@@ -9,10 +9,438 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      access_levels: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          permissions: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          permissions?: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          permissions?: Json
+        }
+        Relationships: []
+      }
+      app_users: {
+        Row: {
+          access_level_id: string | null
+          created_at: string
+          email: string
+          id: string
+          is_active: boolean
+          name: string
+        }
+        Insert: {
+          access_level_id?: string | null
+          created_at?: string
+          email: string
+          id: string
+          is_active?: boolean
+          name: string
+        }
+        Update: {
+          access_level_id?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'app_users_access_level_id_fkey'
+            columns: ['access_level_id']
+            isOneToOne: false
+            referencedRelation: 'access_levels'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      drivers: {
+        Row: {
+          birth_date: string | null
+          cpf: string | null
+          created_at: string
+          id: string
+          name: string
+          phone: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          birth_date?: string | null
+          cpf?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          phone?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          birth_date?: string | null
+          cpf?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
+      inspection_plans: {
+        Row: {
+          checklist: Json | null
+          created_at: string
+          id: string
+          last_inspection: string | null
+          next_inspection: string | null
+          periodicity: string
+          plate: string
+          responsible: string
+          status: string
+          vehicle_type: string
+        }
+        Insert: {
+          checklist?: Json | null
+          created_at?: string
+          id?: string
+          last_inspection?: string | null
+          next_inspection?: string | null
+          periodicity?: string
+          plate: string
+          responsible?: string
+          status?: string
+          vehicle_type: string
+        }
+        Update: {
+          checklist?: Json | null
+          created_at?: string
+          id?: string
+          last_inspection?: string | null
+          next_inspection?: string | null
+          periodicity?: string
+          plate?: string
+          responsible?: string
+          status?: string
+          vehicle_type?: string
+        }
+        Relationships: []
+      }
+      inspections: {
+        Row: {
+          created_at: string
+          date: string
+          driver_name: string | null
+          failed_items: Json | null
+          id: string
+          notes: string | null
+          plate: string
+          status: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          date?: string
+          driver_name?: string | null
+          failed_items?: Json | null
+          id?: string
+          notes?: string | null
+          plate: string
+          status?: string
+          type?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          driver_name?: string | null
+          failed_items?: Json | null
+          id?: string
+          notes?: string | null
+          plate?: string
+          status?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      maintenance_plans: {
+        Row: {
+          checklist: Json | null
+          created_at: string
+          id: string
+          name: string
+          next_execution: string | null
+          periodicity: string | null
+          responsible: string | null
+          status: string
+          target_plate: string | null
+          target_vehicle_type: string | null
+          type: string
+        }
+        Insert: {
+          checklist?: Json | null
+          created_at?: string
+          id?: string
+          name: string
+          next_execution?: string | null
+          periodicity?: string | null
+          responsible?: string | null
+          status?: string
+          target_plate?: string | null
+          target_vehicle_type?: string | null
+          type?: string
+        }
+        Update: {
+          checklist?: Json | null
+          created_at?: string
+          id?: string
+          name?: string
+          next_execution?: string | null
+          periodicity?: string | null
+          responsible?: string | null
+          status?: string
+          target_plate?: string | null
+          target_vehicle_type?: string | null
+          type?: string
+        }
+        Relationships: []
+      }
+      mechanics: {
+        Row: {
+          cpf: string | null
+          created_at: string
+          hourly_rate: number | null
+          id: string
+          name: string
+          phone: string | null
+          specialty: string | null
+          status: string
+          whatsapp: string | null
+        }
+        Insert: {
+          cpf?: string | null
+          created_at?: string
+          hourly_rate?: number | null
+          id?: string
+          name: string
+          phone?: string | null
+          specialty?: string | null
+          status?: string
+          whatsapp?: string | null
+        }
+        Update: {
+          cpf?: string | null
+          created_at?: string
+          hourly_rate?: number | null
+          id?: string
+          name?: string
+          phone?: string | null
+          specialty?: string | null
+          status?: string
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          category: string
+          code: string
+          created_at: string
+          id: string
+          min_quantity: number | null
+          name: string
+          supplier: string | null
+          unit: string
+          unit_value: number | null
+        }
+        Insert: {
+          category?: string
+          code: string
+          created_at?: string
+          id?: string
+          min_quantity?: number | null
+          name: string
+          supplier?: string | null
+          unit?: string
+          unit_value?: number | null
+        }
+        Update: {
+          category?: string
+          code?: string
+          created_at?: string
+          id?: string
+          min_quantity?: number | null
+          name?: string
+          supplier?: string | null
+          unit?: string
+          unit_value?: number | null
+        }
+        Relationships: []
+      }
+      stock_movements: {
+        Row: {
+          created_at: string
+          id: string
+          movement_type: string
+          product_id: string | null
+          quantity: number
+          reason: string | null
+          reference: string | null
+          unit_value: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          movement_type?: string
+          product_id?: string | null
+          quantity?: number
+          reason?: string | null
+          reference?: string | null
+          unit_value?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          movement_type?: string
+          product_id?: string | null
+          quantity?: number
+          reason?: string | null
+          reference?: string | null
+          unit_value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'stock_movements_product_id_fkey'
+            columns: ['product_id']
+            isOneToOne: false
+            referencedRelation: 'current_stock'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'stock_movements_product_id_fkey'
+            columns: ['product_id']
+            isOneToOne: false
+            referencedRelation: 'products'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      vehicles: {
+        Row: {
+          axles_count: number | null
+          brand: string | null
+          cost_center: string | null
+          created_at: string
+          id: string
+          model: string | null
+          plate: string
+          purchase_cost: number | null
+          vehicle_type: string
+          year: number | null
+        }
+        Insert: {
+          axles_count?: number | null
+          brand?: string | null
+          cost_center?: string | null
+          created_at?: string
+          id?: string
+          model?: string | null
+          plate: string
+          purchase_cost?: number | null
+          vehicle_type: string
+          year?: number | null
+        }
+        Update: {
+          axles_count?: number | null
+          brand?: string | null
+          cost_center?: string | null
+          created_at?: string
+          id?: string
+          model?: string | null
+          plate?: string
+          purchase_cost?: number | null
+          vehicle_type?: string
+          year?: number | null
+        }
+        Relationships: []
+      }
+      work_orders: {
+        Row: {
+          created_at: string
+          date: string
+          diagnosis: string | null
+          external_cost: number | null
+          hours: number | null
+          id: string
+          mechanic: string | null
+          parts: Json | null
+          parts_cost: number | null
+          plate: string
+          scheduled_date: string | null
+          status: string
+          total_cost: number | null
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          date?: string
+          diagnosis?: string | null
+          external_cost?: number | null
+          hours?: number | null
+          id?: string
+          mechanic?: string | null
+          parts?: Json | null
+          parts_cost?: number | null
+          plate: string
+          scheduled_date?: string | null
+          status?: string
+          total_cost?: number | null
+          type?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          diagnosis?: string | null
+          external_cost?: number | null
+          hours?: number | null
+          id?: string
+          mechanic?: string | null
+          parts?: Json | null
+          parts_cost?: number | null
+          plate?: string
+          scheduled_date?: string | null
+          status?: string
+          total_cost?: number | null
+          type?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      current_stock: {
+        Row: {
+          category: string | null
+          code: string | null
+          current_balance: number | null
+          id: string | null
+          min_quantity: number | null
+          name: string | null
+          supplier: string | null
+          unit: string | null
+          unit_value: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
