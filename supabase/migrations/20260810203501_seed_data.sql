@@ -100,9 +100,8 @@ INSERT INTO public.inspections (date, plate, type, driver_name, status, failed_i
   ('2026-08-09', 'DEF2G34', 'Diária', 'Marcos Lima', 'Atenção', '["Luz de freio queimada"]', 'Trocar lâmpada com urgência')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO public.stock_movements (product_id, movement_type, quantity, unit_value, reason, reference) VALUES
-  (p1.id, 'entrada', 20, 45.50, 'Compra inicial', NULL)
-  FROM public.products p1 WHERE p1.code = 'FO-001'
+INSERT INTO public.stock_movements (product_id, movement_type, quantity, unit_value, reason, reference)
+  SELECT p.id, 'entrada', 20, 45.50, 'Compra inicial', NULL FROM public.products p WHERE p.code = 'FO-001'
   ON CONFLICT DO NOTHING;
 INSERT INTO public.stock_movements (product_id, movement_type, quantity, unit_value, reason, reference)
   SELECT p.id, 'entrada', 100, 28.90, 'Compra inicial', NULL FROM public.products p WHERE p.code = 'OL-002'
