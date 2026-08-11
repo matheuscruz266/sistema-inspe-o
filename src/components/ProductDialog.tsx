@@ -12,8 +12,11 @@ import {
 } from '@/components/ui/select'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { SubEntityManager, type SubField, type SubColumn } from '@/components/SubEntityManager'
+import { Switch } from '@/components/ui/switch'
 import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+import { uploadFile } from '@/lib/storage'
+import { ImagePlus, X } from 'lucide-react'
 
 interface Props {
   open: boolean
@@ -164,6 +167,8 @@ export function ProductDialog({ open, onOpenChange, editingId, onSaved }: Props)
         max_quantity: 0,
         safety_quantity: 0,
         unit_value: 0,
+        is_active: true,
+        photo_url: '',
       })
       setProductId(null)
     }
@@ -303,6 +308,57 @@ export function ProductDialog({ open, onOpenChange, editingId, onSaved }: Props)
                     )}
                 </div>
               ))}
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                {form.photo_url ? (
+                  <>
+                    <img
+                      src={form.photo_url}
+                      alt="Foto do produto"
+                      className="h-20 w-20 rounded-lg object-cover"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute -top-2 -right-2 h-5 w-5"
+                      onClick={() => setVal('photo_url', '')}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </>
+                ) : (
+                  <label className="flex h-20 w-20 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 hover:border-primary transition-colors">
+                    <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+                        toast.info('Enviando foto...')
+                        const path = `product-${Date.now()}-${file.name}`
+                        const url = await uploadFile('product-photos', path, file)
+                        if (url) {
+                          setVal('photo_url', url)
+                          toast.success('Foto enviada')
+                        } else {
+                          toast.error('Erro ao enviar foto')
+                        }
+                      }}
+                    />
+                  </label>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={form.is_active !== false}
+                  onCheckedChange={(v) => setVal('is_active', v)}
+                />
+                <Label>{form.is_active !== false ? 'Ativo' : 'Inativo'}</Label>
+              </div>
             </div>
             <Button onClick={handleSave} className="w-full">
               {productId ? 'Atualizar' : 'Salvar Produto'}

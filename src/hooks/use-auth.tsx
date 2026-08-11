@@ -21,6 +21,7 @@ interface AuthContextType {
   profile: AppUserProfile | null
   permissions: string[] | null
   isAdmin: boolean
+  canPerform: (screen: string, operation: string) => boolean
   signIn: (email: string, password: string) => Promise<{ error: any }>
   signOut: () => Promise<{ error: any }>
   loading: boolean
@@ -89,9 +90,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       : null
   const isAdmin = !!permissions?.includes('access_levels') || !!permissions?.includes('users')
 
+  const canPerform = (screen: string, operation: string): boolean => {
+    if (isAdmin) return true
+    if (!rawScreens) return false
+    if (Array.isArray(rawScreens)) return (rawScreens as string[]).includes(screen)
+    if (typeof rawScreens === 'object' && rawScreens !== null) {
+      const ops = (rawScreens as Record<string, any>)[screen]
+      if (!ops) return false
+      if (typeof ops === 'boolean') return ops
+      return ops[operation] === true
+    }
+    return false
+  }
+
   return (
     <AuthContext.Provider
-      value={{ user, session, profile, permissions, isAdmin, signIn, signOut, loading }}
+      value={{ user, session, profile, permissions, isAdmin, canPerform, signIn, signOut, loading }}
     >
       {children}
     </AuthContext.Provider>

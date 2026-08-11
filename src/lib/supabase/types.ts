@@ -1925,6 +1925,10 @@ export type Database = {
     }
     Functions: {
       has_screen_access: { Args: { p_screen: string }; Returns: boolean }
+      has_screen_operation: {
+        Args: { p_operation: string; p_screen: string }
+        Returns: boolean
+      }
       is_admin: { Args: never; Returns: boolean }
       table_screen: { Args: { p_table: string }; Returns: string }
     }

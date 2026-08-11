@@ -11,9 +11,11 @@ import {
   TableRow,
   TableCell,
 } from '@/components/ui/table'
-import { Plus, Pencil, Search } from 'lucide-react'
+import { Plus, Pencil, Search, Trash2 } from 'lucide-react'
 import { MaintenancePlanDialog } from '@/components/MaintenancePlanDialog'
 import { formatDate } from '@/lib/utils'
+import { toast } from 'sonner'
+import { useAuth } from '@/hooks/use-auth'
 
 export default function MaintenancePlans() {
   const [plans, setPlans] = useState<any[]>([])
@@ -21,6 +23,21 @@ export default function MaintenancePlans() {
   const [open, setOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
+  const { canPerform } = useAuth()
+  const canDelete = canPerform('maintenance_plans', 'DELETE')
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Confirmar exclusão deste plano de manutenção?')) return
+    const { error } = await supabase
+      .from('maintenance_plans')
+      .update({ is_deleted: true })
+      .eq('id', id)
+    if (error) toast.error('Erro ao excluir')
+    else {
+      toast.success('Plano excluído')
+      fetchData()
+    }
+  }
 
   const fetchData = async () => {
     const { data } = await supabase
@@ -107,10 +124,15 @@ export default function MaintenancePlans() {
                     <Badge variant={p.status === 'Ativo' ? 'default' : 'outline'}>{p.status}</Badge>
                   </TableCell>
                   <TableCell>{formatDate(p.next_execution)}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right whitespace-nowrap">
                     <Button variant="ghost" size="icon" onClick={() => handleOpen(p.id)}>
                       <Pencil className="h-4 w-4" />
                     </Button>
+                    {canDelete && (
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete(p.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))
