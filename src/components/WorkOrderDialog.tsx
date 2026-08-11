@@ -250,6 +250,18 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId }: Prop
                 />
               </div>
               <div>
+                <Label>Unidade</Label>
+                <Select value={form.unit || 'km'} onValueChange={(v) => setVal('unit', v)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="km">km</SelectItem>
+                    <SelectItem value="h">horas</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
                 <Label>Origem</Label>
                 <Select
                   value={form.origin || 'Preventiva'}

@@ -1,106 +1,260 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase/client'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { formatCurrency, formatDate } from '@/lib/utils'
-import { Calendar, Wrench, ClipboardCheck } from 'lucide-react'
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from '@/components/ui/table'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Plus, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
+import { formatDate } from '@/lib/utils'
+import { Input } from '@/components/ui/input'
+
+const STATUS_OPTIONS = [
+  'Prevista',
+  'Programada',
+  'Executada',
+  'Atrasada',
+  'Cancelada',
+  'Não executada',
+]
 
 export default function Scheduling() {
   const [items, setItems] = useState<any[]>([])
+  const [plans, setPlans] = useState<any[]>([])
+  const [vehicles, setVehicles] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [open, setOpen] = useState(false)
+  const [form, setForm] = useState<Record<string, any>>({})
 
-  useEffect(() => {
-    async function load() {
-      const [orders, plans, inspPlans] = await Promise.all([
-        supabase
-          .from('work_orders')
-          .select('*')
-          .not('scheduled_date', 'is', null)
-          .order('scheduled_date'),
-        supabase
-          .from('maintenance_plans')
-          .select('*')
-          .not('next_execution', 'is', null)
-          .order('next_execution'),
-        supabase
-          .from('inspection_plans')
-          .select('*')
-          .not('next_inspection', 'is', null)
-          .order('next_inspection'),
-      ])
-
-      const combined = [
-        ...(orders.data || []).map((o) => ({
-          date: o.scheduled_date,
-          plate: o.plate,
-          type: 'OS',
-          label: o.type,
-          status: o.status,
-          cost: o.total_cost,
-        })),
-        ...(plans.data || []).map((p) => ({
-          date: p.next_execution,
-          plate: p.target_plate || 'Geral',
-          type: 'Manutenção',
-          label: p.name,
-          status: p.status,
-          cost: null,
-        })),
-        ...(inspPlans.data || []).map((i) => ({
-          date: i.next_inspection,
-          plate: i.plate,
-          type: 'Inspeção',
-          label: i.periodicity,
-          status: i.status,
-          cost: null,
-        })),
-      ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-
-      setItems(combined)
-      setLoading(false)
-    }
-    load()
+  const fetchData = useCallback(async () => {
+    const [sched, pl, veh] = await Promise.all([
+      supabase
+        .from('schedule_records')
+        .select('*, maintenance_plans(name), vehicles(plate)')
+        .order('scheduled_date'),
+      supabase.from('maintenance_plans').select('id, name').eq('status', 'Ativo').order('name'),
+      supabase.from('vehicles').select('id, plate').order('plate'),
+    ])
+    setItems(sched.data || [])
+    setPlans(pl.data || [])
+    setVehicles(veh.data || [])
+    setLoading(false)
   }, [])
 
-  if (loading) return <div className="p-6 text-muted-foreground">Carregando agendamentos...</div>
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
+
+  const handleSave = async () => {
+    if (!form.plan_id || !form.vehicle_id || !form.scheduled_date) {
+      toast.error('Preencha todos os campos')
+      return
+    }
+    const { error } = await supabase.from('schedule_records').insert({
+      plan_id: form.plan_id,
+      vehicle_id: form.vehicle_id,
+      scheduled_date: form.scheduled_date,
+      status: form.status || 'Prevista',
+    })
+    if (error) toast.error('Erro ao salvar')
+    else {
+      toast.success('Agendamento criado')
+      setOpen(false)
+      setForm({})
+      fetchData()
+    }
+  }
+
+  const handleStatusChange = async (id: string, status: string) => {
+    const update: any = { status }
+    if (status === 'Executada') update.executed_date = new Date().toISOString().split('T')[0]
+    const { error } = await supabase.from('schedule_records').update(update).eq('id', id)
+    if (error) toast.error('Erro ao atualizar')
+    else {
+      toast.success('Status atualizado')
+      fetchData()
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase.from('schedule_records').delete().eq('id', id)
+    if (error) toast.error('Erro ao excluir')
+    else {
+      toast.success('Excluído')
+      fetchData()
+    }
+  }
+
+  const statusVariant = (status: string) => {
+    switch (status) {
+      case 'Executada':
+        return 'default'
+      case 'Atrasada':
+        return 'destructive'
+      case 'Cancelada':
+        return 'destructive'
+      case 'Não executada':
+        return 'destructive'
+      default:
+        return 'secondary'
+    }
+  }
 
   return (
     <div className="space-y-4 p-4 md:p-6">
-      <h1 className="text-2xl font-bold">Agendamento</h1>
-      <div className="grid gap-3">
-        {items.length === 0 ? (
-          <p className="text-muted-foreground">Nenhum agendamento encontrado.</p>
-        ) : (
-          items.map((item, idx) => (
-            <Card key={idx}>
-              <CardContent className="flex items-center gap-4 p-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  {item.type === 'OS' ? (
-                    <Wrench className="h-5 w-5 text-primary" />
-                  ) : item.type === 'Inspeção' ? (
-                    <ClipboardCheck className="h-5 w-5 text-primary" />
-                  ) : (
-                    <Calendar className="h-5 w-5 text-primary" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{item.label}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {item.plate} - {formatDate(item.date)}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  {item.cost && (
-                    <span className="text-sm font-medium">{formatCurrency(item.cost)}</span>
-                  )}
-                  <Badge variant="secondary">{item.type}</Badge>
-                  <Badge variant="outline">{item.status}</Badge>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Programação</h1>
+        <Button onClick={() => setOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Novo Agendamento
+        </Button>
       </div>
+      <div className="rounded-md border overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Data</TableHead>
+              <TableHead>Plano</TableHead>
+              <TableHead>Veículo</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Executada</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  Carregando...
+                </TableCell>
+              </TableRow>
+            ) : items.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  Nenhum agendamento
+                </TableCell>
+              </TableRow>
+            ) : (
+              items.map((s) => (
+                <TableRow key={s.id}>
+                  <TableCell>{formatDate(s.scheduled_date)}</TableCell>
+                  <TableCell>{s.maintenance_plans?.name || '-'}</TableCell>
+                  <TableCell>{s.vehicles?.plate || '-'}</TableCell>
+                  <TableCell>
+                    <Select value={s.status} onValueChange={(v) => handleStatusChange(s.id, v)}>
+                      <SelectTrigger className="h-7 w-[140px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {STATUS_OPTIONS.map((st) => (
+                          <SelectItem key={st} value={st}>
+                            {st}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>{s.executed_date ? formatDate(s.executed_date) : '-'}</TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="icon" onClick={() => handleDelete(s.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Novo Agendamento</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-3 py-2">
+            <div>
+              <Label>Plano de Manutenção *</Label>
+              <Select
+                value={form.plan_id || ''}
+                onValueChange={(v) => setForm({ ...form, plan_id: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {plans.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Veículo *</Label>
+              <Select
+                value={form.vehicle_id || ''}
+                onValueChange={(v) => setForm({ ...form, vehicle_id: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {vehicles.map((v) => (
+                    <SelectItem key={v.id} value={v.id}>
+                      {v.plate}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Data Agendada *</Label>
+              <Input
+                type="date"
+                value={form.scheduled_date || ''}
+                onChange={(e) => setForm({ ...form, scheduled_date: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Status</Label>
+              <Select
+                value={form.status || 'Prevista'}
+                onValueChange={(v) => setForm({ ...form, status: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((st) => (
+                    <SelectItem key={st} value={st}>
+                      {st}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button onClick={handleSave} className="w-full">
+              Salvar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

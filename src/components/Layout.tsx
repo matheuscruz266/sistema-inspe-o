@@ -19,6 +19,11 @@ import {
   UserPlus,
   Menu,
   LogOut,
+  Layers,
+  Building2,
+  ListChecks,
+  History,
+  BarChart3,
 } from 'lucide-react'
 
 export const menuItems = [
@@ -44,6 +49,11 @@ export const menuItems = [
   { key: 'drivers', label: 'Motoristas', path: '/motoristas', icon: Users },
   { key: 'access_levels', label: 'Níveis de Acesso', path: '/niveis-acesso', icon: Shield },
   { key: 'users', label: 'Usuários', path: '/usuarios', icon: UserPlus },
+  { key: 'components', label: 'Componentes', path: '/componentes', icon: Layers },
+  { key: 'suppliers', label: 'Fornecedores', path: '/fornecedores', icon: Building2 },
+  { key: 'service_catalog', label: 'Serviços', path: '/servicos', icon: ListChecks },
+  { key: 'history', label: 'Histórico', path: '/historico', icon: History },
+  { key: 'indicators', label: 'Indicadores', path: '/indicadores', icon: BarChart3 },
 ]
 
 export default function Layout() {

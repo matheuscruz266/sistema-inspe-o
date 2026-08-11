@@ -20,6 +20,11 @@ import Mechanics from '@/pages/Mechanics'
 import Drivers from '@/pages/Drivers'
 import AccessLevels from '@/pages/AccessLevels'
 import Users from '@/pages/Users'
+import Components from '@/pages/Components'
+import ServiceCatalog from '@/pages/ServiceCatalog'
+import Suppliers from '@/pages/Suppliers'
+import Indicators from '@/pages/Indicators'
+import History from '@/pages/History'
 
 const App = () => (
   <AuthProvider>
@@ -48,6 +53,11 @@ const App = () => (
             <Route path="/motoristas" element={<Drivers />} />
             <Route path="/niveis-acesso" element={<AccessLevels />} />
             <Route path="/usuarios" element={<Users />} />
+            <Route path="/componentes" element={<Components />} />
+            <Route path="/servicos" element={<ServiceCatalog />} />
+            <Route path="/fornecedores" element={<Suppliers />} />
+            <Route path="/indicadores" element={<Indicators />} />
+            <Route path="/historico" element={<History />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
