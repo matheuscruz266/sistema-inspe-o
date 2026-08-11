@@ -25,6 +25,7 @@ import ServiceCatalog from '@/pages/ServiceCatalog'
 import Suppliers from '@/pages/Suppliers'
 import Indicators from '@/pages/Indicators'
 import History from '@/pages/History'
+import DashMaintenance from '@/pages/DashMaintenance'
 
 const App = () => (
   <AuthProvider>
@@ -58,6 +59,7 @@ const App = () => (
             <Route path="/fornecedores" element={<Suppliers />} />
             <Route path="/indicadores" element={<Indicators />} />
             <Route path="/historico" element={<History />} />
+            <Route path="/dash-manutencao" element={<DashMaintenance />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -14,6 +14,7 @@ export type Database = {
           created_at: string
           id: string
           is_active: boolean
+          is_deleted: boolean | null
           name: string
           permissions: Json
         }
@@ -21,6 +22,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          is_deleted?: boolean | null
           name: string
           permissions?: Json
         }
@@ -28,6 +30,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          is_deleted?: boolean | null
           name?: string
           permissions?: Json
         }
@@ -40,6 +43,7 @@ export type Database = {
           email: string
           id: string
           is_active: boolean
+          is_deleted: boolean | null
           name: string
         }
         Insert: {
@@ -48,6 +52,7 @@ export type Database = {
           email: string
           id: string
           is_active?: boolean
+          is_deleted?: boolean | null
           name: string
         }
         Update: {
@@ -56,6 +61,7 @@ export type Database = {
           email?: string
           id?: string
           is_active?: boolean
+          is_deleted?: boolean | null
           name?: string
         }
         Relationships: [
@@ -74,6 +80,7 @@ export type Database = {
           cpf: string | null
           created_at: string
           id: string
+          is_deleted: boolean | null
           name: string
           phone: string | null
           whatsapp: string | null
@@ -83,6 +90,7 @@ export type Database = {
           cpf?: string | null
           created_at?: string
           id?: string
+          is_deleted?: boolean | null
           name: string
           phone?: string | null
           whatsapp?: string | null
@@ -92,6 +100,7 @@ export type Database = {
           cpf?: string | null
           created_at?: string
           id?: string
+          is_deleted?: boolean | null
           name?: string
           phone?: string | null
           whatsapp?: string | null
@@ -144,6 +153,7 @@ export type Database = {
           created_at: string
           expected_value: string | null
           id: string
+          is_deleted: boolean | null
           item: string
           plan_id: string
           response_type: string | null
@@ -154,6 +164,7 @@ export type Database = {
           created_at?: string
           expected_value?: string | null
           id?: string
+          is_deleted?: boolean | null
           item: string
           plan_id: string
           response_type?: string | null
@@ -164,6 +175,7 @@ export type Database = {
           created_at?: string
           expected_value?: string | null
           id?: string
+          is_deleted?: boolean | null
           item?: string
           plan_id?: string
           response_type?: string | null
@@ -187,6 +199,7 @@ export type Database = {
           created_at: string
           criticidade: string | null
           id: string
+          is_deleted: boolean | null
           last_inspection: string | null
           next_inspection: string | null
           periodicity: string
@@ -201,6 +214,7 @@ export type Database = {
           created_at?: string
           criticidade?: string | null
           id?: string
+          is_deleted?: boolean | null
           last_inspection?: string | null
           next_inspection?: string | null
           periodicity?: string
@@ -215,6 +229,7 @@ export type Database = {
           created_at?: string
           criticidade?: string | null
           id?: string
+          is_deleted?: boolean | null
           last_inspection?: string | null
           next_inspection?: string | null
           periodicity?: string
@@ -230,6 +245,7 @@ export type Database = {
           created_at: string
           id: string
           inspection_id: string
+          is_deleted: boolean | null
           item_id: string | null
           result_value: string | null
           status: string | null
@@ -238,6 +254,7 @@ export type Database = {
           created_at?: string
           id?: string
           inspection_id: string
+          is_deleted?: boolean | null
           item_id?: string | null
           result_value?: string | null
           status?: string | null
@@ -246,6 +263,7 @@ export type Database = {
           created_at?: string
           id?: string
           inspection_id?: string
+          is_deleted?: boolean | null
           item_id?: string | null
           result_value?: string | null
           status?: string | null
@@ -274,6 +292,7 @@ export type Database = {
           driver_name: string | null
           failed_items: Json | null
           id: string
+          is_deleted: boolean | null
           notes: string | null
           plate: string
           status: string
@@ -285,6 +304,7 @@ export type Database = {
           driver_name?: string | null
           failed_items?: Json | null
           id?: string
+          is_deleted?: boolean | null
           notes?: string | null
           plate: string
           status?: string
@@ -296,6 +316,7 @@ export type Database = {
           driver_name?: string | null
           failed_items?: Json | null
           id?: string
+          is_deleted?: boolean | null
           notes?: string | null
           plate?: string
           status?: string
@@ -307,6 +328,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_deleted: boolean | null
           plan_id: string
           planned_hours: number | null
           quantity: number | null
@@ -315,6 +337,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          is_deleted?: boolean | null
           plan_id: string
           planned_hours?: number | null
           quantity?: number | null
@@ -323,6 +346,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          is_deleted?: boolean | null
           plan_id?: string
           planned_hours?: number | null
           quantity?: number | null
@@ -342,6 +366,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_deleted: boolean | null
           plan_id: string
           planned_quantity: number | null
           product_id: string | null
@@ -351,6 +376,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          is_deleted?: boolean | null
           plan_id: string
           planned_quantity?: number | null
           product_id?: string | null
@@ -360,6 +386,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          is_deleted?: boolean | null
           plan_id?: string
           planned_quantity?: number | null
           product_id?: string | null
@@ -395,6 +422,7 @@ export type Database = {
           created_at: string
           description: string
           id: string
+          is_deleted: boolean | null
           plan_id: string
           sequence: number | null
           task_type: string | null
@@ -403,6 +431,7 @@ export type Database = {
           created_at?: string
           description: string
           id?: string
+          is_deleted?: boolean | null
           plan_id: string
           sequence?: number | null
           task_type?: string | null
@@ -411,6 +440,7 @@ export type Database = {
           created_at?: string
           description?: string
           id?: string
+          is_deleted?: boolean | null
           plan_id?: string
           sequence?: number | null
           task_type?: string | null
@@ -429,6 +459,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_deleted: boolean | null
           last_event_date: string | null
           last_event_value: number | null
           next_event_date: string | null
@@ -441,6 +472,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          is_deleted?: boolean | null
           last_event_date?: string | null
           last_event_value?: number | null
           next_event_date?: string | null
@@ -453,6 +485,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          is_deleted?: boolean | null
           last_event_date?: string | null
           last_event_value?: number | null
           next_event_date?: string | null
@@ -482,6 +515,7 @@ export type Database = {
           criticidade: string | null
           description: string | null
           id: string
+          is_deleted: boolean | null
           name: string
           next_execution: string | null
           periodicity: string | null
@@ -501,6 +535,7 @@ export type Database = {
           criticidade?: string | null
           description?: string | null
           id?: string
+          is_deleted?: boolean | null
           name: string
           next_execution?: string | null
           periodicity?: string | null
@@ -520,6 +555,7 @@ export type Database = {
           criticidade?: string | null
           description?: string | null
           id?: string
+          is_deleted?: boolean | null
           name?: string
           next_execution?: string | null
           periodicity?: string | null
@@ -538,6 +574,7 @@ export type Database = {
           created_at: string
           hourly_rate: number | null
           id: string
+          is_deleted: boolean | null
           name: string
           phone: string | null
           specialty: string | null
@@ -549,6 +586,7 @@ export type Database = {
           created_at?: string
           hourly_rate?: number | null
           id?: string
+          is_deleted?: boolean | null
           name: string
           phone?: string | null
           specialty?: string | null
@@ -560,6 +598,7 @@ export type Database = {
           created_at?: string
           hourly_rate?: number | null
           id?: string
+          is_deleted?: boolean | null
           name?: string
           phone?: string | null
           specialty?: string | null
@@ -576,6 +615,7 @@ export type Database = {
           generates_os: boolean | null
           id: string
           inspection_id: string
+          is_deleted: boolean | null
           item_id: string | null
           result_value: string | null
           status: string | null
@@ -588,6 +628,7 @@ export type Database = {
           generates_os?: boolean | null
           id?: string
           inspection_id: string
+          is_deleted?: boolean | null
           item_id?: string | null
           result_value?: string | null
           status?: string | null
@@ -600,6 +641,7 @@ export type Database = {
           generates_os?: boolean | null
           id?: string
           inspection_id?: string
+          is_deleted?: boolean | null
           item_id?: string | null
           result_value?: string | null
           status?: string | null
@@ -637,6 +679,7 @@ export type Database = {
           created_at: string
           failure: string | null
           id: string
+          is_deleted: boolean | null
           symptom: string | null
           system: string | null
           work_order_id: string
@@ -648,6 +691,7 @@ export type Database = {
           created_at?: string
           failure?: string | null
           id?: string
+          is_deleted?: boolean | null
           symptom?: string | null
           system?: string | null
           work_order_id: string
@@ -659,6 +703,7 @@ export type Database = {
           created_at?: string
           failure?: string | null
           id?: string
+          is_deleted?: boolean | null
           symptom?: string | null
           system?: string | null
           work_order_id?: string
@@ -679,6 +724,7 @@ export type Database = {
           freight_cost: number | null
           id: string
           invoice_number: string | null
+          is_deleted: boolean | null
           labor_cost: number | null
           other_cost: number | null
           parts_cost: number | null
@@ -694,6 +740,7 @@ export type Database = {
           freight_cost?: number | null
           id?: string
           invoice_number?: string | null
+          is_deleted?: boolean | null
           labor_cost?: number | null
           other_cost?: number | null
           parts_cost?: number | null
@@ -709,6 +756,7 @@ export type Database = {
           freight_cost?: number | null
           id?: string
           invoice_number?: string | null
+          is_deleted?: boolean | null
           labor_cost?: number | null
           other_cost?: number | null
           parts_cost?: number | null
@@ -744,6 +792,7 @@ export type Database = {
           hourly_rate: number | null
           hours: number | null
           id: string
+          is_deleted: boolean | null
           mechanic_name: string
           role: string | null
           start_time: string | null
@@ -756,6 +805,7 @@ export type Database = {
           hourly_rate?: number | null
           hours?: number | null
           id?: string
+          is_deleted?: boolean | null
           mechanic_name: string
           role?: string | null
           start_time?: string | null
@@ -768,6 +818,7 @@ export type Database = {
           hourly_rate?: number | null
           hours?: number | null
           id?: string
+          is_deleted?: boolean | null
           mechanic_name?: string
           role?: string | null
           start_time?: string | null
@@ -788,6 +839,7 @@ export type Database = {
           batch: string | null
           created_at: string
           id: string
+          is_deleted: boolean | null
           product_id: string | null
           product_name: string | null
           quantity: number | null
@@ -800,6 +852,7 @@ export type Database = {
           batch?: string | null
           created_at?: string
           id?: string
+          is_deleted?: boolean | null
           product_id?: string | null
           product_name?: string | null
           quantity?: number | null
@@ -812,6 +865,7 @@ export type Database = {
           batch?: string | null
           created_at?: string
           id?: string
+          is_deleted?: boolean | null
           product_id?: string | null
           product_name?: string | null
           quantity?: number | null
@@ -851,6 +905,7 @@ export type Database = {
           duration: number | null
           equipment_used: string | null
           id: string
+          is_deleted: boolean | null
           service_name: string
           work_order_id: string
         }
@@ -860,6 +915,7 @@ export type Database = {
           duration?: number | null
           equipment_used?: string | null
           id?: string
+          is_deleted?: boolean | null
           service_name: string
           work_order_id: string
         }
@@ -869,6 +925,7 @@ export type Database = {
           duration?: number | null
           equipment_used?: string | null
           id?: string
+          is_deleted?: boolean | null
           service_name?: string
           work_order_id?: string
         }
@@ -882,11 +939,66 @@ export type Database = {
           },
         ]
       }
+      people: {
+        Row: {
+          city: string | null
+          cnh_attachment: string | null
+          cnh_type: string | null
+          cpf: string | null
+          created_at: string
+          full_name: string | null
+          hourly_cost: number | null
+          id: string
+          is_active: boolean | null
+          is_deleted: boolean | null
+          name: string
+          participation: string | null
+          phone: string | null
+          role: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          city?: string | null
+          cnh_attachment?: string | null
+          cnh_type?: string | null
+          cpf?: string | null
+          created_at?: string
+          full_name?: string | null
+          hourly_cost?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_deleted?: boolean | null
+          name: string
+          participation?: string | null
+          phone?: string | null
+          role?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          city?: string | null
+          cnh_attachment?: string | null
+          cnh_type?: string | null
+          cpf?: string | null
+          created_at?: string
+          full_name?: string | null
+          hourly_cost?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_deleted?: boolean | null
+          name?: string
+          participation?: string | null
+          phone?: string | null
+          role?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
       product_applications: {
         Row: {
           component: string | null
           created_at: string
           id: string
+          is_deleted: boolean | null
           product_id: string
           system: string | null
           vehicle_brand: string | null
@@ -897,6 +1009,7 @@ export type Database = {
           component?: string | null
           created_at?: string
           id?: string
+          is_deleted?: boolean | null
           product_id: string
           system?: string | null
           vehicle_brand?: string | null
@@ -907,6 +1020,7 @@ export type Database = {
           component?: string | null
           created_at?: string
           id?: string
+          is_deleted?: boolean | null
           product_id?: string
           system?: string | null
           vehicle_brand?: string | null
@@ -938,6 +1052,7 @@ export type Database = {
           family: string | null
           group_name: string | null
           id: string
+          is_deleted: boolean | null
           manufacturer: string | null
           product_id: string
           subcategory: string | null
@@ -950,6 +1065,7 @@ export type Database = {
           family?: string | null
           group_name?: string | null
           id?: string
+          is_deleted?: boolean | null
           manufacturer?: string | null
           product_id: string
           subcategory?: string | null
@@ -962,6 +1078,7 @@ export type Database = {
           family?: string | null
           group_name?: string | null
           id?: string
+          is_deleted?: boolean | null
           manufacturer?: string | null
           product_id?: string
           subcategory?: string | null
@@ -991,6 +1108,7 @@ export type Database = {
           equivalent_code: string | null
           equivalent_product_id: string | null
           id: string
+          is_deleted: boolean | null
           product_id: string
         }
         Insert: {
@@ -999,6 +1117,7 @@ export type Database = {
           equivalent_code?: string | null
           equivalent_product_id?: string | null
           id?: string
+          is_deleted?: boolean | null
           product_id: string
         }
         Update: {
@@ -1007,6 +1126,7 @@ export type Database = {
           equivalent_code?: string | null
           equivalent_product_id?: string | null
           id?: string
+          is_deleted?: boolean | null
           product_id?: string
         }
         Relationships: [
@@ -1040,11 +1160,61 @@ export type Database = {
           },
         ]
       }
+      product_suppliers: {
+        Row: {
+          created_at: string
+          id: string
+          is_deleted: boolean | null
+          product_id: string
+          supplier_code: string | null
+          supplier_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_deleted?: boolean | null
+          product_id: string
+          supplier_code?: string | null
+          supplier_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_deleted?: boolean | null
+          product_id?: string
+          supplier_code?: string | null
+          supplier_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'product_suppliers_product_id_fkey'
+            columns: ['product_id']
+            isOneToOne: false
+            referencedRelation: 'current_stock'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'product_suppliers_product_id_fkey'
+            columns: ['product_id']
+            isOneToOne: false
+            referencedRelation: 'products'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'product_suppliers_supplier_id_fkey'
+            columns: ['supplier_id']
+            isOneToOne: false
+            referencedRelation: 'suppliers'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       product_units: {
         Row: {
           conversion_factor: number | null
           created_at: string
           id: string
+          is_deleted: boolean | null
           product_id: string
           purchase_unit: string
           stock_unit: string
@@ -1053,6 +1223,7 @@ export type Database = {
           conversion_factor?: number | null
           created_at?: string
           id?: string
+          is_deleted?: boolean | null
           product_id: string
           purchase_unit: string
           stock_unit: string
@@ -1061,6 +1232,7 @@ export type Database = {
           conversion_factor?: number | null
           created_at?: string
           id?: string
+          is_deleted?: boolean | null
           product_id?: string
           purchase_unit?: string
           stock_unit?: string
@@ -1093,6 +1265,7 @@ export type Database = {
           family: string | null
           group_name: string | null
           id: string
+          is_deleted: boolean | null
           location: string | null
           main_supplier_id: string | null
           manufacturer: string | null
@@ -1122,6 +1295,7 @@ export type Database = {
           family?: string | null
           group_name?: string | null
           id?: string
+          is_deleted?: boolean | null
           location?: string | null
           main_supplier_id?: string | null
           manufacturer?: string | null
@@ -1151,6 +1325,7 @@ export type Database = {
           family?: string | null
           group_name?: string | null
           id?: string
+          is_deleted?: boolean | null
           location?: string | null
           main_supplier_id?: string | null
           manufacturer?: string | null
@@ -1185,6 +1360,7 @@ export type Database = {
           created_at: string
           executed_date: string | null
           id: string
+          is_deleted: boolean | null
           plan_id: string | null
           scheduled_date: string
           status: string
@@ -1195,6 +1371,7 @@ export type Database = {
           created_at?: string
           executed_date?: string | null
           id?: string
+          is_deleted?: boolean | null
           plan_id?: string | null
           scheduled_date: string
           status?: string
@@ -1205,6 +1382,7 @@ export type Database = {
           created_at?: string
           executed_date?: string | null
           id?: string
+          is_deleted?: boolean | null
           plan_id?: string | null
           scheduled_date?: string
           status?: string
@@ -1241,6 +1419,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          is_deleted: boolean | null
           name: string
           standard_rate: number | null
           unit: string | null
@@ -1250,6 +1429,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_deleted?: boolean | null
           name: string
           standard_rate?: number | null
           unit?: string | null
@@ -1259,6 +1439,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_deleted?: boolean | null
           name?: string
           standard_rate?: number | null
           unit?: string | null
@@ -1270,6 +1451,7 @@ export type Database = {
           batch_number: string | null
           created_at: string
           id: string
+          is_deleted: boolean | null
           location_id: string | null
           product_id: string
           quantity: number | null
@@ -1279,6 +1461,7 @@ export type Database = {
           batch_number?: string | null
           created_at?: string
           id?: string
+          is_deleted?: boolean | null
           location_id?: string | null
           product_id: string
           quantity?: number | null
@@ -1288,6 +1471,7 @@ export type Database = {
           batch_number?: string | null
           created_at?: string
           id?: string
+          is_deleted?: boolean | null
           location_id?: string | null
           product_id?: string
           quantity?: number | null
@@ -1317,10 +1501,78 @@ export type Database = {
           },
         ]
       }
+      stock_inventory: {
+        Row: {
+          counted_at: string | null
+          counted_by: string | null
+          counted_quantity: number | null
+          created_at: string
+          divergence: number | null
+          id: string
+          is_deleted: boolean | null
+          location_id: string | null
+          notes: string | null
+          product_id: string
+          status: string | null
+          system_quantity: number | null
+        }
+        Insert: {
+          counted_at?: string | null
+          counted_by?: string | null
+          counted_quantity?: number | null
+          created_at?: string
+          divergence?: number | null
+          id?: string
+          is_deleted?: boolean | null
+          location_id?: string | null
+          notes?: string | null
+          product_id: string
+          status?: string | null
+          system_quantity?: number | null
+        }
+        Update: {
+          counted_at?: string | null
+          counted_by?: string | null
+          counted_quantity?: number | null
+          created_at?: string
+          divergence?: number | null
+          id?: string
+          is_deleted?: boolean | null
+          location_id?: string | null
+          notes?: string | null
+          product_id?: string
+          status?: string | null
+          system_quantity?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'stock_inventory_location_id_fkey'
+            columns: ['location_id']
+            isOneToOne: false
+            referencedRelation: 'stock_locations'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'stock_inventory_product_id_fkey'
+            columns: ['product_id']
+            isOneToOne: false
+            referencedRelation: 'current_stock'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'stock_inventory_product_id_fkey'
+            columns: ['product_id']
+            isOneToOne: false
+            referencedRelation: 'products'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       stock_locations: {
         Row: {
           created_at: string
           id: string
+          is_deleted: boolean | null
           name: string
           physical_address: string | null
           warehouse: string | null
@@ -1328,6 +1580,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          is_deleted?: boolean | null
           name: string
           physical_address?: string | null
           warehouse?: string | null
@@ -1335,6 +1588,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          is_deleted?: boolean | null
           name?: string
           physical_address?: string | null
           warehouse?: string | null
@@ -1346,6 +1600,7 @@ export type Database = {
           batch_id: string | null
           created_at: string
           id: string
+          is_deleted: boolean | null
           location_id: string | null
           movement_type: string
           product_id: string | null
@@ -1358,6 +1613,7 @@ export type Database = {
           batch_id?: string | null
           created_at?: string
           id?: string
+          is_deleted?: boolean | null
           location_id?: string | null
           movement_type?: string
           product_id?: string | null
@@ -1370,6 +1626,7 @@ export type Database = {
           batch_id?: string | null
           created_at?: string
           id?: string
+          is_deleted?: boolean | null
           location_id?: string | null
           movement_type?: string
           product_id?: string | null
@@ -1411,29 +1668,38 @@ export type Database = {
       }
       suppliers: {
         Row: {
+          address: string | null
+          city: string | null
           cnpj: string | null
           contact: string | null
           created_at: string
           email: string | null
           id: string
+          is_deleted: boolean | null
           name: string
           phone: string | null
         }
         Insert: {
+          address?: string | null
+          city?: string | null
           cnpj?: string | null
           contact?: string | null
           created_at?: string
           email?: string | null
           id?: string
+          is_deleted?: boolean | null
           name: string
           phone?: string | null
         }
         Update: {
+          address?: string | null
+          city?: string | null
           cnpj?: string | null
           contact?: string | null
           created_at?: string
           email?: string | null
           id?: string
+          is_deleted?: boolean | null
           name?: string
           phone?: string | null
         }
@@ -1444,6 +1710,7 @@ export type Database = {
           component_name: string | null
           created_at: string
           id: string
+          is_deleted: boolean | null
           parent_id: string | null
           system_name: string
           vehicle_id: string | null
@@ -1452,6 +1719,7 @@ export type Database = {
           component_name?: string | null
           created_at?: string
           id?: string
+          is_deleted?: boolean | null
           parent_id?: string | null
           system_name: string
           vehicle_id?: string | null
@@ -1460,6 +1728,7 @@ export type Database = {
           component_name?: string | null
           created_at?: string
           id?: string
+          is_deleted?: boolean | null
           parent_id?: string | null
           system_name?: string
           vehicle_id?: string | null
@@ -1487,7 +1756,9 @@ export type Database = {
           brand: string | null
           cost_center: string | null
           created_at: string
+          crlv_url: string | null
           id: string
+          is_deleted: boolean | null
           model: string | null
           plate: string
           purchase_cost: number | null
@@ -1499,7 +1770,9 @@ export type Database = {
           brand?: string | null
           cost_center?: string | null
           created_at?: string
+          crlv_url?: string | null
           id?: string
+          is_deleted?: boolean | null
           model?: string | null
           plate: string
           purchase_cost?: number | null
@@ -1511,7 +1784,9 @@ export type Database = {
           brand?: string | null
           cost_center?: string | null
           created_at?: string
+          crlv_url?: string | null
           id?: string
+          is_deleted?: boolean | null
           model?: string | null
           plate?: string
           purchase_cost?: number | null
@@ -1533,6 +1808,7 @@ export type Database = {
           hours: number | null
           id: string
           implement_plate: string | null
+          is_deleted: boolean | null
           labor_cost: number | null
           maintenance_plan_id: string | null
           mechanic: string | null
@@ -1562,6 +1838,7 @@ export type Database = {
           hours?: number | null
           id?: string
           implement_plate?: string | null
+          is_deleted?: boolean | null
           labor_cost?: number | null
           maintenance_plan_id?: string | null
           mechanic?: string | null
@@ -1591,6 +1868,7 @@ export type Database = {
           hours?: number | null
           id?: string
           implement_plate?: string | null
+          is_deleted?: boolean | null
           labor_cost?: number | null
           maintenance_plan_id?: string | null
           mechanic?: string | null

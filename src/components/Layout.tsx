@@ -24,6 +24,7 @@ import {
   ListChecks,
   History,
   BarChart3,
+  Gauge,
 } from 'lucide-react'
 
 export const menuItems = [
@@ -54,6 +55,7 @@ export const menuItems = [
   { key: 'service_catalog', label: 'Serviços', path: '/servicos', icon: ListChecks },
   { key: 'history', label: 'Histórico', path: '/historico', icon: History },
   { key: 'indicators', label: 'Indicadores', path: '/indicadores', icon: BarChart3 },
+  { key: 'dash_maintenance', label: 'Dash Manutenção', path: '/dash-manutencao', icon: Gauge },
 ]
 
 export default function Layout() {
