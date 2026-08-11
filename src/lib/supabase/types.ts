@@ -1924,7 +1924,9 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      has_screen_access: { Args: { p_screen: string }; Returns: boolean }
+      is_admin: { Args: never; Returns: boolean }
+      table_screen: { Args: { p_table: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never

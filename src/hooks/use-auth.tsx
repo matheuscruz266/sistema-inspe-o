@@ -11,7 +11,7 @@ interface AppUserProfile {
   access_levels: {
     id: string
     name: string
-    permissions: { screens?: string[] } | null
+    permissions: Record<string, any> | null
   } | null
 }
 
@@ -20,6 +20,7 @@ interface AuthContextType {
   session: Session | null
   profile: AppUserProfile | null
   permissions: string[] | null
+  isAdmin: boolean
   signIn: (email: string, password: string) => Promise<{ error: any }>
   signOut: () => Promise<{ error: any }>
   loading: boolean
@@ -78,10 +79,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { error }
   }
 
-  const permissions = profile?.access_levels?.permissions?.screens ?? null
+  const rawScreens = profile?.access_levels?.permissions?.screens ?? null
+  const permissions: string[] | null = Array.isArray(rawScreens)
+    ? (rawScreens as string[])
+    : rawScreens && typeof rawScreens === 'object'
+      ? Object.entries(rawScreens)
+          .filter(([, ops]: [string, any]) => ops?.SELECT === true)
+          .map(([key]: [string, any]) => key)
+      : null
+  const isAdmin = !!permissions?.includes('access_levels') || !!permissions?.includes('users')
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, permissions, signIn, signOut, loading }}>
+    <AuthContext.Provider
+      value={{ user, session, profile, permissions, isAdmin, signIn, signOut, loading }}
+    >
       {children}
     </AuthContext.Provider>
   )
