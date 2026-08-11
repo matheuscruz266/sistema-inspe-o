@@ -23,6 +23,7 @@ import {
 import { Plus, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
 import { createUser } from '@/services/create-user'
+import { sanitizeText } from '@/lib/sanitize'
 
 export default function Users() {
   const [users, setUsers] = useState<any[]>([])
@@ -74,8 +75,8 @@ export default function Users() {
     setSaving(true)
     try {
       const payload = {
-        name: form.name,
-        email: form.email,
+        name: sanitizeText(form.name),
+        email: sanitizeText(form.email),
         access_level_id: form.access_level_id || null,
         is_active: form.is_active ?? true,
       }
@@ -95,8 +96,8 @@ export default function Users() {
           return
         }
         const { error: createError } = await createUser({
-          email: form.email,
-          name: form.name,
+          email: sanitizeText(form.email),
+          name: sanitizeText(form.name),
           password: form.password,
           access_level_id: form.access_level_id || null,
         })

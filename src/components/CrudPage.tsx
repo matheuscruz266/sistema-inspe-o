@@ -1,5 +1,6 @@
 import { useState, ReactNode } from 'react'
 import { useCrud } from '@/hooks/use-crud'
+import { sanitizeText } from '@/lib/sanitize'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -93,6 +94,8 @@ export function CrudPage({
   const handleSubmit = async () => {
     const submitForm = { ...form }
     fields.forEach((f) => {
+      if (f.type === 'text' || f.type === 'textarea')
+        submitForm[f.name] = sanitizeText(String(form[f.name] || ''))
       if (f.type === 'tags')
         submitForm[f.name] = String(form[f.name] || '')
           .split('\n')

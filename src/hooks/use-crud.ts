@@ -12,14 +12,10 @@ export function useCrud<T = any>(table: string) {
       .select('*')
       .eq('is_deleted', false)
       .order('created_at', { ascending: false })
-    if (!error && result) {
-      setData(result as T[])
+    if (error) {
+      setData([])
     } else {
-      const { data: fallback } = await supabase
-        .from(table)
-        .select('*')
-        .order('created_at', { ascending: false })
-      setData((fallback as T[]) || [])
+      setData((result as T[]) || [])
     }
     setLoading(false)
   }, [table])

@@ -1,8 +1,10 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'npm:@supabase/supabase-js@2'
-import { corsHeaders } from '../_shared/cors.ts'
+import { getCorsHeaders } from '../_shared/cors.ts'
 
 Deno.serve(async (req: Request) => {
+  const corsHeaders = getCorsHeaders(req)
+
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -32,11 +34,51 @@ Deno.serve(async (req: Request) => {
     const {
       data: { user },
     } = await callerClient.auth.getUser()
-    if (!user) {
+    if (!user || !user.email) {
       return new Response(JSON.stringify({ error: 'Não autorizado' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       })
+    }
+
+    // Verify caller is an administrator
+    const { data: callerProfile, error: profileError } = await adminClient
+      .from('app_users')
+      .select('id, is_deleted, access_levels!inner(permissions, is_active, is_deleted)')
+      .eq('email', user.email)
+      .single()
+
+    if (profileError || !callerProfile) {
+      return new Response(JSON.stringify({ error: 'Acesso negado. Usuário não encontrado.' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      })
+    }
+
+    if (callerProfile.is_deleted) {
+      return new Response(JSON.stringify({ error: 'Acesso negado. Usuário desativado.' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      })
+    }
+
+    const accessLevel = callerProfile.access_levels as Record<string, unknown> | null
+    if (!accessLevel || accessLevel.is_active === false || accessLevel.is_deleted === true) {
+      return new Response(JSON.stringify({ error: 'Acesso negado. Nível de acesso inativo.' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      })
+    }
+
+    const permissions = (accessLevel.permissions || {}) as Record<string, unknown>
+    const screens = (permissions.screens || []) as string[]
+    const isAdmin = screens.includes('access_levels') || screens.includes('users')
+
+    if (!isAdmin) {
+      return new Response(
+        JSON.stringify({ error: 'Acesso negado. Apenas administradores podem criar usuários.' }),
+        { status: 403, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
+      )
     }
 
     const body = await req.json()
