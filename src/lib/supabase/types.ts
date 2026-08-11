@@ -114,6 +114,7 @@ export type Database = {
           created_at: string
           generates_os: boolean | null
           id: string
+          is_deleted: boolean | null
           plan_id: string
           priority: string | null
           result_classification: string
@@ -124,6 +125,7 @@ export type Database = {
           created_at?: string
           generates_os?: boolean | null
           id?: string
+          is_deleted?: boolean | null
           plan_id: string
           priority?: string | null
           result_classification: string
@@ -134,6 +136,7 @@ export type Database = {
           created_at?: string
           generates_os?: boolean | null
           id?: string
+          is_deleted?: boolean | null
           plan_id?: string
           priority?: string | null
           result_classification?: string

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
+import { createUser } from '@/services/create-user'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -22,6 +23,7 @@ import {
 } from '@/components/ui/table'
 import { Plus, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
+import { createUserViaEdgeFunction } from '@/services/create-user'
 
 export default function Users() {
   const [users, setUsers] = useState<any[]>([])
@@ -88,33 +90,19 @@ export default function Users() {
         toast.error('Senha deve ter no mínimo 8 caracteres')
         return
       }
-      const { data: sessionData } = await supabase.auth.getSession()
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      const { error: createError } = await createUserViaEdgeFunction({
         email: form.email,
+        name: form.name,
         password: form.password,
+        access_level_id: form.access_level_id || null,
       })
-      if (authError) {
-        toast.error('Erro ao criar usuário: ' + authError.message)
+      if (createError) {
+        toast.error(createError)
         return
       }
-      if (authData.user) {
-        const { error: dbError } = await supabase.from('app_users').insert({
-          id: authData.user.id,
-          ...payload,
-        })
-        if (dbError) toast.error('Erro ao salvar perfil')
-        else {
-          toast.success('Usuário criado com sucesso')
-          setOpen(false)
-          fetchData()
-        }
-      }
-      if (sessionData.session) {
-        await supabase.auth.setSession({
-          access_token: sessionData.session.access_token,
-          refresh_token: sessionData.session.refresh_token,
-        })
-      }
+      toast.success('Usuário criado com sucesso')
+      setOpen(false)
+      fetchData()
     }
   }
 
