@@ -26,6 +26,7 @@ export default function Products() {
     const { data } = await supabase
       .from('products')
       .select('*')
+      .eq('is_deleted', false)
       .order('created_at', { ascending: false })
     setProducts(data || [])
     setLoading(false)

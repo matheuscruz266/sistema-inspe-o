@@ -13,13 +13,15 @@ import {
 } from '@/components/ui/select'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
-import { Plus } from 'lucide-react'
+import { Plus, ClipboardList } from 'lucide-react'
 import { toast } from 'sonner'
+import { StockInventoryDialog } from '@/components/StockInventoryDialog'
 
 export default function Stock() {
   const [movements, setMovements] = useState<any[]>([])
   const [products, setProducts] = useState<any[]>([])
   const [open, setOpen] = useState(false)
+  const [invOpen, setInvOpen] = useState(false)
   const [form, setForm] = useState<Record<string, any>>({})
 
   const fetchData = async () => {
@@ -27,8 +29,9 @@ export default function Stock() {
       supabase
         .from('stock_movements')
         .select('*, products(name)')
+        .eq('is_deleted', false)
         .order('created_at', { ascending: false }),
-      supabase.from('products').select('*').order('name'),
+      supabase.from('products').select('*').eq('is_deleted', false).order('name'),
     ])
     setMovements(mov.data || [])
     setProducts(prods.data || [])
@@ -59,10 +62,16 @@ export default function Stock() {
     <div className="space-y-6 p-4 md:p-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Estoque</h1>
-        <Button onClick={() => setOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nova Movimentação
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setInvOpen(true)}>
+            <ClipboardList className="mr-2 h-4 w-4" />
+            Inventário
+          </Button>
+          <Button onClick={() => setOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Nova Movimentação
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -161,6 +170,7 @@ export default function Stock() {
           </div>
         </DialogContent>
       </Dialog>
+      <StockInventoryDialog open={invOpen} onOpenChange={setInvOpen} />
     </div>
   )
 }

@@ -26,6 +26,7 @@ export default function InspectionPlans() {
     const { data } = await supabase
       .from('inspection_plans')
       .select('*')
+      .eq('is_deleted', false)
       .order('created_at', { ascending: false })
     setPlans(data || [])
     setLoading(false)

@@ -35,6 +35,7 @@ export function StockDashboard() {
       supabase
         .from('stock_movements')
         .select('*, products(name, unit)')
+        .eq('is_deleted', false)
         .order('created_at', { ascending: false }),
       supabase.from('current_stock').select('*'),
     ]).then(([mov, stk]) => {

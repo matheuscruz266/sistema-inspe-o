@@ -18,6 +18,7 @@ import Stock from '@/pages/Stock'
 import Products from '@/pages/Products'
 import Mechanics from '@/pages/Mechanics'
 import Drivers from '@/pages/Drivers'
+import People from '@/pages/People'
 import AccessLevels from '@/pages/AccessLevels'
 import Users from '@/pages/Users'
 import Components from '@/pages/Components'
@@ -52,6 +53,7 @@ const App = () => (
             <Route path="/produtos" element={<Products />} />
             <Route path="/mecanicos" element={<Mechanics />} />
             <Route path="/motoristas" element={<Drivers />} />
+            <Route path="/pessoas" element={<People />} />
             <Route path="/niveis-acesso" element={<AccessLevels />} />
             <Route path="/usuarios" element={<Users />} />
             <Route path="/componentes" element={<Components />} />

@@ -26,6 +26,7 @@ export default function MaintenancePlans() {
     const { data } = await supabase
       .from('maintenance_plans')
       .select('*')
+      .eq('is_deleted', false)
       .order('created_at', { ascending: false })
     setPlans(data || [])
     setLoading(false)
