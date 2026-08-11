@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
-import { createUser } from '@/services/create-user'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -23,7 +22,7 @@ import {
 } from '@/components/ui/table'
 import { Plus, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
-import { createUserViaEdgeFunction } from '@/services/create-user'
+import { createUser } from '@/services/create-user'
 
 export default function Users() {
   const [users, setUsers] = useState<any[]>([])
@@ -90,7 +89,7 @@ export default function Users() {
         toast.error('Senha deve ter no mínimo 8 caracteres')
         return
       }
-      const { error: createError } = await createUserViaEdgeFunction({
+      const { error: createError } = await createUser({
         email: form.email,
         name: form.name,
         password: form.password,
