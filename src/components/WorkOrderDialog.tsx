@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
   SelectTrigger,
@@ -10,295 +11,451 @@ import {
   SelectItem,
   SelectValue,
 } from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
-import { Plus, Trash2 } from 'lucide-react'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { SubEntityManager, type SubField, type SubColumn } from '@/components/SubEntityManager'
 import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { formatCurrency } from '@/lib/utils'
-
-interface Part {
-  product_id: string
-  product_name: string
-  quantity: number
-  unit_value: number
-}
+import { AlertCircle } from 'lucide-react'
 
 interface Props {
   open: boolean
   onOpenChange: (v: boolean) => void
   onSaved: () => void
+  editingId?: string | null
 }
 
-export function WorkOrderDialog({ open, onOpenChange, onSaved }: Props) {
-  const [products, setProducts] = useState<any[]>([])
-  const [mechanics, setMechanics] = useState<any[]>([])
+const ORIGINS = [
+  'Preventiva',
+  'Corretiva',
+  'Inspeção',
+  'Falha',
+  'Acidente',
+  'Solicitação do motorista',
+  'Preditiva',
+  'Recall',
+  'Garantia',
+  'Outro',
+]
+const STATUSES = [
+  'Aberta',
+  'Triagem',
+  'Aprovada',
+  'Planejada',
+  'Em Execução',
+  'Aguardando Peça',
+  'Aguardando Terceiro',
+  'Concluída',
+  'Validada',
+  'Encerrada',
+]
+
+const laborFields: SubField[] = [
+  { name: 'mechanic_name', label: 'Mecânico', type: 'text' },
+  { name: 'role', label: 'Função', type: 'text' },
+  { name: 'hours', label: 'Horas', type: 'number' },
+  { name: 'hourly_rate', label: 'Custo/Hora', type: 'number' },
+  { name: 'cost', label: 'Custo Total', type: 'number' },
+]
+const laborCols: SubColumn[] = [
+  { key: 'mechanic_name', label: 'Mecânico' },
+  { key: 'hours', label: 'Horas' },
+  { key: 'cost', label: 'Custo' },
+]
+
+const materialFields: SubField[] = [
+  { name: 'product_name', label: 'Produto', type: 'text' },
+  { name: 'quantity', label: 'Quantidade', type: 'number' },
+  { name: 'unit', label: 'Unidade', type: 'text' },
+  { name: 'unit_cost', label: 'Custo Unit.', type: 'number' },
+  { name: 'total_cost', label: 'Custo Total', type: 'number' },
+]
+const materialCols: SubColumn[] = [
+  { key: 'product_name', label: 'Produto' },
+  { key: 'quantity', label: 'Qtd' },
+  { key: 'total_cost', label: 'Custo' },
+]
+
+const serviceFields: SubField[] = [
+  { name: 'service_name', label: 'Serviço', type: 'text' },
+  { name: 'duration', label: 'Duração', type: 'number' },
+  { name: 'equipment_used', label: 'Equipamento', type: 'text' },
+  { name: 'cost', label: 'Custo', type: 'number' },
+]
+const serviceCols: SubColumn[] = [
+  { key: 'service_name', label: 'Serviço' },
+  { key: 'duration', label: 'Duração' },
+  { key: 'cost', label: 'Custo' },
+]
+
+const externalFields: SubField[] = [
+  { name: 'supplier_name', label: 'Fornecedor', type: 'text' },
+  { name: 'work_description', label: 'Trabalho Realizado', type: 'text' },
+  { name: 'labor_cost', label: 'Custo Mão de Obra', type: 'number' },
+  { name: 'parts_cost', label: 'Custo Peças', type: 'number' },
+  { name: 'service_cost', label: 'Custo Serviços', type: 'number' },
+  { name: 'freight_cost', label: 'Frete', type: 'number' },
+  { name: 'other_cost', label: 'Outros', type: 'number' },
+  { name: 'invoice_number', label: 'Nota Fiscal', type: 'text' },
+  { name: 'total_cost', label: 'Custo Total', type: 'number' },
+]
+const externalCols: SubColumn[] = [
+  { key: 'supplier_name', label: 'Fornecedor' },
+  { key: 'work_description', label: 'Trabalho' },
+  { key: 'total_cost', label: 'Custo' },
+]
+
+export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId }: Props) {
+  const [woId, setWoId] = useState<string | null>(editingId || null)
   const [form, setForm] = useState<Record<string, any>>({})
-  const [parts, setParts] = useState<Part[]>([])
+  const [diagnosis, setDiagnosis] = useState<Record<string, any>>({})
 
   useEffect(() => {
-    if (open) {
-      supabase
-        .from('products')
-        .select('*')
-        .order('name')
-        .then(({ data }) => setProducts(data || []))
-      supabase
-        .from('mechanics')
-        .select('*')
-        .eq('status', 'Ativo')
-        .order('name')
-        .then(({ data }) => setMechanics(data || []))
+    if (open && editingId) {
+      Promise.all([
+        supabase.from('work_orders').select('*').eq('id', editingId).single(),
+        supabase.from('os_diagnosis').select('*').eq('work_order_id', editingId).single(),
+      ]).then(([wo, diag]) => {
+        if (wo.data) {
+          setForm(wo.data)
+          setWoId(editingId)
+        }
+        if (diag.data) setDiagnosis(diag.data)
+      })
+    } else if (open) {
       setForm({
         date: new Date().toISOString().split('T')[0],
         type: 'Preventiva',
+        origin: 'Preventiva',
         status: 'Aberta',
-        hours: 0,
+        parts_cost: 0,
+        labor_cost: 0,
         external_cost: 0,
+        freight_cost: 0,
+        other_cost: 0,
+        hours: 0,
       })
-      setParts([])
+      setDiagnosis({})
+      setWoId(null)
     }
-  }, [open])
+  }, [open, editingId])
 
-  const partsCost = parts.reduce((s, p) => s + p.unit_value * p.quantity, 0)
-  const mechanic = mechanics.find((m) => m.id === form.mechanic_id)
-  const laborCost = (parseFloat(form.hours) || 0) * parseFloat(mechanic?.hourly_rate || 0)
-  const totalCost = partsCost + laborCost + (parseFloat(form.external_cost) || 0)
-
-  const addPart = () =>
-    setParts([...parts, { product_id: '', product_name: '', quantity: 1, unit_value: 0 }])
-
-  const updatePart = (idx: number, field: keyof Part, value: any) => {
-    const updated = [...parts]
-    if (field === 'product_id') {
-      const prod = products.find((p) => p.id === value)
-      updated[idx] = {
-        product_id: value,
-        product_name: prod?.name || '',
-        quantity: 1,
-        unit_value: parseFloat(prod?.unit_value) || 0,
-      }
-    } else {
-      updated[idx] = { ...updated[idx], [field]: field === 'quantity' ? parseFloat(value) : value }
-    }
-    setParts(updated)
-  }
+  const totalCost =
+    (parseFloat(form.parts_cost) || 0) +
+    (parseFloat(form.labor_cost) || 0) +
+    (parseFloat(form.external_cost) || 0) +
+    (parseFloat(form.freight_cost) || 0) +
+    (parseFloat(form.other_cost) || 0)
+  const isCorrective = form.origin === 'Corretiva' || form.type === 'Corretiva'
 
   const handleSave = async () => {
-    const { data, error } = await supabase
-      .from('work_orders')
-      .insert({
-        date: form.date,
-        plate: form.plate,
-        type: form.type,
-        diagnosis: form.diagnosis || '',
-        parts_cost: partsCost,
-        hours: parseFloat(form.hours) || 0,
-        external_cost: parseFloat(form.external_cost) || 0,
-        mechanic: mechanic?.name || '',
-        status: form.status,
-        total_cost: totalCost,
-        parts: parts.filter((p) => p.product_id),
-        scheduled_date: form.scheduled_date || null,
-      })
-      .select()
-      .single()
-
+    const payload = { ...form, total_cost: totalCost }
+    const { data, error } = woId
+      ? await supabase.from('work_orders').update(payload).eq('id', woId).select().single()
+      : await supabase.from('work_orders').insert(payload).select().single()
     if (error) {
-      toast.error('Erro ao salvar')
+      toast.error('Erro ao salvar OS')
       return
     }
-
-    for (const part of parts.filter((p) => p.product_id)) {
-      await supabase.from('stock_movements').insert({
-        product_id: part.product_id,
-        movement_type: 'saida',
-        quantity: part.quantity,
-        unit_value: part.unit_value,
-        reason: `OS: ${data.plate}`,
-        reference: data.id,
-      })
-    }
-    toast.success('Ordem de serviço criada')
-    onOpenChange(false)
+    toast.success('OS salva')
+    setWoId(data.id)
     onSaved()
   }
+
+  const handleSaveDiagnosis = async () => {
+    if (!woId) return
+    const { error } = await supabase
+      .from('os_diagnosis')
+      .upsert({ ...diagnosis, work_order_id: woId })
+    if (error) toast.error('Erro ao salvar diagnóstico')
+    else toast.success('Diagnóstico salvo')
+  }
+
+  const setVal = (k: string, v: any) => setForm((p) => ({ ...p, [k]: v }))
+  const setDiag = (k: string, v: any) => setDiagnosis((p) => ({ ...p, [k]: v }))
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Nova Ordem de Serviço</DialogTitle>
+          <DialogTitle>{woId ? 'Editar OS' : 'Nova Ordem de Serviço'}</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Data *</Label>
-              <Input
-                type="date"
-                value={form.date || ''}
-                onChange={(e) => setForm({ ...form, date: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Placa *</Label>
-              <Input
-                value={form.plate || ''}
-                onChange={(e) => setForm({ ...form, plate: e.target.value })}
-              />
-            </div>
+        {isCorrective && !diagnosis.symptom && (
+          <div className="flex items-center gap-2 rounded-lg border border-orange-300 bg-orange-50 p-3 text-sm text-orange-800">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            Diagnóstico é obrigatório para OS corretiva. Preencha na aba "Diagnóstico".
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Tipo</Label>
-              <Select
-                value={form.type || 'Preventiva'}
-                onValueChange={(v) => setForm({ ...form, type: v })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Preventiva">Preventiva</SelectItem>
-                  <SelectItem value="Corretiva">Corretiva</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Mecânico</Label>
-              <Select
-                value={form.mechanic_id || ''}
-                onValueChange={(v) => setForm({ ...form, mechanic_id: v })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {mechanics.map((m) => (
-                    <SelectItem key={m.id} value={m.id}>
-                      {m.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label>Diagnóstico</Label>
-            <Textarea
-              value={form.diagnosis || ''}
-              onChange={(e) => setForm({ ...form, diagnosis: e.target.value })}
-            />
-          </div>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label>Horas</Label>
-              <Input
-                type="number"
-                step="0.5"
-                value={form.hours || 0}
-                onChange={(e) => setForm({ ...form, hours: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Custo Externo</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={form.external_cost || 0}
-                onChange={(e) => setForm({ ...form, external_cost: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Status</Label>
-              <Select
-                value={form.status || 'Aberta'}
-                onValueChange={(v) => setForm({ ...form, status: v })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Aberta">Aberta</SelectItem>
-                  <SelectItem value="Em Andamento">Em Andamento</SelectItem>
-                  <SelectItem value="Concluída">Concluída</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label>Data Agendada (opcional)</Label>
-            <Input
-              type="date"
-              value={form.scheduled_date || ''}
-              onChange={(e) => setForm({ ...form, scheduled_date: e.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label>Peças Utilizadas</Label>
-              <Button type="button" variant="outline" size="sm" onClick={addPart}>
-                <Plus className="mr-1 h-3 w-3" />
-                Adicionar
-              </Button>
-            </div>
-            {parts.map((part, idx) => (
-              <div key={idx} className="flex items-center gap-2">
+        )}
+        <Tabs defaultValue="header">
+          <TabsList className="grid w-full grid-cols-6">
+            <TabsTrigger value="header">Cabeçalho</TabsTrigger>
+            <TabsTrigger value="diag" disabled={!woId}>
+              Diagnóstico
+            </TabsTrigger>
+            <TabsTrigger value="labor" disabled={!woId}>
+              Mão de Obra
+            </TabsTrigger>
+            <TabsTrigger value="materials" disabled={!woId}>
+              Materiais
+            </TabsTrigger>
+            <TabsTrigger value="services" disabled={!woId}>
+              Serviços
+            </TabsTrigger>
+            <TabsTrigger value="external" disabled={!woId}>
+              Externo
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="header" className="space-y-3 mt-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Data *</Label>
+                <Input
+                  type="date"
+                  value={form.date || ''}
+                  onChange={(e) => setVal('date', e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>Placa *</Label>
+                <Input value={form.plate || ''} onChange={(e) => setVal('plate', e.target.value)} />
+              </div>
+              <div>
+                <Label>Implemento/Reboque</Label>
+                <Input
+                  value={form.implement_plate || ''}
+                  onChange={(e) => setVal('implement_plate', e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>Odômetro (km)</Label>
+                <Input
+                  type="number"
+                  value={form.odometer || ''}
+                  onChange={(e) => setVal('odometer', e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>Horímetro (h)</Label>
+                <Input
+                  type="number"
+                  value={form.horimeter || ''}
+                  onChange={(e) => setVal('horimeter', e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>Centro de Custo</Label>
+                <Input
+                  value={form.cost_center || ''}
+                  onChange={(e) => setVal('cost_center', e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>Origem</Label>
                 <Select
-                  value={part.product_id}
-                  onValueChange={(v) => updatePart(idx, 'product_id', v)}
+                  value={form.origin || 'Preventiva'}
+                  onValueChange={(v) => setVal('origin', v)}
                 >
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Produto..." />
+                  <SelectTrigger>
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {products.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.name}
+                    {ORIGINS.map((o) => (
+                      <SelectItem key={o} value={o}>
+                        {o}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              <div>
+                <Label>Tipo</Label>
+                <Select value={form.type || 'Preventiva'} onValueChange={(v) => setVal('type', v)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Preventiva">Preventiva</SelectItem>
+                    <SelectItem value="Corretiva">Corretiva</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Status</Label>
+                <Select value={form.status || 'Aberta'} onValueChange={(v) => setVal('status', v)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUSES.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {s}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Usuário</Label>
+                <Input
+                  value={form.user_name || ''}
+                  onChange={(e) => setVal('user_name', e.target.value)}
+                />
+              </div>
+            </div>
+            <div>
+              <Label>Diagnóstico (resumo)</Label>
+              <Textarea
+                value={form.diagnosis || ''}
+                onChange={(e) => setVal('diagnosis', e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-5 gap-2">
+              <div>
+                <Label>Peças</Label>
                 <Input
                   type="number"
                   step="0.01"
-                  className="w-20"
-                  placeholder="Qtd"
-                  value={part.quantity}
-                  onChange={(e) => updatePart(idx, 'quantity', e.target.value)}
+                  value={form.parts_cost || 0}
+                  onChange={(e) => setVal('parts_cost', e.target.value)}
                 />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setParts(parts.filter((_, i) => i !== idx))}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
               </div>
-            ))}
-          </div>
-          <div className="rounded-lg border p-3 space-y-1 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Peças:</span>
-              <span>{formatCurrency(partsCost)}</span>
+              <div>
+                <Label>M.O. Interna</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={form.labor_cost || 0}
+                  onChange={(e) => setVal('labor_cost', e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>Serv. Externo</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={form.external_cost || 0}
+                  onChange={(e) => setVal('external_cost', e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>Frete</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={form.freight_cost || 0}
+                  onChange={(e) => setVal('freight_cost', e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>Outros</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={form.other_cost || 0}
+                  onChange={(e) => setVal('other_cost', e.target.value)}
+                />
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Mão de Obra:</span>
-              <span>{formatCurrency(laborCost)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Externo:</span>
-              <span>{formatCurrency(parseFloat(form.external_cost) || 0)}</span>
-            </div>
-            <div className="flex justify-between font-bold border-t pt-1">
+            <div className="flex justify-between rounded-lg border p-3 font-bold">
               <span>Total:</span>
               <span>{formatCurrency(totalCost)}</span>
             </div>
-          </div>
-          <Button onClick={handleSave} className="w-full">
-            Salvar Ordem de Serviço
-          </Button>
-        </div>
+            <Button onClick={handleSave} className="w-full">
+              {woId ? 'Atualizar OS' : 'Salvar OS'}
+            </Button>
+          </TabsContent>
+          {woId && (
+            <>
+              <TabsContent value="diag" className="space-y-3 mt-2">
+                <div>
+                  <Label>Sintoma</Label>
+                  <Textarea
+                    value={diagnosis.symptom || ''}
+                    onChange={(e) => setDiag('symptom', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>Falha</Label>
+                  <Textarea
+                    value={diagnosis.failure || ''}
+                    onChange={(e) => setDiag('failure', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>Causa</Label>
+                  <Textarea
+                    value={diagnosis.cause || ''}
+                    onChange={(e) => setDiag('cause', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>Ação</Label>
+                  <Textarea
+                    value={diagnosis.action || ''}
+                    onChange={(e) => setDiag('action', e.target.value)}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Sistema</Label>
+                    <Input
+                      value={diagnosis.system || ''}
+                      onChange={(e) => setDiag('system', e.target.value)}
+                      placeholder="Ex: Freios"
+                    />
+                  </div>
+                  <div>
+                    <Label>Componente</Label>
+                    <Input
+                      value={diagnosis.component || ''}
+                      onChange={(e) => setDiag('component', e.target.value)}
+                      placeholder="Ex: Compressor"
+                    />
+                  </div>
+                </div>
+                <Button onClick={handleSaveDiagnosis} className="w-full">
+                  Salvar Diagnóstico
+                </Button>
+              </TabsContent>
+              <TabsContent value="labor">
+                <SubEntityManager
+                  table="os_labor"
+                  parentId={woId}
+                  parentField="work_order_id"
+                  fields={laborFields}
+                  columns={laborCols}
+                />
+              </TabsContent>
+              <TabsContent value="materials">
+                <SubEntityManager
+                  table="os_materials"
+                  parentId={woId}
+                  parentField="work_order_id"
+                  fields={materialFields}
+                  columns={materialCols}
+                />
+              </TabsContent>
+              <TabsContent value="services">
+                <SubEntityManager
+                  table="os_services"
+                  parentId={woId}
+                  parentField="work_order_id"
+                  fields={serviceFields}
+                  columns={serviceCols}
+                />
+              </TabsContent>
+              <TabsContent value="external">
+                <SubEntityManager
+                  table="os_external"
+                  parentId={woId}
+                  parentField="work_order_id"
+                  fields={externalFields}
+                  columns={externalCols}
+                />
+              </TabsContent>
+            </>
+          )}
+        </Tabs>
       </DialogContent>
     </Dialog>
   )

@@ -1,68 +1,132 @@
-import { CrudPage, type FieldConfig, type ColumnConfig } from '@/components/CrudPage'
-
-const fields: FieldConfig[] = [
-  { name: 'plate', label: 'Placa', type: 'text', required: true },
-  {
-    name: 'vehicle_type',
-    label: 'Tipo de Veículo',
-    type: 'select',
-    options: [
-      { label: 'Cavalo Mecânico', value: 'Cavalo Mecânico' },
-      { label: 'Carreta', value: 'Carreta' },
-    ],
-    required: true,
-  },
-  {
-    name: 'periodicity',
-    label: 'Periodicidade',
-    type: 'select',
-    options: [
-      { label: 'Diária', value: 'Diária' },
-      { label: 'Semanal', value: 'Semanal' },
-      { label: 'Mensal', value: 'Mensal' },
-    ],
-  },
-  {
-    name: 'responsible',
-    label: 'Responsável',
-    type: 'select',
-    options: [
-      { label: 'Motorista', value: 'Motorista' },
-      { label: 'Oficina Interna', value: 'Oficina Interna' },
-    ],
-  },
-  { name: 'last_inspection', label: 'Última Inspeção', type: 'date' },
-  { name: 'next_inspection', label: 'Próxima Inspeção', type: 'date' },
-  {
-    name: 'status',
-    label: 'Status',
-    type: 'select',
-    options: [
-      { label: 'Em Dia', value: 'Em Dia' },
-      { label: 'Vencido', value: 'Vencido' },
-      { label: 'Pendente', value: 'Pendente' },
-    ],
-  },
-  { name: 'checklist', label: 'Checklist (um item por linha)', type: 'tags' },
-]
-
-const columns: ColumnConfig[] = [
-  { key: 'plate', label: 'Placa' },
-  { key: 'vehicle_type', label: 'Tipo', format: 'badge' },
-  { key: 'periodicity', label: 'Periodicidade' },
-  { key: 'responsible', label: 'Responsável' },
-  { key: 'next_inspection', label: 'Próxima Inspeção', format: 'date' },
-  { key: 'status', label: 'Status', format: 'badge' },
-]
+import { useState, useEffect } from 'react'
+import { supabase } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from '@/components/ui/table'
+import { Plus, Pencil, Search } from 'lucide-react'
+import { InspectionPlanDialog } from '@/components/InspectionPlanDialog'
+import { formatDate } from '@/lib/utils'
 
 export default function InspectionPlans() {
+  const [plans, setPlans] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [open, setOpen] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
+
+  const fetchData = async () => {
+    const { data } = await supabase
+      .from('inspection_plans')
+      .select('*')
+      .order('created_at', { ascending: false })
+    setPlans(data || [])
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    fetchData()
+  }, [])
+
+  const filtered = search
+    ? plans.filter((p) =>
+        ['plate', 'code', 'vehicle_type'].some((k) =>
+          String(p[k] || '')
+            .toLowerCase()
+            .includes(search.toLowerCase()),
+        ),
+      )
+    : plans
+
+  const handleOpen = (id?: string) => {
+    setEditingId(id || null)
+    setOpen(true)
+  }
+
   return (
-    <CrudPage
-      title="Planos de Inspeção"
-      table="inspection_plans"
-      fields={fields}
-      columns={columns}
-      searchKeys={['plate']}
-    />
+    <div className="space-y-4 p-4 md:p-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Planos de Inspeção</h1>
+        <Button onClick={() => handleOpen()}>
+          <Plus className="mr-2 h-4 w-4" /> Novo Plano
+        </Button>
+      </div>
+      <div className="relative max-w-sm">
+        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Buscar..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-8"
+        />
+      </div>
+      <div className="rounded-md border overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Código</TableHead>
+              <TableHead>Placa</TableHead>
+              <TableHead>Tipo</TableHead>
+              <TableHead>Periodicidade</TableHead>
+              <TableHead>Criticidade</TableHead>
+              <TableHead>Próxima Inspec.</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                  Carregando...
+                </TableCell>
+              </TableRow>
+            ) : filtered.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                  Nenhum registro
+                </TableCell>
+              </TableRow>
+            ) : (
+              filtered.map((p) => (
+                <TableRow key={p.id}>
+                  <TableCell>{p.code || '-'}</TableCell>
+                  <TableCell className="font-medium">{p.plate}</TableCell>
+                  <TableCell>
+                    <Badge variant="secondary">{p.vehicle_type}</Badge>
+                  </TableCell>
+                  <TableCell>{p.periodicity}</TableCell>
+                  <TableCell>{p.criticidade || 'Média'}</TableCell>
+                  <TableCell>{formatDate(p.next_inspection)}</TableCell>
+                  <TableCell>
+                    <Badge variant={p.status === 'Em Dia' ? 'default' : 'destructive'}>
+                      {p.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="icon" onClick={() => handleOpen(p.id)}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      <InspectionPlanDialog
+        open={open}
+        onOpenChange={setOpen}
+        editingId={editingId}
+        onSaved={fetchData}
+      />
+    </div>
   )
 }
