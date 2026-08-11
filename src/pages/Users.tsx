@@ -30,6 +30,7 @@ export default function Users() {
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<any>(null)
   const [form, setForm] = useState<Record<string, any>>({})
+  const [saving, setSaving] = useState(false)
 
   const fetchData = async () => {
     const [u, l] = await Promise.all([
@@ -65,43 +66,50 @@ export default function Users() {
   }
 
   const handleSave = async () => {
+    if (saving) return
     if (!form.name || !form.email) {
       toast.error('Nome e email são obrigatórios')
       return
     }
-    const payload = {
-      name: form.name,
-      email: form.email,
-      access_level_id: form.access_level_id || null,
-      is_active: form.is_active ?? true,
-    }
+    setSaving(true)
+    try {
+      const payload = {
+        name: form.name,
+        email: form.email,
+        access_level_id: form.access_level_id || null,
+        is_active: form.is_active ?? true,
+      }
 
-    if (editing) {
-      const { error } = await supabase.from('app_users').update(payload).eq('id', editing.id)
-      if (error) toast.error('Erro ao salvar')
-      else {
-        toast.success('Salvo com sucesso')
+      if (editing) {
+        const { error } = await supabase.from('app_users').update(payload).eq('id', editing.id)
+        if (error) {
+          toast.error('Erro ao salvar')
+        } else {
+          toast.success('Salvo com sucesso')
+          setOpen(false)
+          fetchData()
+        }
+      } else {
+        if (!form.password || form.password.length < 8) {
+          toast.error('Senha deve ter no mínimo 8 caracteres')
+          return
+        }
+        const { error: createError } = await createUser({
+          email: form.email,
+          name: form.name,
+          password: form.password,
+          access_level_id: form.access_level_id || null,
+        })
+        if (createError) {
+          toast.error(String(createError))
+          return
+        }
+        toast.success('Usuário criado com sucesso')
         setOpen(false)
         fetchData()
       }
-    } else {
-      if (!form.password || form.password.length < 8) {
-        toast.error('Senha deve ter no mínimo 8 caracteres')
-        return
-      }
-      const { error: createError } = await createUser({
-        email: form.email,
-        name: form.name,
-        password: form.password,
-        access_level_id: form.access_level_id || null,
-      })
-      if (createError) {
-        toast.error(createError)
-        return
-      }
-      toast.success('Usuário criado com sucesso')
-      setOpen(false)
-      fetchData()
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -208,8 +216,8 @@ export default function Users() {
               />
               <Label>Ativo</Label>
             </div>
-            <Button onClick={handleSave} className="w-full">
-              Salvar
+            <Button onClick={handleSave} className="w-full" disabled={saving}>
+              {saving ? 'Salvando...' : 'Salvar'}
             </Button>
           </div>
         </DialogContent>
