@@ -1522,6 +1522,7 @@ export type Database = {
       }
       work_orders: {
         Row: {
+          code: string | null
           cost_center: string | null
           created_at: string
           date: string
@@ -1550,6 +1551,7 @@ export type Database = {
           vehicle_id: string | null
         }
         Insert: {
+          code?: string | null
           cost_center?: string | null
           created_at?: string
           date?: string
@@ -1578,6 +1580,7 @@ export type Database = {
           vehicle_id?: string | null
         }
         Update: {
+          code?: string | null
           cost_center?: string | null
           created_at?: string
           date?: string

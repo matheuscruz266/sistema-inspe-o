@@ -25,9 +25,9 @@ interface Props {
 const identFields = [
   { key: 'name', label: 'Nome *', type: 'text' as const },
   { key: 'code', label: 'Código Interno *', type: 'text' as const },
-  { key: 'manufacturer_code', label: 'Cód. Fabricante', type: 'text' as const },
+  { key: 'manufacturer_code', label: 'Cód. Fabricante', type: 'dropdown' as const },
   { key: 'oem_code', label: 'Cód. OEM', type: 'text' as const },
-  { key: 'supplier_code', label: 'Cód. Fornecedor', type: 'text' as const },
+  { key: 'supplier_code', label: 'Cód. Fornecedor', type: 'dropdown' as const },
   { key: 'ean', label: 'EAN/GTIN', type: 'text' as const },
   {
     key: 'category',
@@ -35,12 +35,12 @@ const identFields = [
     type: 'select' as const,
     options: ['Peça', 'Insumo', 'Ferramenta', 'Lubrificante'],
   },
-  { key: 'subcategory', label: 'Subcategoria', type: 'text' as const },
-  { key: 'group_name', label: 'Grupo', type: 'text' as const },
-  { key: 'subgroup', label: 'Subgrupo', type: 'text' as const },
-  { key: 'brand', label: 'Marca', type: 'text' as const },
-  { key: 'manufacturer', label: 'Fabricante', type: 'text' as const },
-  { key: 'family', label: 'Família', type: 'text' as const },
+  { key: 'subcategory', label: 'Subcategoria', type: 'dropdown' as const },
+  { key: 'group_name', label: 'Grupo', type: 'dropdown' as const },
+  { key: 'subgroup', label: 'Subgrupo', type: 'dropdown' as const },
+  { key: 'brand', label: 'Marca', type: 'dropdown' as const },
+  { key: 'manufacturer', label: 'Fabricante', type: 'dropdown' as const },
+  { key: 'family', label: 'Família', type: 'dropdown' as const },
 ]
 
 const stockFields = [
@@ -95,18 +95,53 @@ const equivCols: SubColumn[] = [
   { key: 'equivalent_brand', label: 'Marca' },
 ]
 
+const supplierFields: SubField[] = [
+  { name: 'supplier_code', label: 'Código no Fornecedor', type: 'text' },
+]
+const supplierCols: SubColumn[] = [{ key: 'supplier_code', label: 'Código' }]
+
 export function ProductDialog({ open, onOpenChange, editingId, onSaved }: Props) {
   const [productId, setProductId] = useState<string | null>(editingId || null)
   const [form, setForm] = useState<Record<string, any>>({})
   const [suppliers, setSuppliers] = useState<any[]>([])
+  const [dropdownOptions, setDropdownOptions] = useState<Record<string, string[]>>({})
 
   useEffect(() => {
     supabase
       .from('suppliers')
       .select('id, name')
+      .eq('is_deleted', false)
       .order('name')
       .then(({ data }) => setSuppliers(data || []))
   }, [])
+
+  useEffect(() => {
+    if (open) {
+      supabase
+        .from('products')
+        .select(
+          'manufacturer_code, supplier_code, subcategory, group_name, subgroup, brand, manufacturer, family',
+        )
+        .eq('is_deleted', false)
+        .then(({ data }) => {
+          const opts: Record<string, string[]> = {}
+          const fields = [
+            'manufacturer_code',
+            'supplier_code',
+            'subcategory',
+            'group_name',
+            'subgroup',
+            'brand',
+            'manufacturer',
+            'family',
+          ]
+          fields.forEach((f) => {
+            opts[f] = [...new Set((data || []).map((p: any) => p[f]).filter(Boolean))] as string[]
+          })
+          setDropdownOptions(opts)
+        })
+    }
+  }, [open])
 
   useEffect(() => {
     if (open && editingId) {
@@ -139,6 +174,17 @@ export function ProductDialog({ open, onOpenChange, editingId, onSaved }: Props)
       toast.error('Nome e código são obrigatórios')
       return
     }
+    const { data: existing } = await supabase
+      .from('products')
+      .select('id')
+      .eq('name', form.name)
+      .neq('id', productId || '')
+      .maybeSingle()
+    if (existing) {
+      toast.error('Já existe um produto com este nome')
+      return
+    }
+
     const payload = { ...form }
     Object.keys(payload).forEach((k) => {
       if (['min_quantity', 'max_quantity', 'safety_quantity', 'unit_value'].includes(k)) {
@@ -158,9 +204,8 @@ export function ProductDialog({ open, onOpenChange, editingId, onSaved }: Props)
   }
 
   const setVal = (k: string, v: any) => setForm((p) => ({ ...p, [k]: v }))
-  const allFields = [...identFields, ...stockFields]
 
-  const renderField = (f: (typeof identFields)[0]) => {
+  const renderField = (f: any) => {
     if (f.type === 'select')
       return (
         <Select value={form[f.key] || ''} onValueChange={(v) => setVal(f.key, v)}>
@@ -168,7 +213,7 @@ export function ProductDialog({ open, onOpenChange, editingId, onSaved }: Props)
             <SelectValue placeholder="Selecione..." />
           </SelectTrigger>
           <SelectContent>
-            {f.options?.map((o) => (
+            {f.options?.map((o: string) => (
               <SelectItem key={o} value={o}>
                 {o}
               </SelectItem>
@@ -176,6 +221,27 @@ export function ProductDialog({ open, onOpenChange, editingId, onSaved }: Props)
           </SelectContent>
         </Select>
       )
+    if (f.type === 'dropdown') {
+      const opts = dropdownOptions[f.key] || []
+      return (
+        <Select
+          value={form[f.key] || '__new__'}
+          onValueChange={(v) => setVal(f.key, v === '__new__' ? '' : v)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione ou digite..." />
+          </SelectTrigger>
+          <SelectContent>
+            {opts.map((o) => (
+              <SelectItem key={o} value={o}>
+                {o}
+              </SelectItem>
+            ))}
+            <SelectItem value="__new__">➕ Novo valor...</SelectItem>
+          </SelectContent>
+        </Select>
+      )
+    }
     if (f.type === 'date')
       return (
         <Input
@@ -203,9 +269,12 @@ export function ProductDialog({ open, onOpenChange, editingId, onSaved }: Props)
           <DialogTitle>{productId ? 'Editar Produto' : 'Novo Produto'}</DialogTitle>
         </DialogHeader>
         <Tabs defaultValue="ident">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="ident">Identificação</TabsTrigger>
             <TabsTrigger value="stock">Estoque</TabsTrigger>
+            <TabsTrigger value="suppliers" disabled={!productId}>
+              Fornecedores
+            </TabsTrigger>
             <TabsTrigger value="units" disabled={!productId}>
               Unidades
             </TabsTrigger>
@@ -222,6 +291,16 @@ export function ProductDialog({ open, onOpenChange, editingId, onSaved }: Props)
                 <div key={f.key} className="space-y-1">
                   <Label>{f.label}</Label>
                   {renderField(f)}
+                  {f.type === 'dropdown' &&
+                    !dropdownOptions[f.key]?.includes(form[f.key]) &&
+                    form[f.key] && (
+                      <Input
+                        className="mt-1"
+                        value={form[f.key] || ''}
+                        onChange={(e) => setVal(f.key, e.target.value)}
+                        placeholder="Digite novo valor"
+                      />
+                    )}
                 </div>
               ))}
             </div>
@@ -262,6 +341,15 @@ export function ProductDialog({ open, onOpenChange, editingId, onSaved }: Props)
           </TabsContent>
           {productId && (
             <>
+              <TabsContent value="suppliers">
+                <SubEntityManager
+                  table="product_suppliers"
+                  parentId={productId}
+                  parentField="product_id"
+                  fields={supplierFields}
+                  columns={supplierCols}
+                />
+              </TabsContent>
               <TabsContent value="units">
                 <SubEntityManager
                   table="product_units"

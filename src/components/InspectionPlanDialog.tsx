@@ -14,6 +14,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { SubEntityManager, type SubField, type SubColumn } from '@/components/SubEntityManager'
 import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+import { FileDown } from 'lucide-react'
+import { exportToPDF, tableHtml } from '@/lib/pdf'
 
 interface Props {
   open: boolean
@@ -21,43 +23,6 @@ interface Props {
   editingId?: string | null
   onSaved?: () => void
 }
-
-const planFields = [
-  { key: 'code', label: 'Código', type: 'text' as const },
-  { key: 'plate', label: 'Placa', type: 'text' as const, required: true },
-  {
-    key: 'vehicle_type',
-    label: 'Tipo de Veículo',
-    type: 'select' as const,
-    options: ['Cavalo Mecânico', 'Carreta'],
-  },
-  {
-    key: 'periodicity',
-    label: 'Periodicidade',
-    type: 'select' as const,
-    options: ['Diária', 'Semanal', 'Mensal'],
-  },
-  {
-    key: 'responsible',
-    label: 'Responsável',
-    type: 'select' as const,
-    options: ['Motorista', 'Oficina Interna'],
-  },
-  {
-    key: 'criticidade',
-    label: 'Criticidade',
-    type: 'select' as const,
-    options: ['Baixa', 'Média', 'Alta', 'Crítica'],
-  },
-  {
-    key: 'status',
-    label: 'Status',
-    type: 'select' as const,
-    options: ['Em Dia', 'Vencido', 'Pendente'],
-  },
-  { key: 'last_inspection', label: 'Última Inspeção', type: 'date' as const },
-  { key: 'next_inspection', label: 'Próxima Inspeção', type: 'date' as const },
-]
 
 const itemFields: SubField[] = [
   { name: 'sequence', label: 'Sequência', type: 'number' },
@@ -72,13 +37,7 @@ const itemFields: SubField[] = [
       { label: 'OK / NOK', value: 'OK / NOK' },
       { label: 'Conforme / Não conforme', value: 'Conforme / Não conforme' },
       { label: 'Numérico', value: 'Numérico' },
-      { label: 'Pressão', value: 'Pressão' },
-      { label: 'Temperatura', value: 'Temperatura' },
-      { label: 'Odômetro', value: 'Odômetro' },
-      { label: 'Horímetro', value: 'Horímetro' },
       { label: 'Texto', value: 'Texto' },
-      { label: 'Foto', value: 'Foto' },
-      { label: 'Seleção', value: 'Seleção' },
     ],
   },
   { name: 'expected_value', label: 'Valor Esperado', type: 'text' },
@@ -125,6 +84,16 @@ const consequenceCols: SubColumn[] = [
 export function InspectionPlanDialog({ open, onOpenChange, editingId, onSaved }: Props) {
   const [planId, setPlanId] = useState<string | null>(editingId || null)
   const [form, setForm] = useState<Record<string, any>>({})
+  const [vehicles, setVehicles] = useState<any[]>([])
+
+  useEffect(() => {
+    supabase
+      .from('vehicles')
+      .select('plate')
+      .eq('is_deleted', false)
+      .order('plate')
+      .then(({ data }) => setVehicles(data || []))
+  }, [])
 
   useEffect(() => {
     if (open && editingId) {
@@ -164,13 +133,158 @@ export function InspectionPlanDialog({ open, onOpenChange, editingId, onSaved }:
     onSaved?.()
   }
 
+  const handleExportPDF = async () => {
+    if (!planId) return
+    const [items, consequences] = await Promise.all([
+      supabase
+        .from('inspection_plan_items')
+        .select('*')
+        .eq('plan_id', planId)
+        .eq('is_deleted', false)
+        .order('sequence'),
+      supabase
+        .from('inspection_plan_consequences')
+        .select('*')
+        .eq('plan_id', planId)
+        .eq('is_deleted', false),
+    ])
+    exportToPDF(`Plano de Inspeção: ${form.plate || ''}`, [
+      {
+        heading: 'Identificação',
+        body: tableHtml(
+          ['Campo', 'Valor'],
+          [
+            ['Código', form.code || '-'],
+            ['Placa', form.plate || '-'],
+            ['Tipo de Veículo', form.vehicle_type || '-'],
+            ['Periodicidade', form.periodicity || '-'],
+            ['Responsável', form.responsible || '-'],
+            ['Criticidade', form.criticidade || '-'],
+            ['Status', form.status || '-'],
+            ['Última Inspeção', form.last_inspection || '-'],
+            ['Próxima Inspeção', form.next_inspection || '-'],
+          ],
+        ),
+      },
+      {
+        heading: 'Itens de Inspeção',
+        body: tableHtml(
+          ['Seq', 'Item', 'Verificação', 'Resposta'],
+          (items.data || []).map((i: any) => [
+            i.sequence || '-',
+            i.item || '-',
+            i.verification || '-',
+            i.response_type || '-',
+          ]),
+        ),
+      },
+      {
+        heading: 'Consequências',
+        body: tableHtml(
+          ['Classificação', 'Ação', 'Prioridade'],
+          (consequences.data || []).map((c: any) => [
+            c.result_classification || '-',
+            c.action || '-',
+            c.priority || '-',
+          ]),
+        ),
+      },
+    ])
+  }
+
   const setVal = (k: string, v: any) => setForm((p) => ({ ...p, [k]: v }))
+
+  const identFields = [
+    { key: 'code', label: 'Código', type: 'text' as const },
+    { key: 'plate', label: 'Placa', type: 'vehicle_select' as const, required: true },
+    {
+      key: 'vehicle_type',
+      label: 'Tipo de Veículo',
+      type: 'select' as const,
+      options: ['Cavalo Mecânico', 'Carreta'],
+    },
+    {
+      key: 'periodicity',
+      label: 'Periodicidade',
+      type: 'select' as const,
+      options: ['Diária', 'Semanal', 'Mensal'],
+    },
+    {
+      key: 'responsible',
+      label: 'Responsável',
+      type: 'select' as const,
+      options: ['Motorista', 'Oficina Interna'],
+    },
+    {
+      key: 'criticidade',
+      label: 'Criticidade',
+      type: 'select' as const,
+      options: ['Baixa', 'Média', 'Alta', 'Crítica'],
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      type: 'select' as const,
+      options: ['Em Dia', 'Vencido', 'Pendente'],
+    },
+    { key: 'last_inspection', label: 'Última Inspeção', type: 'date' as const },
+    { key: 'next_inspection', label: 'Próxima Inspeção', type: 'date' as const },
+  ]
+
+  const renderField = (f: any) => {
+    if (f.type === 'vehicle_select')
+      return (
+        <Select value={form[f.key] || ''} onValueChange={(v) => setVal(f.key, v)}>
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione a placa..." />
+          </SelectTrigger>
+          <SelectContent>
+            {vehicles.map((v) => (
+              <SelectItem key={v.id} value={v.plate}>
+                {v.plate}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )
+    if (f.type === 'select')
+      return (
+        <Select value={form[f.key] || ''} onValueChange={(v) => setVal(f.key, v)}>
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione..." />
+          </SelectTrigger>
+          <SelectContent>
+            {f.options?.map((o: string) => (
+              <SelectItem key={o} value={o}>
+                {o}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )
+    if (f.type === 'date')
+      return (
+        <Input
+          type="date"
+          value={form[f.key] || ''}
+          onChange={(e) => setVal(f.key, e.target.value)}
+        />
+      )
+    return <Input value={form[f.key] || ''} onChange={(e) => setVal(f.key, e.target.value)} />
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{planId ? 'Editar Plano' : 'Novo Plano de Inspeção'}</DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle>{planId ? 'Editar Plano' : 'Novo Plano de Inspeção'}</DialogTitle>
+            {planId && (
+              <Button variant="outline" size="sm" onClick={handleExportPDF}>
+                <FileDown className="mr-2 h-4 w-4" /> Exportar PDF
+              </Button>
+            )}
+          </div>
         </DialogHeader>
         <Tabs defaultValue="ident">
           <TabsList className="grid w-full grid-cols-3">
@@ -183,37 +297,13 @@ export function InspectionPlanDialog({ open, onOpenChange, editingId, onSaved }:
             </TabsTrigger>
           </TabsList>
           <TabsContent value="ident" className="space-y-3 mt-2">
-            {planFields.map((f) => (
+            {identFields.map((f) => (
               <div key={f.key} className="space-y-1">
                 <Label>
                   {f.label}
                   {f.required && ' *'}
                 </Label>
-                {f.type === 'select' ? (
-                  <Select value={form[f.key] || ''} onValueChange={(v) => setVal(f.key, v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {f.options?.map((o) => (
-                        <SelectItem key={o} value={o}>
-                          {o}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : f.type === 'date' ? (
-                  <Input
-                    type="date"
-                    value={form[f.key] || ''}
-                    onChange={(e) => setVal(f.key, e.target.value)}
-                  />
-                ) : (
-                  <Input
-                    value={form[f.key] || ''}
-                    onChange={(e) => setVal(f.key, e.target.value)}
-                  />
-                )}
+                {renderField(f)}
               </div>
             ))}
             <Button onClick={handleSave} className="w-full">

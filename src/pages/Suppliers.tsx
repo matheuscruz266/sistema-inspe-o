@@ -6,12 +6,14 @@ const fields: FieldConfig[] = [
   { name: 'contact', label: 'Contato', type: 'text' },
   { name: 'phone', label: 'Telefone', type: 'text' },
   { name: 'email', label: 'Email', type: 'text' },
+  { name: 'city', label: 'Cidade', type: 'text' },
+  { name: 'address', label: 'Endereço', type: 'text' },
 ]
 
 const columns: ColumnConfig[] = [
   { key: 'name', label: 'Nome' },
   { key: 'cnpj', label: 'CNPJ' },
-  { key: 'contact', label: 'Contato' },
+  { key: 'city', label: 'Cidade' },
   { key: 'phone', label: 'Telefone' },
 ]
 
@@ -22,7 +24,7 @@ export default function Suppliers() {
       table="suppliers"
       fields={fields}
       columns={columns}
-      searchKeys={['name', 'cnpj', 'contact']}
+      searchKeys={['name', 'cnpj', 'contact', 'city']}
     />
   )
 }

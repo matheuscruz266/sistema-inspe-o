@@ -28,6 +28,8 @@ export interface SubField {
   label: string
   type: 'text' | 'number' | 'select' | 'switch' | 'date'
   options?: { label: string; value: string }[]
+  dependsOn?: string
+  computeValue?: (dependentValue: string) => string
 }
 
 export interface SubColumn {
@@ -55,6 +57,7 @@ export function SubEntityManager({ table, parentId, parentField, fields, columns
       .from(table)
       .select('*')
       .eq(parentField, parentId)
+      .or('is_deleted.eq.false,is_deleted.is.null')
       .order('created_at')
     setItems(data || [])
   }, [table, parentId, parentField])
@@ -83,20 +86,40 @@ export function SubEntityManager({ table, parentId, parentField, fields, columns
   }
 
   const handleDelete = async (id: string) => {
-    const { error } = await supabase.from(table).delete().eq('id', id)
-    if (error) toast.error('Erro ao excluir')
-    else {
+    const { error: softError } = await supabase
+      .from(table)
+      .update({ is_deleted: true })
+      .eq('id', id)
+    if (softError) {
+      const { error } = await supabase.from(table).delete().eq('id', id)
+      if (error) toast.error('Erro ao excluir')
+      else {
+        toast.success('Excluído')
+        fetchData()
+      }
+    } else {
       toast.success('Excluído')
       fetchData()
     }
   }
 
+  const set = (f: SubField, v: any) => {
+    setForm((p) => {
+      const newForm = { ...p, [f.name]: v }
+      fields.forEach((other) => {
+        if (other.dependsOn === f.name && other.computeValue) {
+          newForm[other.name] = other.computeValue(v)
+        }
+      })
+      return newForm
+    })
+  }
+
   const renderField = (f: SubField) => {
     const val = form[f.name]
-    const set = (v: any) => setForm((p) => ({ ...p, [f.name]: v }))
     if (f.type === 'select')
       return (
-        <Select value={val || ''} onValueChange={set}>
+        <Select value={val || ''} onValueChange={(v) => set(f, v)}>
           <SelectTrigger>
             <SelectValue placeholder="Selecione..." />
           </SelectTrigger>
@@ -109,14 +132,19 @@ export function SubEntityManager({ table, parentId, parentField, fields, columns
           </SelectContent>
         </Select>
       )
-    if (f.type === 'switch') return <Switch checked={!!val} onCheckedChange={set} />
+    if (f.type === 'switch') return <Switch checked={!!val} onCheckedChange={(v) => set(f, v)} />
     if (f.type === 'date')
-      return <Input type="date" value={val || ''} onChange={(e) => set(e.target.value)} />
+      return <Input type="date" value={val || ''} onChange={(e) => set(f, e.target.value)} />
     if (f.type === 'number')
       return (
-        <Input type="number" step="0.01" value={val || ''} onChange={(e) => set(e.target.value)} />
+        <Input
+          type="number"
+          step="0.01"
+          value={val || ''}
+          onChange={(e) => set(f, e.target.value)}
+        />
       )
-    return <Input value={val || ''} onChange={(e) => set(e.target.value)} />
+    return <Input value={val || ''} onChange={(e) => set(f, e.target.value)} />
   }
 
   return (
@@ -150,7 +178,7 @@ export function SubEntityManager({ table, parentId, parentField, fields, columns
               items.map((item) => (
                 <TableRow key={item.id}>
                   {columns.map((c) => (
-                    <TableCell key={c.key}>{String(item[c.name ?? c.key] ?? '-')}</TableCell>
+                    <TableCell key={c.key}>{String(item[c.key] ?? '-')}</TableCell>
                   ))}
                   <TableCell className="text-right whitespace-nowrap">
                     <Button variant="ghost" size="icon" onClick={() => handleOpen(item)}>

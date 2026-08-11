@@ -15,6 +15,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { SubEntityManager, type SubField, type SubColumn } from '@/components/SubEntityManager'
 import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+import { FileDown } from 'lucide-react'
+import { exportToPDF, tableHtml } from '@/lib/pdf'
 
 interface Props {
   open: boolean
@@ -71,7 +73,7 @@ const planFields = [
       'Grupo de ativos',
     ],
   },
-  { key: 'application_target', label: 'Alvo da Aplicação', type: 'text' as const },
+  { key: 'application_target', label: 'Alvo da Aplicação', type: 'select' as const },
   { key: 'periodicity', label: 'Periodicidade', type: 'text' as const },
   { key: 'responsible', label: 'Responsável', type: 'text' as const },
   { key: 'next_execution', label: 'Próxima Execução', type: 'date' as const },
@@ -113,14 +115,28 @@ const triggerFields: SubField[] = [
     ],
   },
   { name: 'value', label: 'Valor', type: 'number' },
-  { name: 'unit', label: 'Unidade', type: 'text' },
+  {
+    name: 'unit',
+    label: 'Unidade',
+    type: 'text',
+    dependsOn: 'trigger_type',
+    computeValue: (v) => {
+      const map: Record<string, string> = {
+        km: 'km',
+        time: 'meses',
+        hours: 'horas',
+        cycles: 'ciclos',
+      }
+      return map[v] || ''
+    },
+  },
   { name: 'last_event_date', label: 'Último Evento', type: 'date' },
   { name: 'next_event_date', label: 'Próximo Evento', type: 'date' },
 ]
 const triggerCols: SubColumn[] = [
   { key: 'trigger_type', label: 'Tipo' },
   { key: 'value', label: 'Valor' },
-  { key: 'unit', label: 'Unidade' },
+  { key: 'unit', label: 'Un' },
   { key: 'next_event_date', label: 'Próximo' },
 ]
 
@@ -149,6 +165,16 @@ const laborCols: SubColumn[] = [
 export function MaintenancePlanDialog({ open, onOpenChange, editingId, onSaved }: Props) {
   const [planId, setPlanId] = useState<string | null>(editingId || null)
   const [form, setForm] = useState<Record<string, any>>({})
+  const [vehicles, setVehicles] = useState<any[]>([])
+
+  useEffect(() => {
+    supabase
+      .from('vehicles')
+      .select('plate')
+      .eq('is_deleted', false)
+      .order('plate')
+      .then(({ data }) => setVehicles(data || []))
+  }, [])
 
   useEffect(() => {
     if (open && editingId) {
@@ -182,13 +208,155 @@ export function MaintenancePlanDialog({ open, onOpenChange, editingId, onSaved }
     onSaved?.()
   }
 
+  const handleExportPDF = async () => {
+    if (!planId) return
+    const [tasks, triggers, materials, labor] = await Promise.all([
+      supabase
+        .from('maintenance_plan_tasks')
+        .select('*')
+        .eq('plan_id', planId)
+        .eq('is_deleted', false)
+        .order('sequence'),
+      supabase
+        .from('maintenance_plan_triggers')
+        .select('*')
+        .eq('plan_id', planId)
+        .eq('is_deleted', false),
+      supabase
+        .from('maintenance_plan_materials')
+        .select('*')
+        .eq('plan_id', planId)
+        .eq('is_deleted', false),
+      supabase
+        .from('maintenance_plan_labor')
+        .select('*')
+        .eq('plan_id', planId)
+        .eq('is_deleted', false),
+    ])
+    exportToPDF(`Plano de Manutenção: ${form.name || ''}`, [
+      {
+        heading: 'Identificação',
+        body: tableHtml(
+          ['Campo', 'Valor'],
+          [
+            ['Código', form.code || '-'],
+            ['Nome', form.name || '-'],
+            ['Tipo', form.type || '-'],
+            ['Criticidade', form.criticidade || '-'],
+            ['Status', form.status || '-'],
+            ['Periodicidade', form.periodicity || '-'],
+            ['Responsável', form.responsible || '-'],
+            ['Próxima Execução', form.next_execution || '-'],
+          ],
+        ),
+      },
+      {
+        heading: 'Tarefas',
+        body: tableHtml(
+          ['Seq', 'Descrição', 'Tipo'],
+          (tasks.data || []).map((t: any) => [
+            t.sequence || '-',
+            t.description || '-',
+            t.task_type || '-',
+          ]),
+        ),
+      },
+      {
+        heading: 'Gatilhos',
+        body: tableHtml(
+          ['Tipo', 'Valor', 'Unidade', 'Próximo Evento'],
+          (triggers.data || []).map((t: any) => [
+            t.trigger_type || '-',
+            t.value || '-',
+            t.unit || '-',
+            t.next_event_date || '-',
+          ]),
+        ),
+      },
+      {
+        heading: 'Materiais',
+        body: tableHtml(
+          ['Produto', 'Qtd', 'Un'],
+          (materials.data || []).map((m: any) => [
+            m.product_name || '-',
+            m.planned_quantity || '-',
+            m.unit || '-',
+          ]),
+        ),
+      },
+      {
+        heading: 'Mão de Obra',
+        body: tableHtml(
+          ['Função', 'Qtd', 'Horas'],
+          (labor.data || []).map((l: any) => [
+            l.role || '-',
+            l.quantity || '-',
+            l.planned_hours || '-',
+          ]),
+        ),
+      },
+    ])
+  }
+
   const setVal = (k: string, v: any) => setForm((p) => ({ ...p, [k]: v }))
+
+  const renderField = (f: any) => {
+    if (f.key === 'application_target') {
+      return (
+        <Select value={form[f.key] || ''} onValueChange={(v) => setVal(f.key, v)}>
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione a placa..." />
+          </SelectTrigger>
+          <SelectContent>
+            {vehicles.map((v) => (
+              <SelectItem key={v.id} value={v.plate}>
+                {v.plate}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )
+    }
+    if (f.type === 'textarea')
+      return <Textarea value={form[f.key] || ''} onChange={(e) => setVal(f.key, e.target.value)} />
+    if (f.type === 'select')
+      return (
+        <Select value={form[f.key] || ''} onValueChange={(v) => setVal(f.key, v)}>
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione..." />
+          </SelectTrigger>
+          <SelectContent>
+            {f.options?.map((o: string) => (
+              <SelectItem key={o} value={o}>
+                {o}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )
+    if (f.type === 'date')
+      return (
+        <Input
+          type="date"
+          value={form[f.key] || ''}
+          onChange={(e) => setVal(f.key, e.target.value)}
+        />
+      )
+    return <Input value={form[f.key] || ''} onChange={(e) => setVal(f.key, e.target.value)} />
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{planId ? 'Editar Plano' : 'Novo Plano de Manutenção'}</DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle>{planId ? 'Editar Plano' : 'Novo Plano de Manutenção'}</DialogTitle>
+            {planId && (
+              <Button variant="outline" size="sm" onClick={handleExportPDF}>
+                <FileDown className="mr-2 h-4 w-4" /> Exportar PDF
+              </Button>
+            )}
+          </div>
         </DialogHeader>
         <Tabs defaultValue="ident">
           <TabsList className="grid w-full grid-cols-5">
@@ -213,36 +381,7 @@ export function MaintenancePlanDialog({ open, onOpenChange, editingId, onSaved }
                   {f.label}
                   {f.required && ' *'}
                 </Label>
-                {f.type === 'textarea' ? (
-                  <Textarea
-                    value={form[f.key] || ''}
-                    onChange={(e) => setVal(f.key, e.target.value)}
-                  />
-                ) : f.type === 'select' ? (
-                  <Select value={form[f.key] || ''} onValueChange={(v) => setVal(f.key, v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {f.options?.map((o) => (
-                        <SelectItem key={o} value={o}>
-                          {o}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : f.type === 'date' ? (
-                  <Input
-                    type="date"
-                    value={form[f.key] || ''}
-                    onChange={(e) => setVal(f.key, e.target.value)}
-                  />
-                ) : (
-                  <Input
-                    value={form[f.key] || ''}
-                    onChange={(e) => setVal(f.key, e.target.value)}
-                  />
-                )}
+                {renderField(f)}
               </div>
             ))}
             <Button onClick={handleSavePlan} className="w-full">
@@ -250,8 +389,7 @@ export function MaintenancePlanDialog({ open, onOpenChange, editingId, onSaved }
             </Button>
             {planId && (
               <p className="text-xs text-muted-foreground text-center">
-                Plano salvo. Agora gerencie tarefas, gatilhos, materiais e mão de obra nas outras
-                abas.
+                Plano salvo. Gerencie os demais nas outras abas.
               </p>
             )}
           </TabsContent>
