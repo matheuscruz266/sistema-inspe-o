@@ -23,7 +23,7 @@ import {
   Building2,
   ListChecks,
   History,
-  BarChart3,
+  LayoutGrid,
   Gauge,
 } from 'lucide-react'
 
@@ -53,7 +53,7 @@ export const menuItems = [
   { key: 'suppliers', label: 'Fornecedores', path: '/fornecedores', icon: Building2 },
   { key: 'service_catalog', label: 'Serviços', path: '/servicos', icon: ListChecks },
   { key: 'history', label: 'Histórico', path: '/historico', icon: History },
-  { key: 'indicators', label: 'Indicadores', path: '/indicadores', icon: BarChart3 },
+  { key: 'kanban', label: 'Kanban', path: '/kanban', icon: LayoutGrid },
   { key: 'dash_maintenance', label: 'Dash Manutenção', path: '/dash-manutencao', icon: Gauge },
 ]
 

@@ -59,7 +59,7 @@ const App = () => (
             <Route path="/componentes" element={<Components />} />
             <Route path="/servicos" element={<ServiceCatalog />} />
             <Route path="/fornecedores" element={<Suppliers />} />
-            <Route path="/indicadores" element={<Indicators />} />
+            <Route path="/kanban" element={<Kanban />} />
             <Route path="/historico" element={<History />} />
             <Route path="/dash-manutencao" element={<DashMaintenance />} />
           </Route>

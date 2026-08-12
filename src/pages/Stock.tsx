@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/select'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
-import { Plus, ClipboardList } from 'lucide-react'
+import { Plus, ClipboardList, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { StockInventoryDialog } from '@/components/StockInventoryDialog'
 
@@ -23,14 +23,18 @@ export default function Stock() {
   const [open, setOpen] = useState(false)
   const [invOpen, setInvOpen] = useState(false)
   const [form, setForm] = useState<Record<string, any>>({})
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateUntil, setDateUntil] = useState('')
 
   const fetchData = async () => {
+    let movQuery = supabase
+      .from('stock_movements')
+      .select('*, products(name)')
+      .eq('is_deleted', false)
+    if (dateFrom) movQuery = movQuery.gte('created_at', dateFrom)
+    if (dateUntil) movQuery = movQuery.lte('created_at', dateUntil + 'T23:59:59')
     const [mov, prods] = await Promise.all([
-      supabase
-        .from('stock_movements')
-        .select('*, products(name)')
-        .eq('is_deleted', false)
-        .order('created_at', { ascending: false }),
+      movQuery.order('created_at', { ascending: false }),
       supabase.from('products').select('*').eq('is_deleted', false).order('name'),
     ])
     setMovements(mov.data || [])
@@ -39,7 +43,7 @@ export default function Stock() {
 
   useEffect(() => {
     fetchData()
-  }, [])
+  }, [dateFrom, dateUntil])
 
   const handleSave = async () => {
     const { error } = await supabase.from('stock_movements').insert({
@@ -72,6 +76,39 @@ export default function Stock() {
             Nova Movimentação
           </Button>
         </div>
+      </div>
+
+      <div className="flex items-end gap-3 flex-wrap">
+        <div className="space-y-1">
+          <Label className="text-xs">Data Inicial</Label>
+          <Input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="w-[160px]"
+          />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">Data Final</Label>
+          <Input
+            type="date"
+            value={dateUntil}
+            onChange={(e) => setDateUntil(e.target.value)}
+            className="w-[160px]"
+          />
+        </div>
+        {(dateFrom || dateUntil) && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setDateFrom('')
+              setDateUntil('')
+            }}
+          >
+            <X className="h-4 w-4 mr-1" /> Limpar
+          </Button>
+        )}
       </div>
 
       <Card>
