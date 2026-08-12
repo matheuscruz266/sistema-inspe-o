@@ -30,6 +30,7 @@ import {
   Landmark,
   Shuffle,
   ClipboardList,
+  Route,
 } from 'lucide-react'
 
 export const menuItems = [
@@ -69,6 +70,13 @@ export const menuItems = [
     label: 'Perfis de Carga',
     path: '/perfis-carga-carreta',
     icon: ClipboardList,
+  },
+  { key: 'routes', label: 'Rotas', path: '/rotas', icon: Route },
+  {
+    key: 'carrier_contracts',
+    label: 'Contratos de Frete',
+    path: '/contratos-frete',
+    icon: FileText,
   },
 ]
 

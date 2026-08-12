@@ -26,6 +26,8 @@ export const AVAILABLE_SCREENS = [
   { key: 'kanban', label: 'Kanban' },
   { key: 'indicators', label: 'Indicadores' },
   { key: 'dash_maintenance', label: 'Dash Manutenção' },
+  { key: 'routes', label: 'Rotas' },
+  { key: 'carrier_contracts', label: 'Contratos de Frete' },
 ]
 
 export function normalizePermissions(screens: unknown): PermissionMatrixData {

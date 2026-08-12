@@ -74,6 +74,116 @@ export type Database = {
           },
         ]
       }
+      asset_owners: {
+        Row: {
+          cnpj_cpf: string | null
+          created_at: string
+          id: string
+          is_deleted: boolean | null
+          name: string
+          notes: string | null
+          owner_type: Database['public']['Enums']['logistics_owner_type'] | null
+        }
+        Insert: {
+          cnpj_cpf?: string | null
+          created_at?: string
+          id?: string
+          is_deleted?: boolean | null
+          name: string
+          notes?: string | null
+          owner_type?: Database['public']['Enums']['logistics_owner_type'] | null
+        }
+        Update: {
+          cnpj_cpf?: string | null
+          created_at?: string
+          id?: string
+          is_deleted?: boolean | null
+          name?: string
+          notes?: string | null
+          owner_type?: Database['public']['Enums']['logistics_owner_type'] | null
+        }
+        Relationships: []
+      }
+      clients: {
+        Row: {
+          active: boolean | null
+          city: string | null
+          cnpj: string | null
+          conversion_factor: number | null
+          created_at: string
+          default_unit: Database['public']['Enums']['logistics_default_unit'] | null
+          group_name: string | null
+          id: string
+          is_deleted: boolean | null
+          state: string | null
+          trade_name: string
+        }
+        Insert: {
+          active?: boolean | null
+          city?: string | null
+          cnpj?: string | null
+          conversion_factor?: number | null
+          created_at?: string
+          default_unit?: Database['public']['Enums']['logistics_default_unit'] | null
+          group_name?: string | null
+          id?: string
+          is_deleted?: boolean | null
+          state?: string | null
+          trade_name: string
+        }
+        Update: {
+          active?: boolean | null
+          city?: string | null
+          cnpj?: string | null
+          conversion_factor?: number | null
+          created_at?: string
+          default_unit?: Database['public']['Enums']['logistics_default_unit'] | null
+          group_name?: string | null
+          id?: string
+          is_deleted?: boolean | null
+          state?: string | null
+          trade_name?: string
+        }
+        Relationships: []
+      }
+      driver_profiles: {
+        Row: {
+          company: Database['public']['Enums']['logistics_driver_company'] | null
+          created_at: string
+          home_city: string | null
+          is_deleted: boolean | null
+          participation_percentage: number | null
+          person_id: string
+          status: Database['public']['Enums']['logistics_driver_status'] | null
+        }
+        Insert: {
+          company?: Database['public']['Enums']['logistics_driver_company'] | null
+          created_at?: string
+          home_city?: string | null
+          is_deleted?: boolean | null
+          participation_percentage?: number | null
+          person_id: string
+          status?: Database['public']['Enums']['logistics_driver_status'] | null
+        }
+        Update: {
+          company?: Database['public']['Enums']['logistics_driver_company'] | null
+          created_at?: string
+          home_city?: string | null
+          is_deleted?: boolean | null
+          participation_percentage?: number | null
+          person_id?: string
+          status?: Database['public']['Enums']['logistics_driver_status'] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'driver_profiles_person_id_fkey'
+            columns: ['person_id']
+            isOneToOne: true
+            referencedRelation: 'people'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       drivers: {
         Row: {
           birth_date: string | null
@@ -326,6 +436,63 @@ export type Database = {
           type?: string
         }
         Relationships: []
+      }
+      locations: {
+        Row: {
+          city: string | null
+          client_id: string | null
+          created_at: string
+          id: string
+          is_deleted: boolean | null
+          latitude: number | null
+          longitude: number | null
+          name: string
+          state: string | null
+          stock_location_id: string | null
+          type: Database['public']['Enums']['logistics_location_type'] | null
+        }
+        Insert: {
+          city?: string | null
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          is_deleted?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+          state?: string | null
+          stock_location_id?: string | null
+          type?: Database['public']['Enums']['logistics_location_type'] | null
+        }
+        Update: {
+          city?: string | null
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          is_deleted?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          state?: string | null
+          stock_location_id?: string | null
+          type?: Database['public']['Enums']['logistics_location_type'] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'locations_client_id_fkey'
+            columns: ['client_id']
+            isOneToOne: false
+            referencedRelation: 'clients'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'locations_stock_location_id_fkey'
+            columns: ['stock_location_id']
+            isOneToOne: false
+            referencedRelation: 'stock_locations'
+            referencedColumns: ['id']
+          },
+        ]
       }
       maintenance_plan_labor: {
         Row: {
@@ -1675,6 +1842,60 @@ export type Database = {
           },
         ]
       }
+      supplier_payment_info: {
+        Row: {
+          account: string | null
+          agency: string | null
+          bank: string | null
+          created_at: string
+          default_price_per_ton: number | null
+          estimated_monthly_volume_tons: number | null
+          is_deleted: boolean | null
+          linked_yard_location_id: string | null
+          pix_key: string | null
+          supplier_id: string
+        }
+        Insert: {
+          account?: string | null
+          agency?: string | null
+          bank?: string | null
+          created_at?: string
+          default_price_per_ton?: number | null
+          estimated_monthly_volume_tons?: number | null
+          is_deleted?: boolean | null
+          linked_yard_location_id?: string | null
+          pix_key?: string | null
+          supplier_id: string
+        }
+        Update: {
+          account?: string | null
+          agency?: string | null
+          bank?: string | null
+          created_at?: string
+          default_price_per_ton?: number | null
+          estimated_monthly_volume_tons?: number | null
+          is_deleted?: boolean | null
+          linked_yard_location_id?: string | null
+          pix_key?: string | null
+          supplier_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'supplier_payment_info_linked_yard_location_id_fkey'
+            columns: ['linked_yard_location_id']
+            isOneToOne: false
+            referencedRelation: 'stock_locations'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'supplier_payment_info_supplier_id_fkey'
+            columns: ['supplier_id']
+            isOneToOne: true
+            referencedRelation: 'suppliers'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       suppliers: {
         Row: {
           address: string | null
@@ -1687,6 +1908,7 @@ export type Database = {
           is_deleted: boolean | null
           name: string
           phone: string | null
+          supplier_type: Database['public']['Enums']['logistics_supplier_type'] | null
         }
         Insert: {
           address?: string | null
@@ -1699,6 +1921,7 @@ export type Database = {
           is_deleted?: boolean | null
           name: string
           phone?: string | null
+          supplier_type?: Database['public']['Enums']['logistics_supplier_type'] | null
         }
         Update: {
           address?: string | null
@@ -1711,6 +1934,146 @@ export type Database = {
           is_deleted?: boolean | null
           name?: string
           phone?: string | null
+          supplier_type?: Database['public']['Enums']['logistics_supplier_type'] | null
+        }
+        Relationships: []
+      }
+      trailer_cargo_profiles: {
+        Row: {
+          cargo_type: Database['public']['Enums']['logistics_cargo_type'] | null
+          created_at: string
+          id: string
+          is_deleted: boolean | null
+          max_payload_kg: number | null
+          real_volume_m3: number | null
+          sale_volume_m3: number | null
+          trailer_vehicle_id: string
+          valid_from: string
+          valid_to: string | null
+        }
+        Insert: {
+          cargo_type?: Database['public']['Enums']['logistics_cargo_type'] | null
+          created_at?: string
+          id?: string
+          is_deleted?: boolean | null
+          max_payload_kg?: number | null
+          real_volume_m3?: number | null
+          sale_volume_m3?: number | null
+          trailer_vehicle_id: string
+          valid_from: string
+          valid_to?: string | null
+        }
+        Update: {
+          cargo_type?: Database['public']['Enums']['logistics_cargo_type'] | null
+          created_at?: string
+          id?: string
+          is_deleted?: boolean | null
+          max_payload_kg?: number | null
+          real_volume_m3?: number | null
+          sale_volume_m3?: number | null
+          trailer_vehicle_id?: string
+          valid_from?: string
+          valid_to?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'trailer_cargo_profiles_trailer_vehicle_id_fkey'
+            columns: ['trailer_vehicle_id']
+            isOneToOne: false
+            referencedRelation: 'vehicles'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      vehicle_set_assignments: {
+        Row: {
+          change_reason: string | null
+          created_at: string
+          driver_id: string | null
+          id: string
+          is_deleted: boolean | null
+          tractor_vehicle_id: string | null
+          trailer_vehicle_id: string | null
+          valid_from: string
+          valid_to: string | null
+          vehicle_set_id: string
+        }
+        Insert: {
+          change_reason?: string | null
+          created_at?: string
+          driver_id?: string | null
+          id?: string
+          is_deleted?: boolean | null
+          tractor_vehicle_id?: string | null
+          trailer_vehicle_id?: string | null
+          valid_from: string
+          valid_to?: string | null
+          vehicle_set_id: string
+        }
+        Update: {
+          change_reason?: string | null
+          created_at?: string
+          driver_id?: string | null
+          id?: string
+          is_deleted?: boolean | null
+          tractor_vehicle_id?: string | null
+          trailer_vehicle_id?: string | null
+          valid_from?: string
+          valid_to?: string | null
+          vehicle_set_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'vehicle_set_assignments_driver_id_fkey'
+            columns: ['driver_id']
+            isOneToOne: false
+            referencedRelation: 'people'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'vehicle_set_assignments_tractor_vehicle_id_fkey'
+            columns: ['tractor_vehicle_id']
+            isOneToOne: false
+            referencedRelation: 'vehicles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'vehicle_set_assignments_trailer_vehicle_id_fkey'
+            columns: ['trailer_vehicle_id']
+            isOneToOne: false
+            referencedRelation: 'vehicles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'vehicle_set_assignments_vehicle_set_id_fkey'
+            columns: ['vehicle_set_id']
+            isOneToOne: false
+            referencedRelation: 'vehicle_sets'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      vehicle_sets: {
+        Row: {
+          created_at: string
+          id: string
+          is_deleted: boolean | null
+          set_code: string | null
+          status: Database['public']['Enums']['logistics_set_status'] | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_deleted?: boolean | null
+          set_code?: string | null
+          status?: Database['public']['Enums']['logistics_set_status'] | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_deleted?: boolean | null
+          set_code?: string | null
+          status?: Database['public']['Enums']['logistics_set_status'] | null
         }
         Relationships: []
       }
@@ -1769,8 +2132,10 @@ export type Database = {
           id: string
           is_deleted: boolean | null
           model: string | null
+          owner_id: string | null
           plate: string
           purchase_cost: number | null
+          status: string | null
           vehicle_type: string
           year: number | null
         }
@@ -1783,8 +2148,10 @@ export type Database = {
           id?: string
           is_deleted?: boolean | null
           model?: string | null
+          owner_id?: string | null
           plate: string
           purchase_cost?: number | null
+          status?: string | null
           vehicle_type: string
           year?: number | null
         }
@@ -1797,12 +2164,22 @@ export type Database = {
           id?: string
           is_deleted?: boolean | null
           model?: string | null
+          owner_id?: string | null
           plate?: string
           purchase_cost?: number | null
+          status?: string | null
           vehicle_type?: string
           year?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'vehicles_owner_id_fkey'
+            columns: ['owner_id']
+            isOneToOne: false
+            referencedRelation: 'asset_owners'
+            referencedColumns: ['id']
+          },
+        ]
       }
       work_orders: {
         Row: {
@@ -1939,7 +2316,14 @@ export type Database = {
       table_screen: { Args: { p_table: string }; Returns: string }
     }
     Enums: {
-      [_ in never]: never
+      logistics_cargo_type: 'cavaco' | 'toras' | 'prancha'
+      logistics_default_unit: 'TON' | 'M3'
+      logistics_driver_company: 'own_fleet' | 'third_party'
+      logistics_driver_status: 'active' | 'inactive'
+      logistics_location_type: 'farm' | 'yard' | 'client_unit' | 'other'
+      logistics_owner_type: 'julitago' | 'affiliated_company' | 'third_party'
+      logistics_set_status: 'active' | 'inactive'
+      logistics_supplier_type: 'parts' | 'raw_material' | 'third_party_freight' | 'services'
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2064,6 +2448,15 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      logistics_cargo_type: ['cavaco', 'toras', 'prancha'],
+      logistics_default_unit: ['TON', 'M3'],
+      logistics_driver_company: ['own_fleet', 'third_party'],
+      logistics_driver_status: ['active', 'inactive'],
+      logistics_location_type: ['farm', 'yard', 'client_unit', 'other'],
+      logistics_owner_type: ['julitago', 'affiliated_company', 'third_party'],
+      logistics_set_status: ['active', 'inactive'],
+      logistics_supplier_type: ['parts', 'raw_material', 'third_party_freight', 'services'],
+    },
   },
 } as const

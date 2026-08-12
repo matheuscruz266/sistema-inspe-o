@@ -33,6 +33,10 @@ import Locations from '@/pages/Locations'
 import AssetOwners from '@/pages/AssetOwners'
 import VehicleSets from '@/pages/VehicleSets'
 import TrailerCargoProfiles from '@/pages/TrailerCargoProfiles'
+import Routes from '@/pages/Routes'
+import CarrierContracts from '@/pages/CarrierContracts'
+import Routes from '@/pages/Routes'
+import CarrierContracts from '@/pages/CarrierContracts'
 
 const App = () => (
   <AuthProvider>
@@ -73,7 +77,10 @@ const App = () => (
             <Route path="/proprietarios" element={<AssetOwners />} />
             <Route path="/conjuntos" element={<VehicleSets />} />
             <Route path="/perfis-carga-carreta" element={<TrailerCargoProfiles />} />
+            <Route path="/rotas" element={<Routes />} />
+            <Route path="/contratos-frete" element={<CarrierContracts />} />
           </Route>
+
           <Route path="*" element={<NotFound />} />
         </Routes>
       </TooltipProvider>
