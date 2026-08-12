@@ -1268,6 +1268,7 @@ export type Database = {
           family: string | null
           group_name: string | null
           id: string
+          is_active: boolean | null
           is_deleted: boolean | null
           location: string | null
           main_supplier_id: string | null
@@ -1277,6 +1278,7 @@ export type Database = {
           min_quantity: number | null
           name: string
           oem_code: string | null
+          photo_url: string | null
           physical_address: string | null
           safety_quantity: number | null
           subcategory: string | null
@@ -1298,6 +1300,7 @@ export type Database = {
           family?: string | null
           group_name?: string | null
           id?: string
+          is_active?: boolean | null
           is_deleted?: boolean | null
           location?: string | null
           main_supplier_id?: string | null
@@ -1307,6 +1310,7 @@ export type Database = {
           min_quantity?: number | null
           name: string
           oem_code?: string | null
+          photo_url?: string | null
           physical_address?: string | null
           safety_quantity?: number | null
           subcategory?: string | null
@@ -1328,6 +1332,7 @@ export type Database = {
           family?: string | null
           group_name?: string | null
           id?: string
+          is_active?: boolean | null
           is_deleted?: boolean | null
           location?: string | null
           main_supplier_id?: string | null
@@ -1337,6 +1342,7 @@ export type Database = {
           min_quantity?: number | null
           name?: string
           oem_code?: string | null
+          photo_url?: string | null
           physical_address?: string | null
           safety_quantity?: number | null
           subcategory?: string | null

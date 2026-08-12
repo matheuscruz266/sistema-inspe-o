@@ -12,55 +12,31 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from '@/components/ui/table'
 import { SubEntityManager, type SubField, type SubColumn } from '@/components/SubEntityManager'
+import { AudioTranscribeButton } from '@/components/AudioTranscribeButton'
 import { supabase } from '@/lib/supabase/client'
+import { useAuth } from '@/hooks/use-auth'
 import { toast } from 'sonner'
 import { formatCurrency } from '@/lib/utils'
-import { AlertCircle } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 
-interface Props {
-  open: boolean
-  onOpenChange: (v: boolean) => void
-  onSaved: () => void
-  editingId?: string | null
-}
-
-const ORIGINS = [
-  'Preventiva',
-  'Corretiva',
-  'Inspeção',
-  'Falha',
-  'Acidente',
-  'Solicitação do motorista',
-  'Preditiva',
-  'Recall',
-  'Garantia',
-  'Outro',
-]
+const OS_TYPES = ['Preventiva', 'Corretiva não planejada/emergencial', 'Corretiva planejada']
 const STATUSES = [
   'Aberta',
-  'Triagem',
-  'Aprovada',
-  'Planejada',
+  'O.S Motorista',
+  'O.S PCM',
+  'O.S Mecânico',
   'Em Execução',
-  'Aguardando Peça',
-  'Aguardando Terceiro',
-  'Concluída',
-  'Validada',
-  'Encerrada',
-]
-
-const laborFields: SubField[] = [
-  { name: 'mechanic_name', label: 'Mecânico', type: 'text' },
-  { name: 'role', label: 'Função', type: 'text' },
-  { name: 'hours', label: 'Horas', type: 'number' },
-  { name: 'hourly_rate', label: 'Custo/Hora', type: 'number' },
-  { name: 'cost', label: 'Custo Total', type: 'number' },
-]
-const laborCols: SubColumn[] = [
-  { key: 'mechanic_name', label: 'Mecânico' },
-  { key: 'hours', label: 'Horas' },
-  { key: 'cost', label: 'Custo' },
+  'Finalizado',
+  'Encerra igual',
 ]
 
 const materialFields: SubField[] = [
@@ -75,9 +51,8 @@ const materialCols: SubColumn[] = [
   { key: 'quantity', label: 'Qtd' },
   { key: 'total_cost', label: 'Custo' },
 ]
-
 const serviceFields: SubField[] = [
-  { name: 'service_name', label: 'Serviço', type: 'text' },
+  { name: 'service_name', label: 'Serviço', type: 'audio-text' },
   { name: 'duration', label: 'Duração', type: 'number' },
   { name: 'equipment_used', label: 'Equipamento', type: 'text' },
   { name: 'cost', label: 'Custo', type: 'number' },
@@ -88,46 +63,64 @@ const serviceCols: SubColumn[] = [
   { key: 'cost', label: 'Custo' },
 ]
 
-const externalFields: SubField[] = [
-  { name: 'supplier_name', label: 'Fornecedor', type: 'text' },
-  { name: 'work_description', label: 'Trabalho Realizado', type: 'text' },
-  { name: 'labor_cost', label: 'Custo Mão de Obra', type: 'number' },
-  { name: 'parts_cost', label: 'Custo Peças', type: 'number' },
-  { name: 'service_cost', label: 'Custo Serviços', type: 'number' },
-  { name: 'freight_cost', label: 'Frete', type: 'number' },
-  { name: 'other_cost', label: 'Outros', type: 'number' },
-  { name: 'invoice_number', label: 'Nota Fiscal', type: 'text' },
-  { name: 'total_cost', label: 'Custo Total', type: 'number' },
-]
-const externalCols: SubColumn[] = [
-  { key: 'supplier_name', label: 'Fornecedor' },
-  { key: 'work_description', label: 'Trabalho' },
-  { key: 'total_cost', label: 'Custo' },
-]
+interface Props {
+  open: boolean
+  onOpenChange: (v: boolean) => void
+  onSaved: () => void
+  editingId?: string | null
+  defaultStatus?: string
+}
 
-export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId }: Props) {
-  const [woId, setWoId] = useState<string | null>(editingId || null)
+export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaultStatus }: Props) {
+  const { profile } = useAuth()
+  const [woId, setWoId] = useState<string | null>(null)
   const [form, setForm] = useState<Record<string, any>>({})
   const [diagnosis, setDiagnosis] = useState<Record<string, any>>({})
+  const [vehicles, setVehicles] = useState<any[]>([])
+  const [mechanics, setMechanics] = useState<any[]>([])
+  const [laborEntries, setLaborEntries] = useState<any[]>([])
+  const [newLabor, setNewLabor] = useState<Record<string, any>>({})
+  const [showClose, setShowClose] = useState(false)
+  const [closeHours, setCloseHours] = useState('')
+  const [closeReleased, setCloseReleased] = useState<'Sim' | 'Não' | null>(null)
+
+  useEffect(() => {
+    if (!open) return
+    Promise.all([
+      supabase.from('vehicles').select('id, plate').eq('is_deleted', false).order('plate'),
+      supabase.from('mechanics').select('*').eq('is_deleted', false).order('name'),
+    ]).then(([v, m]) => {
+      setVehicles(v.data || [])
+      setMechanics(m.data || [])
+    })
+  }, [open])
 
   useEffect(() => {
     if (open && editingId) {
       Promise.all([
         supabase.from('work_orders').select('*').eq('id', editingId).single(),
         supabase.from('os_diagnosis').select('*').eq('work_order_id', editingId).single(),
-      ]).then(([wo, diag]) => {
+        supabase
+          .from('os_labor')
+          .select('*')
+          .eq('work_order_id', editingId)
+          .eq('is_deleted', false),
+      ]).then(([wo, diag, lab]) => {
         if (wo.data) {
           setForm(wo.data)
           setWoId(editingId)
         }
         if (diag.data) setDiagnosis(diag.data)
+        setLaborEntries(lab.data || [])
       })
     } else if (open) {
       setForm({
         date: new Date().toISOString().split('T')[0],
         type: 'Preventiva',
         origin: 'Preventiva',
-        status: 'Aberta',
+        status: defaultStatus || 'Aberta',
+        odometer: '',
+        user_name: profile?.name || '',
         parts_cost: 0,
         labor_cost: 0,
         external_cost: 0,
@@ -137,19 +130,30 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId }: Prop
       })
       setDiagnosis({})
       setWoId(null)
+      setLaborEntries([])
     }
-  }, [open, editingId])
+  }, [open, editingId, profile, defaultStatus])
 
+  const laborCost = laborEntries.reduce((s, l) => s + (parseFloat(l.cost) || 0), 0)
   const totalCost =
     (parseFloat(form.parts_cost) || 0) +
-    (parseFloat(form.labor_cost) || 0) +
+    laborCost +
     (parseFloat(form.external_cost) || 0) +
     (parseFloat(form.freight_cost) || 0) +
     (parseFloat(form.other_cost) || 0)
-  const isCorrective = form.origin === 'Corretiva' || form.type === 'Corretiva'
+  const setVal = (k: string, v: any) => setForm((p) => ({ ...p, [k]: v }))
+  const setDiag = (k: string, v: any) => setDiagnosis((p) => ({ ...p, [k]: v }))
 
   const handleSave = async () => {
-    const payload = { ...form, total_cost: totalCost }
+    if (!form.plate) {
+      toast.error('Placa é obrigatória')
+      return
+    }
+    if (!form.odometer && form.odometer !== 0) {
+      toast.error('Odômetro é obrigatório')
+      return
+    }
+    const payload = { ...form, labor_cost: laborCost, total_cost: totalCost }
     const { data, error } = woId
       ? await supabase.from('work_orders').update(payload).eq('id', woId).select().single()
       : await supabase.from('work_orders').insert(payload).select().single()
@@ -162,7 +166,7 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId }: Prop
     onSaved()
   }
 
-  const handleSaveDiagnosis = async () => {
+  const handleSaveDiag = async () => {
     if (!woId) return
     const { error } = await supabase
       .from('os_diagnosis')
@@ -171,8 +175,54 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId }: Prop
     else toast.success('Diagnóstico salvo')
   }
 
-  const setVal = (k: string, v: any) => setForm((p) => ({ ...p, [k]: v }))
-  const setDiag = (k: string, v: any) => setDiagnosis((p) => ({ ...p, [k]: v }))
+  const handleAddLabor = async () => {
+    if (!newLabor.mechanic_name || !woId) return
+    const mechanic = mechanics.find((m) => m.name === newLabor.mechanic_name)
+    const rate = parseFloat(mechanic?.hourly_rate) || 0
+    const hours = parseFloat(newLabor.hours) || 0
+    const cost = hours * rate
+    const { data, error } = await supabase
+      .from('os_labor')
+      .insert({
+        work_order_id: woId,
+        mechanic_name: newLabor.mechanic_name,
+        role: mechanic?.specialty || '',
+        hours,
+        hourly_rate: rate,
+        cost,
+      })
+      .select()
+      .single()
+    if (error) {
+      toast.error('Erro ao adicionar')
+      return
+    }
+    setLaborEntries([...laborEntries, data])
+    setNewLabor({})
+  }
+
+  const handleDeleteLabor = async (id: string) => {
+    await supabase.from('os_labor').update({ is_deleted: true }).eq('id', id)
+    setLaborEntries(laborEntries.filter((l) => l.id !== id))
+  }
+
+  const handleClose = async () => {
+    if (!woId || !closeHours || !closeReleased) return
+    const status = closeReleased === 'Sim' ? 'Finalizado' : 'Encerra igual'
+    const hours = parseFloat(closeHours) || 0
+    const { error } = await supabase
+      .from('work_orders')
+      .update({ status, hours, labor_cost: laborCost, total_cost: totalCost })
+      .eq('id', woId)
+    if (error) {
+      toast.error('Erro ao finalizar')
+      return
+    }
+    toast.success(`OS finalizada: ${status}`)
+    setShowClose(false)
+    onOpenChange(false)
+    onSaved()
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -180,294 +230,361 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId }: Prop
         <DialogHeader>
           <DialogTitle>{woId ? 'Editar OS' : 'Nova Ordem de Serviço'}</DialogTitle>
         </DialogHeader>
-        {isCorrective && !diagnosis.symptom && (
-          <div className="flex items-center gap-2 rounded-lg border border-orange-300 bg-orange-50 p-3 text-sm text-orange-800">
-            <AlertCircle className="h-4 w-4 shrink-0" />
-            Diagnóstico é obrigatório para OS corretiva. Preencha na aba "Diagnóstico".
-          </div>
-        )}
-        <Tabs defaultValue="header">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="header">Cabeçalho</TabsTrigger>
-            <TabsTrigger value="diag" disabled={!woId}>
-              Diagnóstico
-            </TabsTrigger>
-            <TabsTrigger value="labor" disabled={!woId}>
-              Mão de Obra
-            </TabsTrigger>
-            <TabsTrigger value="materials" disabled={!woId}>
-              Materiais
-            </TabsTrigger>
-            <TabsTrigger value="services" disabled={!woId}>
-              Serviços
-            </TabsTrigger>
-            <TabsTrigger value="external" disabled={!woId}>
-              Externo
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="header" className="space-y-3 mt-2">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Data *</Label>
-                <Input
-                  type="date"
-                  value={form.date || ''}
-                  onChange={(e) => setVal('date', e.target.value)}
-                />
-              </div>
-              <div>
-                <Label>Placa *</Label>
-                <Input value={form.plate || ''} onChange={(e) => setVal('plate', e.target.value)} />
-              </div>
-              <div>
-                <Label>Implemento/Reboque</Label>
-                <Input
-                  value={form.implement_plate || ''}
-                  onChange={(e) => setVal('implement_plate', e.target.value)}
-                />
-              </div>
-              <div>
-                <Label>Odômetro (km)</Label>
-                <Input
-                  type="number"
-                  value={form.odometer || ''}
-                  onChange={(e) => setVal('odometer', e.target.value)}
-                />
-              </div>
-              <div>
-                <Label>Horímetro (h)</Label>
-                <Input
-                  type="number"
-                  value={form.horimeter || ''}
-                  onChange={(e) => setVal('horimeter', e.target.value)}
-                />
-              </div>
-              <div>
-                <Label>Centro de Custo</Label>
-                <Input
-                  value={form.cost_center || ''}
-                  onChange={(e) => setVal('cost_center', e.target.value)}
-                />
-              </div>
-              <div>
-                <Label>Unidade</Label>
-                <Select value={form.unit || 'km'} onValueChange={(v) => setVal('unit', v)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="km">km</SelectItem>
-                    <SelectItem value="h">horas</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Origem</Label>
-                <Select
-                  value={form.origin || 'Preventiva'}
-                  onValueChange={(v) => setVal('origin', v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ORIGINS.map((o) => (
-                      <SelectItem key={o} value={o}>
-                        {o}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Tipo</Label>
-                <Select value={form.type || 'Preventiva'} onValueChange={(v) => setVal('type', v)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Preventiva">Preventiva</SelectItem>
-                    <SelectItem value="Corretiva">Corretiva</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Status</Label>
-                <Select value={form.status || 'Aberta'} onValueChange={(v) => setVal('status', v)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {STATUSES.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {s}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Usuário</Label>
-                <Input
-                  value={form.user_name || ''}
-                  onChange={(e) => setVal('user_name', e.target.value)}
-                />
-              </div>
-            </div>
+        {showClose ? (
+          <div className="space-y-4 py-4">
+            <h3 className="font-semibold">Finalização da OS</h3>
             <div>
-              <Label>Diagnóstico (resumo)</Label>
-              <Textarea
-                value={form.diagnosis || ''}
-                onChange={(e) => setVal('diagnosis', e.target.value)}
+              <Label>Horas gastas *</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={closeHours}
+                onChange={(e) => setCloseHours(e.target.value)}
               />
             </div>
-            <div className="grid grid-cols-5 gap-2">
-              <div>
-                <Label>Peças</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={form.parts_cost || 0}
-                  onChange={(e) => setVal('parts_cost', e.target.value)}
-                />
-              </div>
-              <div>
-                <Label>M.O. Interna</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={form.labor_cost || 0}
-                  onChange={(e) => setVal('labor_cost', e.target.value)}
-                />
-              </div>
-              <div>
-                <Label>Serv. Externo</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={form.external_cost || 0}
-                  onChange={(e) => setVal('external_cost', e.target.value)}
-                />
-              </div>
-              <div>
-                <Label>Frete</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={form.freight_cost || 0}
-                  onChange={(e) => setVal('freight_cost', e.target.value)}
-                />
-              </div>
-              <div>
-                <Label>Outros</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={form.other_cost || 0}
-                  onChange={(e) => setVal('other_cost', e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="flex justify-between rounded-lg border p-3 font-bold">
-              <span>Total:</span>
-              <span>{formatCurrency(totalCost)}</span>
-            </div>
-            <Button onClick={handleSave} className="w-full">
-              {woId ? 'Atualizar OS' : 'Salvar OS'}
-            </Button>
-          </TabsContent>
-          {woId && (
-            <>
-              <TabsContent value="diag" className="space-y-3 mt-2">
-                <div>
-                  <Label>Sintoma</Label>
-                  <Textarea
-                    value={diagnosis.symptom || ''}
-                    onChange={(e) => setDiag('symptom', e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label>Falha</Label>
-                  <Textarea
-                    value={diagnosis.failure || ''}
-                    onChange={(e) => setDiag('failure', e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label>Causa</Label>
-                  <Textarea
-                    value={diagnosis.cause || ''}
-                    onChange={(e) => setDiag('cause', e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label>Ação</Label>
-                  <Textarea
-                    value={diagnosis.action || ''}
-                    onChange={(e) => setDiag('action', e.target.value)}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>Sistema</Label>
-                    <Input
-                      value={diagnosis.system || ''}
-                      onChange={(e) => setDiag('system', e.target.value)}
-                      placeholder="Ex: Freios"
-                    />
-                  </div>
-                  <div>
-                    <Label>Componente</Label>
-                    <Input
-                      value={diagnosis.component || ''}
-                      onChange={(e) => setDiag('component', e.target.value)}
-                      placeholder="Ex: Compressor"
-                    />
-                  </div>
-                </div>
-                <Button onClick={handleSaveDiagnosis} className="w-full">
-                  Salvar Diagnóstico
+            <div>
+              <Label>Está liberado?</Label>
+              <div className="flex gap-2 mt-2">
+                <Button
+                  variant={closeReleased === 'Sim' ? 'default' : 'outline'}
+                  onClick={() => setCloseReleased('Sim')}
+                >
+                  Sim
                 </Button>
-              </TabsContent>
-              <TabsContent value="labor">
-                <SubEntityManager
-                  table="os_labor"
-                  parentId={woId}
-                  parentField="work_order_id"
-                  fields={laborFields}
-                  columns={laborCols}
-                />
-              </TabsContent>
-              <TabsContent value="materials">
-                <SubEntityManager
-                  table="os_materials"
-                  parentId={woId}
-                  parentField="work_order_id"
-                  fields={materialFields}
-                  columns={materialCols}
-                />
-              </TabsContent>
-              <TabsContent value="services">
-                <SubEntityManager
-                  table="os_services"
-                  parentId={woId}
-                  parentField="work_order_id"
-                  fields={serviceFields}
-                  columns={serviceCols}
-                />
-              </TabsContent>
-              <TabsContent value="external">
-                <SubEntityManager
-                  table="os_external"
-                  parentId={woId}
-                  parentField="work_order_id"
-                  fields={externalFields}
-                  columns={externalCols}
-                />
-              </TabsContent>
-            </>
-          )}
-        </Tabs>
+                <Button
+                  variant={closeReleased === 'Não' ? 'default' : 'outline'}
+                  onClick={() => setCloseReleased('Não')}
+                >
+                  Não
+                </Button>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleClose} disabled={!closeHours || !closeReleased}>
+                Confirmar Finalização
+              </Button>
+              <Button variant="outline" onClick={() => setShowClose(false)}>
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <Tabs defaultValue="header">
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="header">Cabeçalho</TabsTrigger>
+              <TabsTrigger value="diag" disabled={!woId}>
+                Diagnóstico
+              </TabsTrigger>
+              <TabsTrigger value="labor" disabled={!woId}>
+                Mão de Obra
+              </TabsTrigger>
+              <TabsTrigger value="materials" disabled={!woId}>
+                Materiais
+              </TabsTrigger>
+              <TabsTrigger value="services" disabled={!woId}>
+                Serviços
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="header" className="space-y-3 mt-2">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Data (automático)</Label>
+                  <Input type="date" value={form.date || ''} disabled />
+                </div>
+                <div>
+                  <Label>Placa *</Label>
+                  <Select
+                    value={form.vehicle_id || ''}
+                    onValueChange={(v) => {
+                      const vh = vehicles.find((x) => x.id === v)
+                      setVal('vehicle_id', v)
+                      setVal('plate', vh?.plate || '')
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {vehicles.map((v) => (
+                        <SelectItem key={v.id} value={v.id}>
+                          {v.plate}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Odômetro (Km) *</Label>
+                  <Input
+                    type="number"
+                    value={form.odometer || ''}
+                    onChange={(e) => setVal('odometer', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>Tipo</Label>
+                  <Select
+                    value={form.type || 'Preventiva'}
+                    onValueChange={(v) => setVal('type', v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {OS_TYPES.map((t) => (
+                        <SelectItem key={t} value={t}>
+                          {t}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Usuário (automático)</Label>
+                  <Input value={form.user_name || ''} disabled />
+                </div>
+                <div>
+                  <Label>Status</Label>
+                  <Select
+                    value={form.status || 'Aberta'}
+                    onValueChange={(v) => setVal('status', v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STATUSES.map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {s}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Implemento/Reboque</Label>
+                  <Input
+                    value={form.implement_plate || ''}
+                    onChange={(e) => setVal('implement_plate', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>Horímetro (h)</Label>
+                  <Input
+                    type="number"
+                    value={form.horimeter || ''}
+                    onChange={(e) => setVal('horimeter', e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <Label>Peças</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={form.parts_cost || 0}
+                    onChange={(e) => setVal('parts_cost', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>Serv. Externo</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={form.external_cost || 0}
+                    onChange={(e) => setVal('external_cost', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>Outros</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={form.other_cost || 0}
+                    onChange={(e) => setVal('other_cost', e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-between rounded-lg border p-3 font-bold">
+                <span>Total (M.O.: {formatCurrency(laborCost)}):</span>
+                <span>{formatCurrency(totalCost)}</span>
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={handleSave} className="flex-1">
+                  {woId ? 'Atualizar OS' : 'Salvar OS'}
+                </Button>
+                {woId && !['Finalizado', 'Encerra igual'].includes(form.status) && (
+                  <Button variant="secondary" onClick={() => setShowClose(true)}>
+                    Finalizar OS
+                  </Button>
+                )}
+              </div>
+            </TabsContent>
+            {woId && (
+              <>
+                <TabsContent value="diag" className="space-y-3 mt-2">
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <Label>Problema/Diagnóstico</Label>
+                      <AudioTranscribeButton
+                        value={diagnosis.symptom || ''}
+                        onChange={(v) => setDiag('symptom', v)}
+                      />
+                    </div>
+                    <Textarea
+                      value={diagnosis.symptom || ''}
+                      onChange={(e) => setDiag('symptom', e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label>Causa</Label>
+                    <Textarea
+                      value={diagnosis.cause || ''}
+                      onChange={(e) => setDiag('cause', e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label>Ação</Label>
+                    <Textarea
+                      value={diagnosis.action || ''}
+                      onChange={(e) => setDiag('action', e.target.value)}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label>Sistema</Label>
+                      <Input
+                        value={diagnosis.system || ''}
+                        onChange={(e) => setDiag('system', e.target.value)}
+                        placeholder="Ex: Freios"
+                      />
+                    </div>
+                    <div>
+                      <Label>Componente</Label>
+                      <Input
+                        value={diagnosis.component || ''}
+                        onChange={(e) => setDiag('component', e.target.value)}
+                        placeholder="Ex: Compressor"
+                      />
+                    </div>
+                  </div>
+                  <Button onClick={handleSaveDiag} className="w-full">
+                    Salvar Diagnóstico
+                  </Button>
+                </TabsContent>
+                <TabsContent value="labor" className="space-y-3 mt-2">
+                  <div className="rounded-md border overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Mecânico</TableHead>
+                          <TableHead>Horas</TableHead>
+                          <TableHead>Custo/Hora</TableHead>
+                          <TableHead>Total</TableHead>
+                          <TableHead className="text-right">Ações</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {laborEntries.length === 0 ? (
+                          <TableRow>
+                            <TableCell
+                              colSpan={5}
+                              className="text-center py-4 text-muted-foreground"
+                            >
+                              Nenhum registro
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          laborEntries.map((l) => (
+                            <TableRow key={l.id}>
+                              <TableCell>{l.mechanic_name}</TableCell>
+                              <TableCell>{l.hours}</TableCell>
+                              <TableCell>{formatCurrency(l.hourly_rate)}</TableCell>
+                              <TableCell>{formatCurrency(l.cost)}</TableCell>
+                              <TableCell className="text-right">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleDeleteLabor(l.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  <div className="grid grid-cols-12 gap-2 items-end">
+                    <div className="col-span-5">
+                      <Label>Mecânico</Label>
+                      <Select
+                        value={newLabor.mechanic_name || ''}
+                        onValueChange={(v) => {
+                          const m = mechanics.find((x) => x.name === v)
+                          setNewLabor({
+                            ...newLabor,
+                            mechanic_name: v,
+                            hourly_rate: m?.hourly_rate || 0,
+                          })
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {mechanics.map((m) => (
+                            <SelectItem key={m.id} value={m.name}>
+                              {m.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="col-span-3">
+                      <Label>Horas</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={newLabor.hours || ''}
+                        onChange={(e) => setNewLabor({ ...newLabor, hours: e.target.value })}
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <Label>Custo/Hora</Label>
+                      <Input type="number" disabled value={newLabor.hourly_rate || ''} />
+                    </div>
+                    <div className="col-span-2">
+                      <Button onClick={handleAddLabor} className="w-full">
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </TabsContent>
+                <TabsContent value="materials">
+                  <SubEntityManager
+                    table="os_materials"
+                    parentId={woId}
+                    parentField="work_order_id"
+                    fields={materialFields}
+                    columns={materialCols}
+                  />
+                </TabsContent>
+                <TabsContent value="services">
+                  <SubEntityManager
+                    table="os_services"
+                    parentId={woId}
+                    parentField="work_order_id"
+                    fields={serviceFields}
+                    columns={serviceCols}
+                  />
+                </TabsContent>
+              </>
+            )}
+          </Tabs>
+        )}
       </DialogContent>
     </Dialog>
   )
