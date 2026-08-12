@@ -52,6 +52,7 @@ export default function Vehicles() {
   const [models, setModels] = useState<string[]>([])
   const [newBrand, setNewBrand] = useState(false)
   const [newModel, setNewModel] = useState(false)
+  const [assetOwners, setAssetOwners] = useState<any[]>([])
 
   const fetchData = useCallback(async () => {
     const { data } = await supabase
@@ -69,6 +70,12 @@ export default function Vehicles() {
       ...new Set((data || []).map((v: any) => v.model).filter(Boolean)),
     ] as string[]
     setModels(uniqueModels)
+    const { data: owners } = await supabase
+      .from('asset_owners')
+      .select('id, name')
+      .eq('is_deleted', false)
+      .order('name')
+    setAssetOwners(owners || [])
   }, [])
 
   useEffect(() => {
@@ -92,7 +99,13 @@ export default function Vehicles() {
         purchase_cost_display: formatCurrencyInput(item.purchase_cost || 0),
       })
     } else {
-      setForm({ axles_count: 2, vehicle_type: 'Cavalo Mecânico', purchase_cost_display: '' })
+      setForm({
+        axles_count: 2,
+        vehicle_type: 'Cavalo Mecânico',
+        purchase_cost_display: '',
+        status: 'Ativo',
+        owner_id: '',
+      })
     }
     setEditing(item || null)
     setNewBrand(false)
@@ -117,6 +130,8 @@ export default function Vehicles() {
         ? parseCurrencyInput(form.purchase_cost_display)
         : 0,
       crlv_url: form.crlv_url || null,
+      owner_id: form.owner_id || null,
+      status: form.status || 'Ativo',
     }
     const { error } = editing
       ? await supabase.from('vehicles').update(payload).eq('id', editing.id)
@@ -170,6 +185,8 @@ export default function Vehicles() {
               <TableHead>Modelo</TableHead>
               <TableHead>Ano</TableHead>
               <TableHead>Custo</TableHead>
+              <TableHead>Proprietário</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead>CRLV</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -177,13 +194,13 @@ export default function Vehicles() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                   Carregando...
                 </TableCell>
               </TableRow>
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                   Nenhum registro
                 </TableCell>
               </TableRow>
@@ -196,6 +213,8 @@ export default function Vehicles() {
                   <TableCell>{v.model || '-'}</TableCell>
                   <TableCell>{v.year || '-'}</TableCell>
                   <TableCell>{formatCurrency(v.purchase_cost)}</TableCell>
+                  <TableCell>{assetOwners.find((o) => o.id === v.owner_id)?.name || '-'}</TableCell>
+                  <TableCell>{v.status || 'Ativo'}</TableCell>
                   <TableCell>
                     {v.crlv_url ? (
                       <a
@@ -249,6 +268,8 @@ export default function Vehicles() {
                   <SelectContent>
                     <SelectItem value="Cavalo Mecânico">Cavalo Mecânico</SelectItem>
                     <SelectItem value="Carreta">Carreta</SelectItem>
+                    <SelectItem value="Frota Leve">Frota Leve</SelectItem>
+                    <SelectItem value="Equipamento Florestal">Equipamento Florestal</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -375,6 +396,41 @@ export default function Vehicles() {
                     placeholder="0,00"
                   />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Proprietário</Label>
+                <Select
+                  value={form.owner_id || '__none__'}
+                  onValueChange={(v) => setForm({ ...form, owner_id: v === '__none__' ? null : v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">—</SelectItem>
+                    {assetOwners.map((o) => (
+                      <SelectItem key={o.id} value={o.id}>
+                        {o.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select
+                  value={form.status || 'Ativo'}
+                  onValueChange={(v) => setForm({ ...form, status: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Ativo">Ativo</SelectItem>
+                    <SelectItem value="Vendido">Vendido</SelectItem>
+                    <SelectItem value="Outro">Outro</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <div className="space-y-2">

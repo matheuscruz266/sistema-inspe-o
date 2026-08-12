@@ -25,6 +25,11 @@ import {
   History,
   LayoutGrid,
   Gauge,
+  Store,
+  MapPin,
+  Landmark,
+  Shuffle,
+  ClipboardList,
 } from 'lucide-react'
 
 export const menuItems = [
@@ -55,6 +60,16 @@ export const menuItems = [
   { key: 'history', label: 'Histórico', path: '/historico', icon: History },
   { key: 'kanban', label: 'Kanban', path: '/kanban', icon: LayoutGrid },
   { key: 'dash_maintenance', label: 'Dash Manutenção', path: '/dash-manutencao', icon: Gauge },
+  { key: 'clients', label: 'Clientes', path: '/clientes', icon: Store },
+  { key: 'locations', label: 'Locais', path: '/locais', icon: MapPin },
+  { key: 'asset_owners', label: 'Proprietários', path: '/proprietarios', icon: Landmark },
+  { key: 'vehicle_sets', label: 'Conjuntos', path: '/conjuntos', icon: Shuffle },
+  {
+    key: 'trailer_cargo_profiles',
+    label: 'Perfis de Carga',
+    path: '/perfis-carga-carreta',
+    icon: ClipboardList,
+  },
 ]
 
 export default function Layout() {

@@ -28,6 +28,11 @@ import Indicators from '@/pages/Indicators'
 import History from '@/pages/History'
 import DashMaintenance from '@/pages/DashMaintenance'
 import Kanban from '@/pages/Kanban'
+import Clients from '@/pages/Clients'
+import Locations from '@/pages/Locations'
+import AssetOwners from '@/pages/AssetOwners'
+import VehicleSets from '@/pages/VehicleSets'
+import TrailerCargoProfiles from '@/pages/TrailerCargoProfiles'
 
 const App = () => (
   <AuthProvider>
@@ -63,6 +68,11 @@ const App = () => (
             <Route path="/kanban" element={<Kanban />} />
             <Route path="/historico" element={<History />} />
             <Route path="/dash-manutencao" element={<DashMaintenance />} />
+            <Route path="/clientes" element={<Clients />} />
+            <Route path="/locais" element={<Locations />} />
+            <Route path="/proprietarios" element={<AssetOwners />} />
+            <Route path="/conjuntos" element={<VehicleSets />} />
+            <Route path="/perfis-carga-carreta" element={<TrailerCargoProfiles />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
