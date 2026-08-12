@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import {
   Table,
@@ -20,6 +22,7 @@ import {
   ArrowRight,
   Pencil,
   Trash2,
+  X,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatDate, formatCurrency } from '@/lib/utils'
