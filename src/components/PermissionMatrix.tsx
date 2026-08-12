@@ -23,6 +23,7 @@ export const AVAILABLE_SCREENS = [
   { key: 'suppliers', label: 'Fornecedores' },
   { key: 'service_catalog', label: 'Serviços' },
   { key: 'history', label: 'Histórico' },
+  { key: 'kanban', label: 'Kanban' },
   { key: 'indicators', label: 'Indicadores' },
   { key: 'dash_maintenance', label: 'Dash Manutenção' },
 ]
