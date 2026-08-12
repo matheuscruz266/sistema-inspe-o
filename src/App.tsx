@@ -27,6 +27,7 @@ import Suppliers from '@/pages/Suppliers'
 import Indicators from '@/pages/Indicators'
 import History from '@/pages/History'
 import DashMaintenance from '@/pages/DashMaintenance'
+import Kanban from '@/pages/Kanban'
 
 const App = () => (
   <AuthProvider>
