@@ -104,6 +104,57 @@ export type Database = {
         }
         Relationships: []
       }
+      carrier_contracts: {
+        Row: {
+          agreed_value: number | null
+          carrier_supplier_id: string | null
+          created_at: string
+          id: string
+          is_deleted: boolean | null
+          route_id: string | null
+          valid_from: string
+          valid_to: string | null
+          value_per_km: number | null
+        }
+        Insert: {
+          agreed_value?: number | null
+          carrier_supplier_id?: string | null
+          created_at?: string
+          id?: string
+          is_deleted?: boolean | null
+          route_id?: string | null
+          valid_from: string
+          valid_to?: string | null
+          value_per_km?: number | null
+        }
+        Update: {
+          agreed_value?: number | null
+          carrier_supplier_id?: string | null
+          created_at?: string
+          id?: string
+          is_deleted?: boolean | null
+          route_id?: string | null
+          valid_from?: string
+          valid_to?: string | null
+          value_per_km?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'carrier_contracts_carrier_supplier_id_fkey'
+            columns: ['carrier_supplier_id']
+            isOneToOne: false
+            referencedRelation: 'suppliers'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'carrier_contracts_route_id_fkey'
+            columns: ['route_id']
+            isOneToOne: false
+            referencedRelation: 'routes'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       clients: {
         Row: {
           active: boolean | null
@@ -1531,6 +1582,75 @@ export type Database = {
           },
         ]
       }
+      routes: {
+        Row: {
+          created_at: string
+          destination_client_id: string | null
+          id: string
+          is_deleted: boolean | null
+          km_one_way: number | null
+          km_range: string | null
+          km_round_trip: number | null
+          origin_location_id: string | null
+          price_unit: Database['public']['Enums']['logistics_default_unit'] | null
+          toll_heavy: number | null
+          toll_light: number | null
+          transport_type: Database['public']['Enums']['logistics_transport_type'] | null
+          unit_price: number | null
+          valid_from: string
+          valid_to: string | null
+        }
+        Insert: {
+          created_at?: string
+          destination_client_id?: string | null
+          id?: string
+          is_deleted?: boolean | null
+          km_one_way?: number | null
+          km_range?: string | null
+          km_round_trip?: number | null
+          origin_location_id?: string | null
+          price_unit?: Database['public']['Enums']['logistics_default_unit'] | null
+          toll_heavy?: number | null
+          toll_light?: number | null
+          transport_type?: Database['public']['Enums']['logistics_transport_type'] | null
+          unit_price?: number | null
+          valid_from: string
+          valid_to?: string | null
+        }
+        Update: {
+          created_at?: string
+          destination_client_id?: string | null
+          id?: string
+          is_deleted?: boolean | null
+          km_one_way?: number | null
+          km_range?: string | null
+          km_round_trip?: number | null
+          origin_location_id?: string | null
+          price_unit?: Database['public']['Enums']['logistics_default_unit'] | null
+          toll_heavy?: number | null
+          toll_light?: number | null
+          transport_type?: Database['public']['Enums']['logistics_transport_type'] | null
+          unit_price?: number | null
+          valid_from?: string
+          valid_to?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'routes_destination_client_id_fkey'
+            columns: ['destination_client_id']
+            isOneToOne: false
+            referencedRelation: 'clients'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'routes_origin_location_id_fkey'
+            columns: ['origin_location_id']
+            isOneToOne: false
+            referencedRelation: 'locations'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       schedule_records: {
         Row: {
           created_at: string
@@ -2324,6 +2444,7 @@ export type Database = {
       logistics_owner_type: 'julitago' | 'affiliated_company' | 'third_party'
       logistics_set_status: 'active' | 'inactive'
       logistics_supplier_type: 'parts' | 'raw_material' | 'third_party_freight' | 'services'
+      logistics_transport_type: 'own_fleet' | 'third_party'
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2457,6 +2578,7 @@ export const Constants = {
       logistics_owner_type: ['julitago', 'affiliated_company', 'third_party'],
       logistics_set_status: ['active', 'inactive'],
       logistics_supplier_type: ['parts', 'raw_material', 'third_party_freight', 'services'],
+      logistics_transport_type: ['own_fleet', 'third_party'],
     },
   },
 } as const

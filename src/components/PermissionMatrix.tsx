@@ -28,6 +28,8 @@ export const AVAILABLE_SCREENS = [
   { key: 'dash_maintenance', label: 'Dash Manutenção' },
   { key: 'routes', label: 'Rotas' },
   { key: 'carrier_contracts', label: 'Contratos de Frete' },
+  { key: 'demands', label: 'Demandas' },
+  { key: 'trips', label: 'Viagens' },
 ]
 
 export function normalizePermissions(screens: unknown): PermissionMatrixData {

@@ -35,6 +35,8 @@ import VehicleSets from '@/pages/VehicleSets'
 import TrailerCargoProfiles from '@/pages/TrailerCargoProfiles'
 import RoutesPage from '@/pages/Routes'
 import CarrierContracts from '@/pages/CarrierContracts'
+import Demands from '@/pages/Demands'
+import Trips from '@/pages/Trips'
 
 const App = () => (
   <AuthProvider>
@@ -77,6 +79,8 @@ const App = () => (
             <Route path="/perfis-carga-carreta" element={<TrailerCargoProfiles />} />
             <Route path="/rotas" element={<RoutesPage />} />
             <Route path="/contratos-frete" element={<CarrierContracts />} />
+            <Route path="/demandas" element={<Demands />} />
+            <Route path="/viagens" element={<Trips />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />

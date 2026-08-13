@@ -31,6 +31,9 @@ import {
   Shuffle,
   ClipboardList,
   Route,
+  ClipboardList,
+  PackageOpen,
+  Road,
 } from 'lucide-react'
 
 export const menuItems = [
@@ -78,6 +81,8 @@ export const menuItems = [
     path: '/contratos-frete',
     icon: FileText,
   },
+  { key: 'demands', label: 'Demandas', path: '/demandas', icon: PackageOpen },
+  { key: 'trips', label: 'Viagens', path: '/viagens', icon: Road },
 ]
 
 export default function Layout() {
