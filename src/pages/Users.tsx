@@ -102,7 +102,7 @@ export default function Users() {
           access_level_id: form.access_level_id || null,
         })
         if (createError) {
-          toast.error(String(createError))
+          toast.error(String(createError), { duration: 5000 })
           return
         }
         toast.success('Usuário criado com sucesso')

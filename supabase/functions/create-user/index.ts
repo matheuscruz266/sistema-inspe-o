@@ -33,7 +33,14 @@ Deno.serve(async (req: Request) => {
 
     const {
       data: { user },
+      error: getUserError,
     } = await callerClient.auth.getUser()
+    if (getUserError) {
+      return new Response(JSON.stringify({ error: 'Sessão inválida: ' + getUserError.message }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      })
+    }
     if (!user || !user.email) {
       return new Response(JSON.stringify({ error: 'Não autorizado' }), {
         status: 401,
@@ -41,7 +48,6 @@ Deno.serve(async (req: Request) => {
       })
     }
 
-    // Verify caller is an administrator
     const { data: callerProfile, error: profileError } = await adminClient
       .from('app_users')
       .select('id, is_deleted, access_levels!inner(permissions, is_active, is_deleted)')
@@ -122,6 +128,27 @@ Deno.serve(async (req: Request) => {
       })
     }
 
+    // Ensure token columns are '' (never NULL) and phone is NULL (never '')
+    // This prevents GoTrue HTTP 500 errors on subsequent auth operations
+    await adminClient
+      .rpc('exec_sql', {
+        sql_query: `UPDATE auth.users SET
+        confirmation_token = COALESCE(confirmation_token, ''),
+        recovery_token = COALESCE(recovery_token, ''),
+        email_change_token_new = COALESCE(email_change_token_new, ''),
+        email_change = COALESCE(email_change, ''),
+        email_change_token_current = COALESCE(email_change_token_current, ''),
+        phone_change = COALESCE(phone_change, ''),
+        phone_change_token = COALESCE(phone_change_token, ''),
+        reauthentication_token = COALESCE(reauthentication_token, ''),
+        phone = NULLIF(phone, '')
+      WHERE id = '${authData.user.id}'::uuid;`,
+      })
+      .catch(() => {
+        // If exec_sql RPC is not available, try direct update via from() won't work for auth.users
+        // The migration handles this, so we swallow the error
+      })
+
     const { error: dbError } = await adminClient.from('app_users').insert({
       id: authData.user.id,
       name,
@@ -144,7 +171,8 @@ Deno.serve(async (req: Request) => {
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     })
   } catch (err) {
-    return new Response(JSON.stringify({ error: 'Erro interno do servidor' }), {
+    const message = err instanceof Error ? err.message : 'Erro interno do servidor'
+    return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     })
