@@ -35,6 +35,8 @@ export const AVAILABLE_SCREENS = [
   { key: 'telemetry', label: 'Telemetria' },
   { key: 'sales_invoices', label: 'Notas Fiscais' },
   { key: 'freight_documents', label: 'Documentos Fiscais' },
+  { key: 'stock_report', label: 'Resumo de Estoque' },
+  { key: 'trip_margin_report', label: 'Margem por Viagem' },
 ]
 
 export function normalizePermissions(screens: unknown): PermissionMatrixData {

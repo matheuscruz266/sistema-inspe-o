@@ -268,6 +268,73 @@ export type Database = {
         }
         Relationships: []
       }
+      freight_documents: {
+        Row: {
+          carrier_supplier_id: string | null
+          created_at: string
+          cte_number: string
+          freight_value: number | null
+          id: string
+          is_deleted: boolean | null
+          issue_date: string
+          notes: string | null
+          route_id: string | null
+          series: string | null
+          status: string | null
+          trip_id: string | null
+        }
+        Insert: {
+          carrier_supplier_id?: string | null
+          created_at?: string
+          cte_number: string
+          freight_value?: number | null
+          id?: string
+          is_deleted?: boolean | null
+          issue_date?: string
+          notes?: string | null
+          route_id?: string | null
+          series?: string | null
+          status?: string | null
+          trip_id?: string | null
+        }
+        Update: {
+          carrier_supplier_id?: string | null
+          created_at?: string
+          cte_number?: string
+          freight_value?: number | null
+          id?: string
+          is_deleted?: boolean | null
+          issue_date?: string
+          notes?: string | null
+          route_id?: string | null
+          series?: string | null
+          status?: string | null
+          trip_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'freight_documents_carrier_supplier_id_fkey'
+            columns: ['carrier_supplier_id']
+            isOneToOne: false
+            referencedRelation: 'suppliers'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'freight_documents_route_id_fkey'
+            columns: ['route_id']
+            isOneToOne: false
+            referencedRelation: 'routes'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'freight_documents_trip_id_fkey'
+            columns: ['trip_id']
+            isOneToOne: false
+            referencedRelation: 'trips'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       fuel_records: {
         Row: {
           created_at: string
@@ -1853,6 +1920,92 @@ export type Database = {
             columns: ['origin_location_id']
             isOneToOne: false
             referencedRelation: 'locations'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      sales_invoices: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          gross_weight: number | null
+          id: string
+          invoice_number: string
+          is_deleted: boolean | null
+          issue_date: string
+          net_weight: number | null
+          notes: string | null
+          product_id: string | null
+          series: string | null
+          status: string | null
+          total_value: number | null
+          trip_id: string | null
+          unit: string | null
+          unit_value: number | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          gross_weight?: number | null
+          id?: string
+          invoice_number: string
+          is_deleted?: boolean | null
+          issue_date?: string
+          net_weight?: number | null
+          notes?: string | null
+          product_id?: string | null
+          series?: string | null
+          status?: string | null
+          total_value?: number | null
+          trip_id?: string | null
+          unit?: string | null
+          unit_value?: number | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          gross_weight?: number | null
+          id?: string
+          invoice_number?: string
+          is_deleted?: boolean | null
+          issue_date?: string
+          net_weight?: number | null
+          notes?: string | null
+          product_id?: string | null
+          series?: string | null
+          status?: string | null
+          total_value?: number | null
+          trip_id?: string | null
+          unit?: string | null
+          unit_value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'sales_invoices_client_id_fkey'
+            columns: ['client_id']
+            isOneToOne: false
+            referencedRelation: 'clients'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'sales_invoices_product_id_fkey'
+            columns: ['product_id']
+            isOneToOne: false
+            referencedRelation: 'current_stock'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'sales_invoices_product_id_fkey'
+            columns: ['product_id']
+            isOneToOne: false
+            referencedRelation: 'products'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'sales_invoices_trip_id_fkey'
+            columns: ['trip_id']
+            isOneToOne: false
+            referencedRelation: 'trips'
             referencedColumns: ['id']
           },
         ]

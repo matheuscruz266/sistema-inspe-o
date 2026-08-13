@@ -37,6 +37,8 @@ import {
   Fuel,
   Activity,
   Receipt,
+  BarChart3,
+  TrendingUp,
 } from 'lucide-react'
 
 export const menuItems = [
@@ -91,6 +93,13 @@ export const menuItems = [
   { key: 'telemetry', label: 'Telemetria', path: '/telemetria', icon: Activity },
   { key: 'sales_invoices', label: 'Notas Fiscais', path: '/notas-fiscais', icon: FileText },
   { key: 'freight_documents', label: 'Documentos Fiscais', path: '/cte', icon: Receipt },
+  { key: 'stock_report', label: 'Resumo de Estoque', path: '/relatorios/estoque', icon: BarChart3 },
+  {
+    key: 'trip_margin_report',
+    label: 'Margem por Viagem',
+    path: '/relatorios/margem',
+    icon: TrendingUp,
+  },
 ]
 
 export default function Layout() {

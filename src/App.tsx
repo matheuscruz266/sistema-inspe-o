@@ -42,6 +42,8 @@ import FuelRecords from '@/pages/FuelRecords'
 import Telemetry from '@/pages/Telemetry'
 import SalesInvoices from '@/pages/SalesInvoices'
 import FreightDocuments from '@/pages/FreightDocuments'
+import StockReport from '@/pages/StockReport'
+import TripMarginReport from '@/pages/TripMarginReport'
 
 const App = () => (
   <AuthProvider>
@@ -91,6 +93,8 @@ const App = () => (
             <Route path="/telemetria" element={<Telemetry />} />
             <Route path="/notas-fiscais" element={<SalesInvoices />} />
             <Route path="/cte" element={<FreightDocuments />} />
+            <Route path="/relatorios/estoque" element={<StockReport />} />
+            <Route path="/relatorios/margem" element={<TripMarginReport />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />
