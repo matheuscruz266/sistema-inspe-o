@@ -21,8 +21,9 @@ import {
   TableRow,
   TableCell,
 } from '@/components/ui/table'
-import { Plus, Pencil, ShieldX } from 'lucide-react'
+import { Plus, Pencil, ShieldX, KeyRound } from 'lucide-react'
 import { toast } from 'sonner'
+import { resetUserPassword } from '@/services/reset-user-password'
 
 export default function Users() {
   const { isAdmin } = useAuth()
@@ -110,6 +111,40 @@ export default function Users() {
     }
     setOpen(false)
     fetchData()
+  }
+
+  const handleResetOpen = (user: any) => {
+    setResetTarget(user)
+    setResetPassword('')
+    setResetConfirm('')
+    setResetOpen(true)
+  }
+
+  const handleResetSave = async () => {
+    if (!resetTarget) return
+    if (!resetPassword || resetPassword.length < 8) {
+      toast.error('A senha deve ter no mínimo 8 caracteres')
+      return
+    }
+    if (resetPassword !== resetConfirm) {
+      toast.error('As senhas não conferem')
+      return
+    }
+    setResetLoading(true)
+    const { error } = await resetUserPassword({
+      userId: resetTarget.id,
+      password: resetPassword,
+    })
+    setResetLoading(false)
+    if (error) {
+      toast.error(error)
+      return
+    }
+    toast.success('Senha redefinida com sucesso')
+    setResetOpen(false)
+    setResetTarget(null)
+    setResetPassword('')
+    setResetConfirm('')
   }
 
   if (!isAdmin) {
@@ -241,6 +276,43 @@ export default function Users() {
             </div>
             <Button onClick={handleSave} className="w-full">
               Salvar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={resetOpen} onOpenChange={setResetOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Redefinir Senha</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <p className="text-sm text-muted-foreground">
+              Defina uma nova senha temporária para{' '}
+              <span className="font-medium text-foreground">
+                {resetTarget?.name} ({resetTarget?.email})
+              </span>
+              . A senha deverá ser comunicada ao usuário por fora do sistema.
+            </p>
+            <div className="space-y-2">
+              <Label>Nova Senha *</Label>
+              <Input
+                type="password"
+                value={resetPassword}
+                onChange={(e) => setResetPassword(e.target.value)}
+                placeholder="Mínimo 8 caracteres"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Confirmar Senha *</Label>
+              <Input
+                type="password"
+                value={resetConfirm}
+                onChange={(e) => setResetConfirm(e.target.value)}
+                placeholder="Repita a nova senha"
+              />
+            </div>
+            <Button onClick={handleResetSave} disabled={resetLoading} className="w-full">
+              {resetLoading ? 'Salvando...' : 'Salvar'}
             </Button>
           </div>
         </DialogContent>
