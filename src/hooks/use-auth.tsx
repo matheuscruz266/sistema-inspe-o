@@ -24,6 +24,8 @@ interface AuthContextType {
   canPerform: (screen: string, operation: string) => boolean
   signIn: (email: string, password: string) => Promise<{ error: any }>
   signOut: () => Promise<{ error: any }>
+  resetPasswordEmail: (email: string) => Promise<{ error: any }>
+  updatePassword: (password: string) => Promise<{ error: any }>
   loading: boolean
 }
 
@@ -80,6 +82,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { error }
   }
 
+  const resetPasswordEmail = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+    return { error }
+  }
+
+  const updatePassword = async (password: string) => {
+    const { error } = await supabase.auth.updateUser({ password })
+    return { error }
+  }
+
   const rawScreens = profile?.access_levels?.permissions?.screens ?? null
   const permissions: string[] | null = Array.isArray(rawScreens)
     ? (rawScreens as string[])
@@ -113,7 +127,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, session, profile, permissions, isAdmin, canPerform, signIn, signOut, loading }}
+      value={{
+        user,
+        session,
+        profile,
+        permissions,
+        isAdmin,
+        canPerform,
+        signIn,
+        signOut,
+        resetPasswordEmail,
+        updatePassword,
+        loading,
+      }}
     >
       {children}
     </AuthContext.Provider>

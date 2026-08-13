@@ -72,6 +72,14 @@ export default function Login() {
             <Button type="submit" className="w-full" disabled={submitting}>
               {submitting ? 'Entrando...' : 'Entrar'}
             </Button>
+            <Button
+              type="button"
+              variant="link"
+              className="w-full"
+              onClick={() => navigate('/forgot-password')}
+            >
+              Esqueci minha senha
+            </Button>
           </form>
         </CardContent>
       </Card>

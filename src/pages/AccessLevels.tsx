@@ -16,7 +16,6 @@ import {
 } from '@/components/ui/table'
 import {
   PermissionMatrix,
-  AVAILABLE_SCREENS,
   normalizePermissions,
   type PermissionMatrixData,
 } from '@/components/PermissionMatrix'
@@ -181,7 +180,7 @@ export default function AccessLevels() {
             </div>
             <div className="space-y-2">
               <Label>Matriz de Permissões por Tela</Label>
-              <PermissionMatrix screens={AVAILABLE_SCREENS} matrix={matrix} onChange={setMatrix} />
+              <PermissionMatrix matrix={matrix} onChange={setMatrix} />
             </div>
             <Button onClick={handleSave} className="w-full">
               Salvar
