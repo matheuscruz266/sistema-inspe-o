@@ -33,6 +33,7 @@ import {
   Route,
   PackageOpen,
   Navigation,
+  Warehouse,
 } from 'lucide-react'
 
 export const menuItems = [
@@ -53,6 +54,7 @@ export const menuItems = [
   { key: 'entries', label: 'Lançamentos', path: '/lancamentos', icon: FileText },
   { key: 'scheduling', label: 'Agendamento', path: '/agendamento', icon: Calendar },
   { key: 'stock', label: 'Estoque', path: '/estoque', icon: Package },
+  { key: 'receipts', label: 'Recebimentos', path: '/recebimentos', icon: Warehouse },
   { key: 'products', label: 'Produtos', path: '/produtos', icon: Boxes },
   { key: 'people', label: 'Pessoas', path: '/pessoas', icon: Users },
   { key: 'access_levels', label: 'Níveis de Acesso', path: '/niveis-acesso', icon: Shield },

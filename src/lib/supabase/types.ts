@@ -2105,6 +2105,201 @@ export type Database = {
           },
         ]
       }
+      trip_demands: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          is_deleted: boolean | null
+          notes: string | null
+          request_timestamp: string
+          requested_date: string | null
+          requested_loads: number | null
+          requested_m3: number | null
+          requested_tons: number | null
+          source_channel: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          is_deleted?: boolean | null
+          notes?: string | null
+          request_timestamp?: string
+          requested_date?: string | null
+          requested_loads?: number | null
+          requested_m3?: number | null
+          requested_tons?: number | null
+          source_channel?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          is_deleted?: boolean | null
+          notes?: string | null
+          request_timestamp?: string
+          requested_date?: string | null
+          requested_loads?: number | null
+          requested_m3?: number | null
+          requested_tons?: number | null
+          source_channel?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'trip_demands_client_id_fkey'
+            columns: ['client_id']
+            isOneToOne: false
+            referencedRelation: 'clients'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      trips: {
+        Row: {
+          arrival_time: string | null
+          calculated_freight_value: number | null
+          created_at: string
+          demand_id: string | null
+          destination_client_id: string | null
+          driver_id: string | null
+          finish_time: string | null
+          gross_weight: number | null
+          id: string
+          is_deleted: boolean | null
+          net_weight: number | null
+          nfe_number: string | null
+          notes: string | null
+          origin_location_id: string | null
+          product_id: string | null
+          real_volume_m3: number | null
+          route_id: string | null
+          sale_volume_m3: number | null
+          start_time: string | null
+          status: Database['public']['Enums']['logistics_trip_status']
+          tare_weight: number | null
+          tractor_vehicle_id: string
+          trailer_vehicle_id: string | null
+          trip_date: string
+        }
+        Insert: {
+          arrival_time?: string | null
+          calculated_freight_value?: number | null
+          created_at?: string
+          demand_id?: string | null
+          destination_client_id?: string | null
+          driver_id?: string | null
+          finish_time?: string | null
+          gross_weight?: number | null
+          id?: string
+          is_deleted?: boolean | null
+          net_weight?: number | null
+          nfe_number?: string | null
+          notes?: string | null
+          origin_location_id?: string | null
+          product_id?: string | null
+          real_volume_m3?: number | null
+          route_id?: string | null
+          sale_volume_m3?: number | null
+          start_time?: string | null
+          status?: Database['public']['Enums']['logistics_trip_status']
+          tare_weight?: number | null
+          tractor_vehicle_id: string
+          trailer_vehicle_id?: string | null
+          trip_date?: string
+        }
+        Update: {
+          arrival_time?: string | null
+          calculated_freight_value?: number | null
+          created_at?: string
+          demand_id?: string | null
+          destination_client_id?: string | null
+          driver_id?: string | null
+          finish_time?: string | null
+          gross_weight?: number | null
+          id?: string
+          is_deleted?: boolean | null
+          net_weight?: number | null
+          nfe_number?: string | null
+          notes?: string | null
+          origin_location_id?: string | null
+          product_id?: string | null
+          real_volume_m3?: number | null
+          route_id?: string | null
+          sale_volume_m3?: number | null
+          start_time?: string | null
+          status?: Database['public']['Enums']['logistics_trip_status']
+          tare_weight?: number | null
+          tractor_vehicle_id?: string
+          trailer_vehicle_id?: string | null
+          trip_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'trips_demand_id_fkey'
+            columns: ['demand_id']
+            isOneToOne: false
+            referencedRelation: 'trip_demands'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'trips_destination_client_id_fkey'
+            columns: ['destination_client_id']
+            isOneToOne: false
+            referencedRelation: 'clients'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'trips_driver_id_fkey'
+            columns: ['driver_id']
+            isOneToOne: false
+            referencedRelation: 'people'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'trips_origin_location_id_fkey'
+            columns: ['origin_location_id']
+            isOneToOne: false
+            referencedRelation: 'locations'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'trips_product_id_fkey'
+            columns: ['product_id']
+            isOneToOne: false
+            referencedRelation: 'current_stock'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'trips_product_id_fkey'
+            columns: ['product_id']
+            isOneToOne: false
+            referencedRelation: 'products'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'trips_route_id_fkey'
+            columns: ['route_id']
+            isOneToOne: false
+            referencedRelation: 'routes'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'trips_tractor_vehicle_id_fkey'
+            columns: ['tractor_vehicle_id']
+            isOneToOne: false
+            referencedRelation: 'vehicles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'trips_trailer_vehicle_id_fkey'
+            columns: ['trailer_vehicle_id']
+            isOneToOne: false
+            referencedRelation: 'vehicles'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       vehicle_set_assignments: {
         Row: {
           change_reason: string | null
@@ -2445,6 +2640,7 @@ export type Database = {
       logistics_set_status: 'active' | 'inactive'
       logistics_supplier_type: 'parts' | 'raw_material' | 'third_party_freight' | 'services'
       logistics_transport_type: 'own_fleet' | 'third_party'
+      logistics_trip_status: 'requested' | 'scheduled' | 'in_transit' | 'completed' | 'cancelled'
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2579,6 +2775,7 @@ export const Constants = {
       logistics_set_status: ['active', 'inactive'],
       logistics_supplier_type: ['parts', 'raw_material', 'third_party_freight', 'services'],
       logistics_transport_type: ['own_fleet', 'third_party'],
+      logistics_trip_status: ['requested', 'scheduled', 'in_transit', 'completed', 'cancelled'],
     },
   },
 } as const

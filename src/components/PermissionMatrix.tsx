@@ -15,6 +15,7 @@ export const AVAILABLE_SCREENS = [
   { key: 'entries', label: 'Lançamentos' },
   { key: 'scheduling', label: 'Agendamento' },
   { key: 'stock', label: 'Estoque' },
+  { key: 'receipts', label: 'Recebimentos' },
   { key: 'products', label: 'Produtos' },
   { key: 'people', label: 'Pessoas' },
   { key: 'access_levels', label: 'Níveis de Acesso' },

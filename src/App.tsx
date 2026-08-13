@@ -37,6 +37,7 @@ import RoutesPage from '@/pages/Routes'
 import CarrierContracts from '@/pages/CarrierContracts'
 import Demands from '@/pages/Demands'
 import Trips from '@/pages/Trips'
+import Receipts from '@/pages/Receipts'
 
 const App = () => (
   <AuthProvider>
@@ -60,6 +61,7 @@ const App = () => (
             <Route path="/lancamentos" element={<Entries />} />
             <Route path="/agendamento" element={<Scheduling />} />
             <Route path="/estoque" element={<Stock />} />
+            <Route path="/recebimentos" element={<Receipts />} />
             <Route path="/produtos" element={<Products />} />
             <Route path="/mecanicos" element={<Mechanics />} />
             <Route path="/motoristas" element={<Drivers />} />
