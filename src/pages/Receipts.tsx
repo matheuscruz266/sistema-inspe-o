@@ -100,7 +100,14 @@ export default function Receipts() {
 
   const supName = (id: string) => suppliers.find((s) => s.id === id)?.name || '-'
   const prodName = (id: string) => products.find((p) => p.id === id)?.name || '-'
-  const locName = (id: string) => locations.find((l) => l.id === id)?.name || '-'
+  const patioName = (id: string) => patios.find((p) => p.id === id)?.name || '-'
+  const fmt = (v: number) => formatCurrency(v)
+  const fmtNum = (v: number) => v.toFixed(2)
+  const totalMadeira = num(form.quantity) * num(form.valor_ton_madeira)
+  const totalFrete = num(form.quantity) * num(form.valor_ton_frete)
+  const totalOutros = num(form.quantity) * num(form.outros_ton)
+  const valorTotalCarga = totalMadeira + totalFrete + totalOutros
+  const m3Estereo = num(form.quantity) * 0.9 * 3
 
   const filtered = search
     ? receipts.filter((r) => {
@@ -108,7 +115,7 @@ export default function Receipts() {
         return (
           supName(r.supplier_id).toLowerCase().includes(s) ||
           prodName(r.product_id).toLowerCase().includes(s) ||
-          locName(r.location_id).toLowerCase().includes(s) ||
+          patioName(r.patio_id).toLowerCase().includes(s) ||
           String(r.nfe_number || '')
             .toLowerCase()
             .includes(s)
@@ -135,7 +142,7 @@ export default function Receipts() {
   }
 
   const handleSave = async () => {
-    if (!form.supplier_id || !form.product_id || !form.location_id || !form.receipt_date) {
+    if (!form.supplier_id || !form.product_id || !form.patio_id || !form.receipt_date) {
       toast.error('Fornecedor, produto, patio e data sao obrigatorios')
       return
     }
@@ -143,7 +150,7 @@ export default function Receipts() {
       receipt_date: form.receipt_date,
       supplier_id: form.supplier_id,
       product_id: form.product_id,
-      location_id: form.location_id,
+      patio_id: form.patio_id,
       quantity: form.quantity ? parseFloat(form.quantity) : 0,
       unit: form.unit || 'TON',
       gross_weight: form.gross_weight ? parseFloat(form.gross_weight) : null,

@@ -710,19 +710,28 @@ export type Database = {
           id: string
           is_deleted: boolean
           location_id: string | null
+          m3_estereo: number | null
           net_weight: number | null
           nfe_number: string | null
           notes: string | null
+          outros_ton: number | null
+          patio_id: string | null
           product_id: string | null
           quantity: number | null
           receipt_date: string
           status: string | null
           supplier_id: string | null
           tare_weight: number | null
+          total_frete: number | null
+          total_madeira: number | null
+          total_outros: number | null
           tractor_vehicle_id: string | null
           trailer_vehicle_id: string | null
           trip_id: string | null
           unit: Database['public']['Enums']['logistics_default_unit'] | null
+          valor_ton_frete: number | null
+          valor_ton_madeira: number | null
+          valor_total_carga: number | null
         }
         Insert: {
           created_at?: string
@@ -731,19 +740,28 @@ export type Database = {
           id?: string
           is_deleted?: boolean
           location_id?: string | null
+          m3_estereo?: number | null
           net_weight?: number | null
           nfe_number?: string | null
           notes?: string | null
+          outros_ton?: number | null
+          patio_id?: string | null
           product_id?: string | null
           quantity?: number | null
           receipt_date: string
           status?: string | null
           supplier_id?: string | null
           tare_weight?: number | null
+          total_frete?: number | null
+          total_madeira?: number | null
+          total_outros?: number | null
           tractor_vehicle_id?: string | null
           trailer_vehicle_id?: string | null
           trip_id?: string | null
           unit?: Database['public']['Enums']['logistics_default_unit'] | null
+          valor_ton_frete?: number | null
+          valor_ton_madeira?: number | null
+          valor_total_carga?: number | null
         }
         Update: {
           created_at?: string
@@ -752,19 +770,28 @@ export type Database = {
           id?: string
           is_deleted?: boolean
           location_id?: string | null
+          m3_estereo?: number | null
           net_weight?: number | null
           nfe_number?: string | null
           notes?: string | null
+          outros_ton?: number | null
+          patio_id?: string | null
           product_id?: string | null
           quantity?: number | null
           receipt_date?: string
           status?: string | null
           supplier_id?: string | null
           tare_weight?: number | null
+          total_frete?: number | null
+          total_madeira?: number | null
+          total_outros?: number | null
           tractor_vehicle_id?: string | null
           trailer_vehicle_id?: string | null
           trip_id?: string | null
           unit?: Database['public']['Enums']['logistics_default_unit'] | null
+          valor_ton_frete?: number | null
+          valor_ton_madeira?: number | null
+          valor_total_carga?: number | null
         }
         Relationships: [
           {
@@ -779,6 +806,13 @@ export type Database = {
             columns: ['location_id']
             isOneToOne: false
             referencedRelation: 'stock_locations'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'log_receipts_patio_id_fkey'
+            columns: ['patio_id']
+            isOneToOne: false
+            referencedRelation: 'patios'
             referencedColumns: ['id']
           },
           {
@@ -1443,6 +1477,62 @@ export type Database = {
             columns: ['work_order_id']
             isOneToOne: false
             referencedRelation: 'work_orders'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      patios: {
+        Row: {
+          address: string | null
+          city: string | null
+          contact: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          is_deleted: boolean
+          name: string
+          notes: string | null
+          phone: string | null
+          state: string | null
+          stock_location_id: string | null
+          zip_code: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          contact?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_deleted?: boolean
+          name: string
+          notes?: string | null
+          phone?: string | null
+          state?: string | null
+          stock_location_id?: string | null
+          zip_code?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          contact?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_deleted?: boolean
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          state?: string | null
+          stock_location_id?: string | null
+          zip_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'patios_stock_location_id_fkey'
+            columns: ['stock_location_id']
+            isOneToOne: false
+            referencedRelation: 'stock_locations'
             referencedColumns: ['id']
           },
         ]
