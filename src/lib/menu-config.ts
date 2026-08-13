@@ -27,6 +27,7 @@ import {
   UserCheck,
   Container,
   Boxes,
+  Wallet,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -37,20 +38,30 @@ export interface MenuItemType {
   icon: LucideIcon
 }
 
-export interface MenuGroupType {
+export interface MenuSubGroupType {
+  key: string
   label: string
   items: MenuItemType[]
 }
 
+export interface MenuGroupType {
+  key: string
+  label: string
+  items: MenuItemType[]
+  subGroups?: MenuSubGroupType[]
+}
+
 export const menuGroups: MenuGroupType[] = [
   {
-    label: 'Geral',
+    key: 'no_module',
+    label: 'Sem módulo',
     items: [
       { label: 'Dashboard', path: '/', screen: 'dashboard', icon: LayoutDashboard },
       { label: 'Agendamento', path: '/agendamento', screen: 'scheduling', icon: Calendar },
     ],
   },
   {
+    key: 'maintenance',
     label: 'Manutenção',
     items: [
       { label: 'Ordens de Serviço', path: '/kanban', screen: 'kanban', icon: Wrench },
@@ -79,6 +90,7 @@ export const menuGroups: MenuGroupType[] = [
     ],
   },
   {
+    key: 'logistics',
     label: 'Logística',
     items: [
       { label: 'Viagens', path: '/viagens', screen: 'trips', icon: Truck },
@@ -95,11 +107,27 @@ export const menuGroups: MenuGroupType[] = [
       { label: 'Documentos Fiscais', path: '/cte', screen: 'freight_documents', icon: FileText },
       { label: 'Combustíveis', path: '/combustivel', screen: 'fuel', icon: Fuel },
       { label: 'Telemetria', path: '/telemetria', screen: 'telemetry', icon: Gauge },
-      { label: 'Recebimentos', path: '/recebimentos', screen: 'receipts', icon: PackageCheck },
+    ],
+    subGroups: [
+      {
+        key: 'yards',
+        label: 'Pátios',
+        items: [
+          { label: 'Recebimentos', path: '/recebimentos', screen: 'receipts', icon: PackageCheck },
+          {
+            label: 'Pagamento Fornecedores',
+            path: '/pagamentos-patio',
+            screen: 'yard_payments',
+            icon: Wallet,
+          },
+          { label: 'Dash Pátios', path: '/dash-patios', screen: 'dash_yards', icon: BarChart3 },
+        ],
+      },
     ],
   },
   {
-    label: 'Relatórios',
+    key: 'margins',
+    label: 'Margens',
     items: [
       {
         label: 'Margem por Viagem',
@@ -107,15 +135,10 @@ export const menuGroups: MenuGroupType[] = [
         screen: 'trip_margin_report',
         icon: TrendingUp,
       },
-      {
-        label: 'Resumo de Estoque',
-        path: '/relatorios/estoque',
-        screen: 'stock_report',
-        icon: BarChart3,
-      },
     ],
   },
   {
+    key: 'registrations',
     label: 'Cadastros',
     items: [
       { label: 'Veículos', path: '/veiculos', screen: 'vehicles', icon: Truck },
@@ -138,9 +161,21 @@ export const menuGroups: MenuGroupType[] = [
     ],
   },
   {
+    key: 'stock_module',
     label: 'Estoque',
-    items: [{ label: 'Estoque', path: '/estoque', screen: 'stock', icon: Boxes }],
+    items: [
+      { label: 'Estoque', path: '/estoque', screen: 'stock', icon: Boxes },
+      {
+        label: 'Resumo de Estoque',
+        path: '/relatorios/estoque',
+        screen: 'stock_report',
+        icon: BarChart3,
+      },
+    ],
   },
 ]
 
-export const menuItems: MenuItemType[] = menuGroups.flatMap((g) => g.items)
+export const menuItems: MenuItemType[] = menuGroups.flatMap((g) => [
+  ...g.items,
+  ...(g.subGroups || []).flatMap((sg) => sg.items),
+])

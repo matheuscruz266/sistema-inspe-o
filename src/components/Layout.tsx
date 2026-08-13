@@ -4,50 +4,115 @@ import { useAuth } from '@/hooks/use-auth'
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Menu, LogOut, User } from 'lucide-react'
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible'
+import { Menu, LogOut, User, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { menuGroups, menuItems } from '@/lib/menu-config'
+import { menuGroups, menuItems, type MenuItemType } from '@/lib/menu-config'
 
 export { menuItems }
+
+function NavItem({
+  item,
+  onNavigate,
+  indent,
+}: {
+  item: MenuItemType
+  onNavigate?: () => void
+  indent?: boolean
+}) {
+  const Icon = item.icon
+  return (
+    <NavLink
+      to={item.path}
+      end={item.path === '/'}
+      onClick={onNavigate}
+      className={({ isActive }) =>
+        cn(
+          'flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors',
+          indent && 'pl-7',
+          isActive
+            ? 'bg-primary text-primary-foreground'
+            : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+        )
+      }
+    >
+      <Icon className="h-4 w-4 shrink-0" />
+      <span className="truncate">{item.label}</span>
+    </NavLink>
+  )
+}
 
 function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const { canPerform, isAdmin } = useAuth()
   const hasAccess = (screen: string) => isAdmin || canPerform(screen, 'SELECT')
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
+  const toggle = (key: string) => setOpenGroups((prev) => ({ ...prev, [key]: !prev[key] }))
+  const isOpen = (key: string) => openGroups[key] !== false
 
   return (
     <ScrollArea className="h-full">
       <nav className="space-y-1 p-3">
         {menuGroups.map((group) => {
-          const visible = group.items.filter((item) => hasAccess(item.screen))
-          if (visible.length === 0) return null
+          const visible = group.items.filter((i) => hasAccess(i.screen))
+          const visibleSubs = (group.subGroups || []).filter((sg) =>
+            sg.items.some((i) => hasAccess(i.screen)),
+          )
+          if (visible.length === 0 && visibleSubs.length === 0) return null
+
           return (
-            <div key={group.label} className="mb-4">
-              <p className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            <Collapsible
+              key={group.key}
+              open={isOpen(group.key)}
+              onOpenChange={() => toggle(group.key)}
+            >
+              <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-muted">
                 {group.label}
-              </p>
-              {visible.map((item) => {
-                const Icon = item.icon
-                return (
-                  <NavLink
-                    key={item.path}
-                    to={item.path}
-                    end={item.path === '/'}
-                    onClick={onNavigate}
-                    className={({ isActive }) =>
-                      cn(
-                        'flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors',
-                        isActive
-                          ? 'bg-primary text-primary-foreground'
-                          : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-                      )
-                    }
-                  >
-                    <Icon className="h-4 w-4 shrink-0" />
-                    <span className="truncate">{item.label}</span>
-                  </NavLink>
-                )
-              })}
-            </div>
+                <ChevronDown
+                  className={cn(
+                    'h-4 w-4 transition-transform duration-200',
+                    isOpen(group.key) && 'rotate-180',
+                  )}
+                />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="mt-1 space-y-1">
+                  {visible.map((item) => (
+                    <NavItem key={item.path} item={item} onNavigate={onNavigate} />
+                  ))}
+                  {visibleSubs.map((sub) => {
+                    const subVisible = sub.items.filter((i) => hasAccess(i.screen))
+                    if (subVisible.length === 0) return null
+                    return (
+                      <Collapsible
+                        key={sub.key}
+                        open={isOpen(sub.key)}
+                        onOpenChange={() => toggle(sub.key)}
+                      >
+                        <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted">
+                          <span className="flex items-center gap-2">
+                            <span className="text-xs">↳</span>
+                            {sub.label}
+                          </span>
+                          <ChevronDown
+                            className={cn(
+                              'h-4 w-4 transition-transform duration-200',
+                              isOpen(sub.key) && 'rotate-180',
+                            )}
+                          />
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <div className="mt-1 space-y-1 border-l border-border ml-4 pl-2">
+                            {subVisible.map((item) => (
+                              <NavItem key={item.path} item={item} onNavigate={onNavigate} indent />
+                            ))}
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    )
+                  })}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
           )
         })}
       </nav>

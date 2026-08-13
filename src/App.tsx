@@ -46,6 +46,8 @@ import SalesInvoices from '@/pages/SalesInvoices'
 import FreightDocuments from '@/pages/FreightDocuments'
 import StockReport from '@/pages/StockReport'
 import TripMarginReport from '@/pages/TripMarginReport'
+import YardPayments from '@/pages/YardPayments'
+import DashYards from '@/pages/DashYards'
 
 const App = () => (
   <AuthProvider>
@@ -99,6 +101,8 @@ const App = () => (
             <Route path="/cte" element={<FreightDocuments />} />
             <Route path="/relatorios/estoque" element={<StockReport />} />
             <Route path="/relatorios/margem" element={<TripMarginReport />} />
+            <Route path="/pagamentos-patio" element={<YardPayments />} />
+            <Route path="/dash-patios" element={<DashYards />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />
