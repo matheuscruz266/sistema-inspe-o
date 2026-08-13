@@ -32,7 +32,7 @@ import {
   ClipboardList,
   Route,
   PackageOpen,
-  Road,
+  Navigation,
 } from 'lucide-react'
 
 export const menuItems = [
@@ -81,7 +81,7 @@ export const menuItems = [
     icon: FileText,
   },
   { key: 'demands', label: 'Demandas', path: '/demandas', icon: PackageOpen },
-  { key: 'trips', label: 'Viagens', path: '/viagens', icon: Road },
+  { key: 'trips', label: 'Viagens', path: '/viagens', icon: Navigation },
 ]
 
 export default function Layout() {
