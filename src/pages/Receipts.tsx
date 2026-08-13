@@ -404,7 +404,7 @@ export default function Receipts() {
 
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-2">
-                <Label>Valor por Tonelada Madeira (R$)</Label>
+                <Label className="whitespace-nowrap">Valor por Tonelada Madeira (R$)</Label>
                 <Input
                   type="number"
                   step="0.01"
@@ -413,7 +413,7 @@ export default function Receipts() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Valor por Tonelada Frete (R$)</Label>
+                <Label className="whitespace-nowrap">Valor por Tonelada Frete (R$)</Label>
                 <Input
                   type="number"
                   step="0.01"
@@ -422,7 +422,7 @@ export default function Receipts() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Outros por Tonelada (R$)</Label>
+                <Label className="whitespace-nowrap">Outros por Tonelada (R$)</Label>
                 <Input
                   type="number"
                   step="0.01"
