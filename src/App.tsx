@@ -35,6 +35,7 @@ import Locations from '@/pages/Locations'
 import AssetOwners from '@/pages/AssetOwners'
 import VehicleSets from '@/pages/VehicleSets'
 import TrailerCargoProfiles from '@/pages/TrailerCargoProfiles'
+import Patios from '@/pages/Patios'
 import RoutesPage from '@/pages/Routes'
 import CarrierContracts from '@/pages/CarrierContracts'
 import Demands from '@/pages/Demands'
@@ -91,6 +92,7 @@ const App = () => (
             <Route path="/proprietarios" element={<AssetOwners />} />
             <Route path="/conjuntos" element={<VehicleSets />} />
             <Route path="/perfis-carga-carreta" element={<TrailerCargoProfiles />} />
+            <Route path="/patios" element={<Patios />} />
             <Route path="/rotas" element={<RoutesPage />} />
             <Route path="/contratos-frete" element={<CarrierContracts />} />
             <Route path="/demandas" element={<Demands />} />

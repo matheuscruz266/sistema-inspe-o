@@ -38,11 +38,16 @@ const UNITS = [
   { label: 'M3', value: 'M3' },
 ]
 
+const num = (v: any) => {
+  const n = parseFloat(String(v ?? ''))
+  return Number.isFinite(n) ? n : 0
+}
+
 export default function Receipts() {
   const [receipts, setReceipts] = useState<any[]>([])
   const [suppliers, setSuppliers] = useState<any[]>([])
   const [products, setProducts] = useState<any[]>([])
-  const [locations, setLocations] = useState<any[]>([])
+  const [patios, setPatios] = useState<any[]>([])
   const [trips, setTrips] = useState<any[]>([])
   const [vehicles, setVehicles] = useState<any[]>([])
   const [drivers, setDrivers] = useState<any[]>([])
@@ -54,7 +59,7 @@ export default function Receipts() {
 
   const fetchData = useCallback(async () => {
     setLoading(true)
-    const [rec, sup, prod, loc, trp, veh, drv] = await Promise.all([
+    const [rec, sup, prod, pat, trp, veh, drv] = await Promise.all([
       supabase
         .from('log_receipts')
         .select('*')
@@ -66,7 +71,7 @@ export default function Receipts() {
         .eq('is_deleted', false)
         .eq('supplier_type', 'raw_material'),
       supabase.from('products').select('*').eq('is_deleted', false).order('name'),
-      supabase.from('stock_locations').select('*').eq('is_deleted', false),
+      supabase.from('patios').select('*').eq('is_deleted', false).order('name'),
       supabase
         .from('trips')
         .select('id, trip_date')
@@ -82,7 +87,7 @@ export default function Receipts() {
     setReceipts(rec.data || [])
     setSuppliers(sup.data || [])
     setProducts(prod.data || [])
-    setLocations(loc.data || [])
+    setPatios(pat.data || [])
     setTrips(trp.data || [])
     setVehicles(veh.data || [])
     setDrivers(drv.data || [])
@@ -240,7 +245,7 @@ export default function Receipts() {
                       </TableCell>
                       <TableCell className="font-medium">{supName(r.supplier_id)}</TableCell>
                       <TableCell>{prodName(r.product_id)}</TableCell>
-                      <TableCell>{locName(r.location_id)}</TableCell>
+                      <TableCell>{patioName(r.patio_id)}</TableCell>
                       <TableCell>
                         {r.quantity || '-'} {r.unit || ''}
                       </TableCell>
@@ -343,21 +348,19 @@ export default function Receipts() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Patio *</Label>
+                <Label>Pátio *</Label>
                 <Select
-                  value={form.location_id || '__none__'}
-                  onValueChange={(v) =>
-                    setForm({ ...form, location_id: v === '__none__' ? null : v })
-                  }
+                  value={form.patio_id || '__none__'}
+                  onValueChange={(v) => setForm({ ...form, patio_id: v === '__none__' ? null : v })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="__none__">--</SelectItem>
-                    {locations.map((l) => (
-                      <SelectItem key={l.id} value={l.id}>
-                        {l.name}
+                    {patios.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -394,30 +397,69 @@ export default function Receipts() {
 
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-2">
-                <Label>Peso Bruto</Label>
+                <Label>Valor por Tonelada Madeira (R$)</Label>
                 <Input
                   type="number"
-                  step="0.001"
-                  value={form.gross_weight || ''}
-                  onChange={(e) => setForm({ ...form, gross_weight: e.target.value })}
+                  step="0.01"
+                  value={form.valor_ton_madeira ?? ''}
+                  onChange={(e) => setForm({ ...form, valor_ton_madeira: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
-                <Label>Tara</Label>
+                <Label>Valor por Tonelada Frete (R$)</Label>
                 <Input
                   type="number"
-                  step="0.001"
-                  value={form.tare_weight || ''}
-                  onChange={(e) => setForm({ ...form, tare_weight: e.target.value })}
+                  step="0.01"
+                  value={form.valor_ton_frete ?? ''}
+                  onChange={(e) => setForm({ ...form, valor_ton_frete: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
-                <Label>Peso Liquido</Label>
+                <Label>Outros por Tonelada (R$)</Label>
                 <Input
                   type="number"
-                  step="0.001"
-                  value={form.net_weight || ''}
-                  onChange={(e) => setForm({ ...form, net_weight: e.target.value })}
+                  step="0.01"
+                  value={form.outros_ton ?? ''}
+                  onChange={(e) => setForm({ ...form, outros_ton: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Total Madeira (R$)</Label>
+                <Input
+                  readOnly
+                  value={fmt(totalMadeira)}
+                  className="bg-muted text-muted-foreground"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Total Frete (R$)</Label>
+                <Input
+                  readOnly
+                  value={fmt(totalFrete)}
+                  className="bg-muted text-muted-foreground"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Total Outros (R$)</Label>
+                <Input
+                  readOnly
+                  value={fmt(totalOutros)}
+                  className="bg-muted text-muted-foreground"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Valor Total da Carga (R$)</Label>
+                <Input readOnly value={fmt(valorTotalCarga)} className="bg-muted font-semibold" />
+              </div>
+              <div className="space-y-2">
+                <Label>M³ Estéreo</Label>
+                <Input
+                  readOnly
+                  value={fmtNum(m3Estereo)}
+                  className="bg-muted text-muted-foreground"
                 />
               </div>
             </div>
@@ -456,27 +498,6 @@ export default function Receipts() {
                   value={form.tractor_vehicle_id || '__none__'}
                   onValueChange={(v) =>
                     setForm({ ...form, tractor_vehicle_id: v === '__none__' ? null : v })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">--</SelectItem>
-                    {vehicles.map((v) => (
-                      <SelectItem key={v.id} value={v.id}>
-                        {v.plate}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Carreta (opcional)</Label>
-                <Select
-                  value={form.trailer_vehicle_id || '__none__'}
-                  onValueChange={(v) =>
-                    setForm({ ...form, trailer_vehicle_id: v === '__none__' ? null : v })
                   }
                 >
                   <SelectTrigger>

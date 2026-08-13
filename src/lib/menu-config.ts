@@ -158,6 +158,7 @@ export const menuGroups: MenuGroupType[] = [
         screen: 'trailer_cargo_profiles',
         icon: Container,
       },
+      { label: 'Pátios', path: '/patios', screen: 'patios', icon: MapPin },
     ],
   },
   {

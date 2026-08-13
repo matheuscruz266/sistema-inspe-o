@@ -122,6 +122,7 @@ export const PERMISSION_TREE: TreeNode[] = [
       { key: 'locations', label: '8º Locais' },
       { key: 'asset_owners', label: '9º Proprietários' },
       { key: 'trailer_cargo_profiles', label: '10º Perfis de Carga' },
+      { key: 'patios', label: '11º Pátios' },
     ],
   },
   {
