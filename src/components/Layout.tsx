@@ -31,7 +31,6 @@ import {
   Shuffle,
   ClipboardList,
   Route,
-  ClipboardList,
   PackageOpen,
   Road,
 } from 'lucide-react'

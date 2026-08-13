@@ -193,7 +193,9 @@ export default function Trips() {
           driverName(i.driver_id).toLowerCase().includes(s) ||
           clientName(i.destination_client_id).toLowerCase().includes(s) ||
           locName(i.origin_location_id).toLowerCase().includes(s) ||
-          String(i.nfe_number || '').toLowerCase().includes(s) ||
+          String(i.nfe_number || '')
+            .toLowerCase()
+            .includes(s) ||
           statusLabel(i.status).toLowerCase().includes(s)
         )
       })
@@ -301,7 +303,7 @@ export default function Trips() {
             <TableRow>
               <TableHead>Data</TableHead>
               <TableHead>Cavalo</TableHead>
-              <TableHead>Motorista</TableTableHead>
+              <TableHead>Motorista</TableHead>
               <TableHead>Origem</TableHead>
               <TableHead>Destino</TableHead>
               <TableHead>Status</TableHead>
@@ -369,7 +371,8 @@ export default function Trips() {
           <div className="grid gap-4 py-4">
             {vehicles.length === 0 && (
               <p className="text-sm text-amber-600 bg-amber-50 dark:bg-amber-950/30 rounded p-3">
-                Nenhum veículo cadastrado. Acesse a tela de Veículos para criar um registro primeiro.
+                Nenhum veículo cadastrado. Acesse a tela de Veículos para criar um registro
+                primeiro.
               </p>
             )}
             {drivers.length === 0 && (
@@ -380,7 +383,8 @@ export default function Trips() {
             )}
             {clients.length === 0 && (
               <p className="text-sm text-amber-600 bg-amber-50 dark:bg-amber-950/30 rounded p-3">
-                Nenhum cliente cadastrado. Acesse a tela de Clientes para criar um registro primeiro.
+                Nenhum cliente cadastrado. Acesse a tela de Clientes para criar um registro
+                primeiro.
               </p>
             )}
             {locations.length === 0 && (
@@ -390,7 +394,8 @@ export default function Trips() {
             )}
             {products.length === 0 && (
               <p className="text-sm text-amber-600 bg-amber-50 dark:bg-amber-950/30 rounded p-3">
-                Nenhum produto cadastrado. Acesse a tela de Produtos para criar um registro primeiro.
+                Nenhum produto cadastrado. Acesse a tela de Produtos para criar um registro
+                primeiro.
               </p>
             )}
 
@@ -618,9 +623,7 @@ export default function Trips() {
                   type="number"
                   step="0.1"
                   value={form.sale_volume_m3 || ''}
-                  onChange={(e) =>
-                    handleWeightOrVolumeChange('sale_volume_m3', e.target.value)
-                  }
+                  onChange={(e) => handleWeightOrVolumeChange('sale_volume_m3', e.target.value)}
                 />
               </div>
               <div className="space-y-2">
@@ -694,9 +697,7 @@ export default function Trips() {
                   type="number"
                   step="0.01"
                   value={form.calculated_freight_value || ''}
-                  onChange={(e) =>
-                    setForm({ ...form, calculated_freight_value: e.target.value })
-                  }
+                  onChange={(e) => setForm({ ...form, calculated_freight_value: e.target.value })}
                   placeholder="0,00"
                 />
                 {selectedRoute && (
