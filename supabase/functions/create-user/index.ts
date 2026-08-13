@@ -55,6 +55,18 @@ Deno.serve(async (req: Request) => {
       .single()
 
     if (profileError || !callerProfile) {
+      console.error('[create-user] Falha ao carregar perfil do chamador:', {
+        callerEmail: user.email,
+        profileError: profileError
+          ? {
+              name: profileError.name,
+              message: profileError.message,
+              code: (profileError as { code?: string }).code,
+              details: profileError,
+            }
+          : null,
+        callerProfile,
+      })
       return new Response(JSON.stringify({ error: 'Acesso negado. Usuário não encontrado.' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -62,6 +74,10 @@ Deno.serve(async (req: Request) => {
     }
 
     if (callerProfile.is_deleted) {
+      console.error('[create-user] Chamador desativado:', {
+        callerEmail: user.email,
+        callerId: callerProfile.id,
+      })
       return new Response(JSON.stringify({ error: 'Acesso negado. Usuário desativado.' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -70,6 +86,10 @@ Deno.serve(async (req: Request) => {
 
     const accessLevel = callerProfile.access_levels as Record<string, unknown> | null
     if (!accessLevel || accessLevel.is_active === false || accessLevel.is_deleted === true) {
+      console.error('[create-user] Nível de acesso inativo para o chamador:', {
+        callerEmail: user.email,
+        accessLevel,
+      })
       return new Response(JSON.stringify({ error: 'Acesso negado. Nível de acesso inativo.' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -127,14 +147,31 @@ Deno.serve(async (req: Request) => {
     // acesso do chamador de forma centralizada (SECURITY DEFINER).
     let isAdminByRpc = false
     try {
-      const { data: isAdminData } = await callerClient.rpc('is_admin')
+      const { data: isAdminData, error: isAdminError } = await callerClient.rpc('is_admin')
+      if (isAdminError) {
+        console.error('[create-user] Erro na RPC is_admin():', {
+          message: isAdminError.message,
+          code: (isAdminError as { code?: string }).code,
+        })
+      }
       isAdminByRpc = isAdminData === true
-    } catch {
-      // Se a RPC falhar, mantém apenas o critério da árvore de permissões.
+    } catch (err) {
+      console.error('[create-user] Exceção ao chamar is_admin():', err)
     }
     isAdmin = isAdmin || isAdminByRpc
 
     if (!isAdmin) {
+      console.error('[create-user] Acesso negado — chamador não é admin:', {
+        callerEmail: user.email,
+        isAdminByTree: screenHasAnyOperation(
+          (screensRaw && typeof screensRaw === 'object' ? screensRaw : {}) as Record<
+            string,
+            unknown
+          >,
+          'access_levels',
+        ),
+        isAdminByRpc,
+      })
       return new Response(
         JSON.stringify({ error: 'Acesso negado. Apenas administradores podem criar usuários.' }),
         { status: 403, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
@@ -158,6 +195,8 @@ Deno.serve(async (req: Request) => {
       })
     }
 
+    console.log('[create-user] Criando auth user:', { email, name })
+
     const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
       email,
       password,
@@ -166,6 +205,11 @@ Deno.serve(async (req: Request) => {
     })
 
     if (authError) {
+      console.error('[create-user] Erro ao criar auth user:', {
+        email,
+        name: authError.name,
+        message: authError.message,
+      })
       let message = authError.message
       if (
         message.includes('already') ||
@@ -182,26 +226,12 @@ Deno.serve(async (req: Request) => {
       })
     }
 
-    // Ensure token columns are '' (never NULL) and phone is NULL (never '')
-    // This prevents GoTrue HTTP 500 errors on subsequent auth operations
-    await adminClient
-      .rpc('exec_sql', {
-        sql_query: `UPDATE auth.users SET
-        confirmation_token = COALESCE(confirmation_token, ''),
-        recovery_token = COALESCE(recovery_token, ''),
-        email_change_token_new = COALESCE(email_change_token_new, ''),
-        email_change = COALESCE(email_change, ''),
-        email_change_token_current = COALESCE(email_change_token_current, ''),
-        phone_change = COALESCE(phone_change, ''),
-        phone_change_token = COALESCE(phone_change_token, ''),
-        reauthentication_token = COALESCE(reauthentication_token, ''),
-        phone = NULLIF(phone, '')
-      WHERE id = '${authData.user.id}'::uuid;`,
-      })
-      .catch(() => {
-        // If exec_sql RPC is not available, try direct update via from() won't work for auth.users
-        // The migration handles this, so we swallow the error
-      })
+    console.log('[create-user] Auth user criado, inserindo em app_users:', {
+      authUserId: authData.user.id,
+      email,
+      name,
+      access_level_id: access_level_id || null,
+    })
 
     const { error: dbError } = await adminClient.from('app_users').insert({
       id: authData.user.id,
@@ -213,18 +243,85 @@ Deno.serve(async (req: Request) => {
     })
 
     if (dbError) {
-      await adminClient.auth.admin.deleteUser(authData.user.id)
-      return new Response(JSON.stringify({ error: 'Erro ao salvar perfil: ' + dbError.message }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      // Log DETALHADO do erro real da inserção em app_users, ANTES de qualquer
+      // tentativa de rollback. É este erro que precisamos para diagnosticar.
+      console.error('[create-user] ERRO ao inserir em app_users:', {
+        authUserId: authData.user.id,
+        email,
+        name,
+        access_level_id: access_level_id || null,
+        dbError: {
+          name: dbError.name,
+          message: dbError.message,
+          code: (dbError as { code?: string }).code,
+          details: (dbError as { details?: unknown }).details,
+          hint: (dbError as { hint?: unknown }).hint,
+          full: dbError,
+        },
       })
+
+      // Tenta desfazer a criação do auth user para evitar órfão, mas de forma
+      // blindada: se o deleteUser falhar, não queremos mascarar o erro real da
+      // inserção. Capturamos qualquer exceção e apenas logamos.
+      try {
+        const { error: deleteError } = await adminClient.auth.admin.deleteUser(authData.user.id)
+        if (deleteError) {
+          console.error('[create-user] Falha ao deletar auth user após erro de inserção:', {
+            authUserId: authData.user.id,
+            email,
+            deleteError: {
+              name: deleteError.name,
+              message: deleteError.message,
+              code: (deleteError as { code?: string }).code,
+            },
+          })
+        } else {
+          console.log('[create-user] Auth user removido com sucesso após erro de inserção:', {
+            authUserId: authData.user.id,
+            email,
+          })
+        }
+      } catch (deleteException) {
+        console.error('[create-user] Exceção ao deletar auth user após erro de inserção:', {
+          authUserId: authData.user.id,
+          email,
+          deleteException:
+            deleteException instanceof Error
+              ? {
+                  name: deleteException.name,
+                  message: deleteException.message,
+                  stack: deleteException.stack,
+                }
+              : String(deleteException),
+        })
+      }
+
+      // Retorna SEMPRE o erro real da inserção, nunca um erro genérico.
+      return new Response(
+        JSON.stringify({
+          error: 'Erro ao salvar perfil: ' + dbError.message,
+          code: (dbError as { code?: string }).code,
+        }),
+        { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
+      )
     }
+
+    console.log('[create-user] app_users inserido com sucesso:', {
+      authUserId: authData.user.id,
+      email,
+    })
 
     return new Response(JSON.stringify({ data: { id: authData.user.id, email, name } }), {
       status: 200,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     })
   } catch (err) {
+    console.error(
+      '[create-user] Erro interno não tratado:',
+      err instanceof Error
+        ? { name: err.name, message: err.message, stack: err.stack }
+        : String(err),
+    )
     const message = err instanceof Error ? err.message : 'desconhecido'
     return new Response(JSON.stringify({ error: 'Erro interno: ' + message }), {
       status: 500,
