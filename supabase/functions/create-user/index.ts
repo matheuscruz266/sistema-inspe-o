@@ -78,21 +78,49 @@ Deno.serve(async (req: Request) => {
 
     const permissions = (accessLevel.permissions || {}) as Record<string, unknown>
     const screensRaw = permissions.screens
+
+    // Permissions may be a flat object (`{ users: { SELECT: true } }`) or a
+    // cascading/nested structure where screens are grouped under modules
+    // (`{ Cadastros: { users: { SELECT: true } } }`). We traverse the tree
+    // recursively to find the `access_levels` and `users` screens.
+    const OPERATION_KEYS = ['SELECT', 'INSERT', 'UPDATE', 'DELETE']
+    const isScreenNode = (value: unknown): boolean => {
+      if (typeof value === 'boolean') return true
+      if (value && typeof value === 'object') {
+        const o = value as Record<string, unknown>
+        return OPERATION_KEYS.some((k) => k in o)
+      }
+      return false
+    }
+    const findScreen = (node: Record<string, unknown>, screen: string): unknown => {
+      for (const [key, value] of Object.entries(node)) {
+        if (key === screen && isScreenNode(value)) return value
+        if (value && typeof value === 'object' && !isScreenNode(value)) {
+          const found = findScreen(value as Record<string, unknown>, screen)
+          if (found !== undefined) return found
+        }
+      }
+      return undefined
+    }
+    const screenHasAnyOperation = (node: Record<string, unknown>, screen: string): boolean => {
+      const ops = findScreen(node, screen)
+      if (ops === undefined) return false
+      if (typeof ops === 'boolean') return ops
+      if (ops && typeof ops === 'object') {
+        const o = ops as Record<string, boolean>
+        return o.SELECT === true || o.INSERT === true || o.UPDATE === true || o.DELETE === true
+      }
+      return false
+    }
+
     let isAdmin = false
     if (Array.isArray(screensRaw)) {
       const arr = screensRaw as string[]
       isAdmin = arr.includes('access_levels') || arr.includes('users')
     } else if (screensRaw && typeof screensRaw === 'object') {
-      const checkScreen = (screen: string): boolean => {
-        const ops = (screensRaw as Record<string, unknown>)[screen]
-        if (typeof ops === 'boolean') return ops
-        if (ops && typeof ops === 'object') {
-          const o = ops as Record<string, boolean>
-          return o.SELECT === true || o.INSERT === true || o.UPDATE === true || o.DELETE === true
-        }
-        return false
-      }
-      isAdmin = checkScreen('access_levels') || checkScreen('users')
+      const screens = screensRaw as Record<string, unknown>
+      isAdmin =
+        screenHasAnyOperation(screens, 'access_levels') || screenHasAnyOperation(screens, 'users')
     }
 
     if (!isAdmin) {
