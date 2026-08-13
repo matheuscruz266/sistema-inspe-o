@@ -9,9 +9,9 @@ interface KanbanBoardProps {
 
 const COLUMNS = [
   { id: 'O.S Motorista', label: 'O.S Motorista' },
+  { id: 'O.S Mecânico', label: 'O.S Mecânico' },
   { id: 'O.S PCM', label: 'O.S PCM' },
   { id: 'Finalizado', label: 'Finalizado' },
-  { id: 'O.S Mecânico', label: 'O.S Mecânico' },
 ]
 
 export function KanbanBoard({ items, onMove, onCardClick }: KanbanBoardProps) {

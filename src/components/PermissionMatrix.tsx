@@ -22,6 +22,7 @@ export const AVAILABLE_SCREENS = [
   { key: 'users', label: 'Usuários' },
   { key: 'components', label: 'Componentes' },
   { key: 'suppliers', label: 'Fornecedores' },
+  { key: 'clients', label: 'Clientes' },
   { key: 'service_catalog', label: 'Serviços' },
   { key: 'history', label: 'Histórico' },
   { key: 'kanban', label: 'Kanban' },

@@ -85,7 +85,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     ? (rawScreens as string[])
     : rawScreens && typeof rawScreens === 'object'
       ? Object.entries(rawScreens)
-          .filter(([, ops]: [string, any]) => ops?.SELECT === true)
+          .filter(([, ops]: [string, any]) => {
+            if (typeof ops === 'boolean') return ops
+            return (
+              ops?.SELECT === true ||
+              ops?.INSERT === true ||
+              ops?.UPDATE === true ||
+              ops?.DELETE === true
+            )
+          })
           .map(([key]: [string, any]) => key)
       : null
   const isAdmin = !!permissions?.includes('access_levels') || !!permissions?.includes('users')

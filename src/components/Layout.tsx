@@ -71,7 +71,7 @@ export const menuItems: MenuEntry[] = [
     label: 'Manutenção',
     icon: Settings,
     children: [
-      { key: 'kanban', label: '1º Kanban', path: '/kanban', icon: LayoutGrid },
+      { key: 'kanban', label: '1º Ordens de Serviço', path: '/kanban', icon: LayoutGrid },
       {
         key: 'dash_maintenance',
         label: '2º Dash Manutenção',
@@ -92,6 +92,7 @@ export const menuItems: MenuEntry[] = [
         icon: Wrench,
       },
       { key: 'service_catalog', label: '6º Serviços', path: '/servicos', icon: ListChecks },
+      { key: 'components', label: '7º Componentes', path: '/componentes', icon: Layers },
     ],
   },
   { key: 'scheduling', label: 'Agendamento', path: '/agendamento', icon: Calendar },
@@ -101,7 +102,6 @@ export const menuItems: MenuEntry[] = [
   { key: 'people', label: 'Pessoas', path: '/pessoas', icon: Users },
   { key: 'access_levels', label: 'Níveis de Acesso', path: '/niveis-acesso', icon: Shield },
   { key: 'users', label: 'Usuários', path: '/usuarios', icon: UserPlus },
-  { key: 'components', label: 'Componentes', path: '/componentes', icon: Layers },
   { key: 'suppliers', label: 'Fornecedores', path: '/fornecedores', icon: Building2 },
   { key: 'history', label: 'Histórico', path: '/historico', icon: History },
   { key: 'clients', label: 'Clientes', path: '/clientes', icon: Store },
