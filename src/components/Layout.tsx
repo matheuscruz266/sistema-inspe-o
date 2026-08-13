@@ -3,6 +3,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom'
 import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible'
 import { cn } from '@/lib/utils'
 import {
   LayoutDashboard,
@@ -39,27 +40,60 @@ import {
   Receipt,
   BarChart3,
   TrendingUp,
+  ChevronDown,
+  Settings,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 
-export const menuItems = [
+interface MenuItem {
+  key: string
+  label: string
+  path: string
+  icon: LucideIcon
+}
+
+interface MenuGroup {
+  key: string
+  label: string
+  icon: LucideIcon
+  children: MenuItem[]
+}
+
+type MenuEntry = MenuItem | MenuGroup
+
+const isGroup = (entry: MenuEntry): entry is MenuGroup => 'children' in entry
+
+export const menuItems: MenuEntry[] = [
   { key: 'dashboard', label: 'Dashboard', path: '/', icon: LayoutDashboard },
   { key: 'vehicles', label: 'Veículos', path: '/veiculos', icon: Truck },
-  { key: 'kanban', label: '1º Kanban', path: '/kanban', icon: LayoutGrid },
-  { key: 'dash_maintenance', label: '2º Dash Manutenção', path: '/dash-manutencao', icon: Gauge },
-  { key: 'entries', label: '3º Lançamentos', path: '/lancamentos', icon: FileText },
   {
-    key: 'inspection_plans',
-    label: '4º Plano de Inspeção',
-    path: '/planos-inspecao',
-    icon: ClipboardCheck,
+    key: 'maintenance',
+    label: 'Manutenção',
+    icon: Settings,
+    children: [
+      { key: 'kanban', label: '1º Kanban', path: '/kanban', icon: LayoutGrid },
+      {
+        key: 'dash_maintenance',
+        label: '2º Dash Manutenção',
+        path: '/dash-manutencao',
+        icon: Gauge,
+      },
+      { key: 'entries', label: '3º Lançamentos', path: '/lancamentos', icon: FileText },
+      {
+        key: 'inspection_plans',
+        label: '4º Plano de Inspeção',
+        path: '/planos-inspecao',
+        icon: ClipboardCheck,
+      },
+      {
+        key: 'maintenance_plans',
+        label: '5º Plano de Manutenção',
+        path: '/planos-manutencao',
+        icon: Wrench,
+      },
+      { key: 'service_catalog', label: '6º Serviços', path: '/servicos', icon: ListChecks },
+    ],
   },
-  {
-    key: 'maintenance_plans',
-    label: '5º Plano de Manutenção',
-    path: '/planos-manutencao',
-    icon: Wrench,
-  },
-  { key: 'service_catalog', label: '6º Serviços', path: '/servicos', icon: ListChecks },
   { key: 'scheduling', label: 'Agendamento', path: '/agendamento', icon: Calendar },
   { key: 'stock', label: 'Estoque', path: '/estoque', icon: Package },
   { key: 'receipts', label: 'Recebimentos', path: '/recebimentos', icon: Warehouse },
@@ -107,35 +141,56 @@ export default function Layout() {
   const { profile, permissions, signOut } = useAuth()
   const location = useLocation()
 
-  const visibleItems = permissions
-    ? menuItems.filter((item) => permissions.includes(item.key))
-    : menuItems
+  const hasAccess = (key: string) => !permissions || permissions.includes(key)
+
+  const visibleEntries = menuItems.filter((entry) => {
+    if (isGroup(entry)) return entry.children.some((c) => hasAccess(c.key))
+    return hasAccess(entry.key)
+  })
 
   const handleSignOut = async () => {
     await signOut()
     window.location.href = '/login'
   }
 
+  const renderLink = (item: MenuItem, onNavigate: () => void) => {
+    const Icon = item.icon
+    const isActive = location.pathname === item.path
+    return (
+      <Link
+        key={item.key}
+        to={item.path}
+        onClick={onNavigate}
+        className={cn(
+          'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+          isActive
+            ? 'bg-primary text-primary-foreground'
+            : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+        )}
+      >
+        <Icon className="h-4 w-4 shrink-0" />
+        {item.label}
+      </Link>
+    )
+  }
+
   const NavLinks = () => (
     <nav className="flex flex-col gap-1 px-3 py-4">
-      {visibleItems.map((item) => {
-        const Icon = item.icon
-        const isActive = location.pathname === item.path
+      {visibleEntries.map((entry) => {
+        if (!isGroup(entry)) return renderLink(entry, () => setOpen(false))
+
+        const visibleChildren = entry.children.filter((c) => hasAccess(c.key))
+        const hasActiveChild = visibleChildren.some((c) => c.path === location.pathname)
+
         return (
-          <Link
-            key={item.key}
-            to={item.path}
-            onClick={() => setOpen(false)}
-            className={cn(
-              'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-              isActive
-                ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-            )}
-          >
-            <Icon className="h-5 w-5 shrink-0" />
-            {item.label}
-          </Link>
+          <CollapsibleGroup
+            key={entry.key}
+            entry={entry}
+            defaultOpen={hasActiveChild}
+            hasActiveChild={hasActiveChild}
+            onNavigate={() => setOpen(false)}
+            renderLink={renderLink}
+          />
         )
       })}
     </nav>
@@ -200,5 +255,49 @@ export default function Layout() {
         </main>
       </div>
     </div>
+  )
+}
+
+interface CollapsibleGroupProps {
+  entry: MenuGroup
+  defaultOpen: boolean
+  hasActiveChild: boolean
+  onNavigate: () => void
+  renderLink: (item: MenuItem, onNavigate: () => void) => React.ReactNode
+}
+
+function CollapsibleGroup({
+  entry,
+  defaultOpen,
+  hasActiveChild,
+  onNavigate,
+  renderLink,
+}: CollapsibleGroupProps) {
+  const [isOpen, setIsOpen] = useState(defaultOpen)
+  const GroupIcon = entry.icon
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <CollapsibleTrigger
+        className={cn(
+          'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+          hasActiveChild && !isOpen
+            ? 'text-foreground bg-muted/60'
+            : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+        )}
+      >
+        <GroupIcon className="h-5 w-5 shrink-0" />
+        <span className="flex-1 text-left">{entry.label}</span>
+        <ChevronDown
+          className={cn(
+            'h-4 w-4 shrink-0 transition-transform duration-200',
+            isOpen && 'rotate-180',
+          )}
+        />
+      </CollapsibleTrigger>
+      <CollapsibleContent className="flex flex-col gap-1 mt-1 ml-3 pl-3 border-l">
+        {entry.children.filter((c) => !c.key || true).map((child) => renderLink(child, onNavigate))}
+      </CollapsibleContent>
+    </Collapsible>
   )
 }
