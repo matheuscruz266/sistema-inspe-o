@@ -14,7 +14,6 @@ import {
   Calendar,
   Package,
   Boxes,
-  UserCog,
   Users,
   Shield,
   UserPlus,
@@ -42,6 +41,8 @@ import {
   TrendingUp,
   ChevronDown,
   Settings,
+  Database,
+  CreditCard,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -51,21 +52,26 @@ interface MenuItem {
   path: string
   icon: LucideIcon
 }
-
-interface MenuGroup {
+interface MenuSubGroup {
   key: string
   label: string
   icon: LucideIcon
   children: MenuItem[]
 }
-
+interface MenuGroup {
+  key: string
+  label: string
+  icon: LucideIcon
+  children: (MenuItem | MenuSubGroup)[]
+}
 type MenuEntry = MenuItem | MenuGroup
 
 const isGroup = (entry: MenuEntry): entry is MenuGroup => 'children' in entry
+const isSubGroup = (child: MenuItem | MenuSubGroup): child is MenuSubGroup => 'children' in child
 
 export const menuItems: MenuEntry[] = [
   { key: 'dashboard', label: 'Dashboard', path: '/', icon: LayoutDashboard },
-  { key: 'vehicles', label: 'Veículos', path: '/veiculos', icon: Truck },
+  { key: 'scheduling', label: 'Agendamento', path: '/agendamento', icon: Calendar },
   {
     key: 'maintenance',
     label: 'Manutenção',
@@ -93,46 +99,93 @@ export const menuItems: MenuEntry[] = [
       },
       { key: 'service_catalog', label: '6º Serviços', path: '/servicos', icon: ListChecks },
       { key: 'components', label: '7º Componentes', path: '/componentes', icon: Layers },
+      { key: 'history', label: '8º Histórico', path: '/historico', icon: History },
     ],
   },
-  { key: 'scheduling', label: 'Agendamento', path: '/agendamento', icon: Calendar },
-  { key: 'stock', label: 'Estoque', path: '/estoque', icon: Package },
-  { key: 'receipts', label: 'Recebimentos', path: '/recebimentos', icon: Warehouse },
-  { key: 'products', label: 'Produtos', path: '/produtos', icon: Boxes },
-  { key: 'people', label: 'Pessoas', path: '/pessoas', icon: Users },
-  { key: 'access_levels', label: 'Níveis de Acesso', path: '/niveis-acesso', icon: Shield },
-  { key: 'users', label: 'Usuários', path: '/usuarios', icon: UserPlus },
-  { key: 'suppliers', label: 'Fornecedores', path: '/fornecedores', icon: Building2 },
-  { key: 'history', label: 'Histórico', path: '/historico', icon: History },
-  { key: 'clients', label: 'Clientes', path: '/clientes', icon: Store },
-  { key: 'locations', label: 'Locais', path: '/locais', icon: MapPin },
-  { key: 'asset_owners', label: 'Proprietários', path: '/proprietarios', icon: Landmark },
-  { key: 'vehicle_sets', label: 'Conjuntos', path: '/conjuntos', icon: Shuffle },
   {
-    key: 'trailer_cargo_profiles',
-    label: 'Perfis de Carga',
-    path: '/perfis-carga-carreta',
-    icon: ClipboardList,
+    key: 'logistics',
+    label: 'Logística',
+    icon: Navigation,
+    children: [
+      { key: 'trips', label: '1º Viagens', path: '/viagens', icon: Navigation },
+      { key: 'demands', label: '2º Demandas', path: '/demandas', icon: PackageOpen },
+      { key: 'clients', label: '3º Clientes', path: '/clientes', icon: Store },
+      { key: 'routes', label: '4º Rotas', path: '/rotas', icon: Route },
+      {
+        key: 'carrier_contracts',
+        label: '5º Contratos de Frete',
+        path: '/contratos-frete',
+        icon: FileText,
+      },
+      { key: 'sales_invoices', label: '6º Notas', path: '/notas-fiscais', icon: FileText },
+      { key: 'freight_documents', label: '7º Documentos Fiscais', path: '/cte', icon: Receipt },
+      { key: 'fuel', label: '8º Combustíveis', path: '/combustivel', icon: Fuel },
+      { key: 'telemetry', label: '9º Telemetria', path: '/telemetria', icon: Activity },
+      {
+        key: 'yards',
+        label: 'Pátios',
+        icon: Warehouse,
+        children: [
+          { key: 'receipts', label: '1º Recebimentos', path: '/recebimentos', icon: Warehouse },
+          {
+            key: 'yard_payments',
+            label: '2º Pagamento Fornecedores',
+            path: '/pagamento-fornecedores-patios',
+            icon: CreditCard,
+          },
+          { key: 'dash_yards', label: '3º Dash Pátios', path: '/dash-patios', icon: BarChart3 },
+        ],
+      },
+    ],
   },
-  { key: 'routes', label: 'Rotas', path: '/rotas', icon: Route },
   {
-    key: 'carrier_contracts',
-    label: 'Contratos de Frete',
-    path: '/contratos-frete',
-    icon: FileText,
-  },
-  { key: 'demands', label: 'Demandas', path: '/demandas', icon: PackageOpen },
-  { key: 'trips', label: 'Viagens', path: '/viagens', icon: Navigation },
-  { key: 'fuel', label: 'Combustível', path: '/combustivel', icon: Fuel },
-  { key: 'telemetry', label: 'Telemetria', path: '/telemetria', icon: Activity },
-  { key: 'sales_invoices', label: 'Notas Fiscais', path: '/notas-fiscais', icon: FileText },
-  { key: 'freight_documents', label: 'Documentos Fiscais', path: '/cte', icon: Receipt },
-  { key: 'stock_report', label: 'Resumo de Estoque', path: '/relatorios/estoque', icon: BarChart3 },
-  {
-    key: 'trip_margin_report',
-    label: 'Margem por Viagem',
-    path: '/relatorios/margem',
+    key: 'margins',
+    label: 'Margens',
     icon: TrendingUp,
+    children: [
+      {
+        key: 'trip_margin_report',
+        label: '1º Margem por Viagem',
+        path: '/relatorios/margem',
+        icon: TrendingUp,
+      },
+    ],
+  },
+  {
+    key: 'registrations',
+    label: 'Cadastros',
+    icon: Database,
+    children: [
+      { key: 'vehicles', label: '1º Veículos', path: '/veiculos', icon: Truck },
+      { key: 'vehicle_sets', label: '2º Conjuntos', path: '/conjuntos', icon: Shuffle },
+      { key: 'products', label: '3º Produtos', path: '/produtos', icon: Boxes },
+      { key: 'people', label: '4º Pessoas', path: '/pessoas', icon: Users },
+      { key: 'suppliers', label: '5º Fornecedores', path: '/fornecedores', icon: Building2 },
+      { key: 'users', label: '6º Usuários', path: '/usuarios', icon: UserPlus },
+      { key: 'access_levels', label: '7º Níveis de Acesso', path: '/niveis-acesso', icon: Shield },
+      { key: 'locations', label: '8º Locais', path: '/locais', icon: MapPin },
+      { key: 'asset_owners', label: '9º Proprietários', path: '/proprietarios', icon: Landmark },
+      {
+        key: 'trailer_cargo_profiles',
+        label: '10º Perfis de Carga',
+        path: '/perfis-carga-carreta',
+        icon: ClipboardList,
+      },
+    ],
+  },
+  {
+    key: 'stock_module',
+    label: 'Estoque',
+    icon: Package,
+    children: [
+      { key: 'stock', label: '1º Estoque', path: '/estoque', icon: Package },
+      {
+        key: 'stock_report',
+        label: '2º Resumo de Estoque',
+        path: '/relatorios/estoque',
+        icon: BarChart3,
+      },
+    ],
   },
 ]
 
@@ -144,7 +197,10 @@ export default function Layout() {
   const hasAccess = (key: string) => !permissions || permissions.includes(key)
 
   const visibleEntries = menuItems.filter((entry) => {
-    if (isGroup(entry)) return entry.children.some((c) => hasAccess(c.key))
+    if (isGroup(entry))
+      return entry.children.some((c) =>
+        isSubGroup(c) ? c.children.some((sc) => hasAccess(sc.key)) : hasAccess(c.key),
+      )
     return hasAccess(entry.key)
   })
 
@@ -178,18 +234,24 @@ export default function Layout() {
     <nav className="flex flex-col gap-1 px-3 py-4">
       {visibleEntries.map((entry) => {
         if (!isGroup(entry)) return renderLink(entry, () => setOpen(false))
-
-        const visibleChildren = entry.children.filter((c) => hasAccess(c.key))
-        const hasActiveChild = visibleChildren.some((c) => c.path === location.pathname)
-
+        const visibleChildren = entry.children.filter((c) =>
+          isSubGroup(c) ? c.children.some((sc) => hasAccess(sc.key)) : hasAccess(c.key),
+        )
+        const hasActiveChild = visibleChildren.some((c) =>
+          isSubGroup(c)
+            ? c.children.some((sc) => sc.path === location.pathname)
+            : c.path === location.pathname,
+        )
         return (
           <CollapsibleGroup
             key={entry.key}
-            entry={entry}
+            entry={{ ...entry, children: visibleChildren }}
             defaultOpen={hasActiveChild}
             hasActiveChild={hasActiveChild}
             onNavigate={() => setOpen(false)}
             renderLink={renderLink}
+            hasAccess={hasAccess}
+            pathname={location.pathname}
           />
         )
       })}
@@ -226,7 +288,6 @@ export default function Layout() {
         </div>
         <UserInfo />
       </aside>
-
       <div className="flex-1 flex flex-col min-w-0">
         <header className="flex items-center gap-3 border-b bg-background px-4 py-3 md:hidden">
           <Sheet open={open} onOpenChange={setOpen}>
@@ -264,6 +325,8 @@ interface CollapsibleGroupProps {
   hasActiveChild: boolean
   onNavigate: () => void
   renderLink: (item: MenuItem, onNavigate: () => void) => React.ReactNode
+  hasAccess: (key: string) => boolean
+  pathname: string
 }
 
 function CollapsibleGroup({
@@ -272,10 +335,11 @@ function CollapsibleGroup({
   hasActiveChild,
   onNavigate,
   renderLink,
+  hasAccess,
+  pathname,
 }: CollapsibleGroupProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen)
   const GroupIcon = entry.icon
-
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <CollapsibleTrigger
@@ -296,7 +360,30 @@ function CollapsibleGroup({
         />
       </CollapsibleTrigger>
       <CollapsibleContent className="flex flex-col gap-1 mt-1 ml-3 pl-3 border-l">
-        {entry.children.filter((c) => !c.key || true).map((child) => renderLink(child, onNavigate))}
+        {entry.children.map((child) => {
+          if (isSubGroup(child)) {
+            const SubIcon = child.icon
+            const visibleSubChildren = child.children.filter((sc) => hasAccess(sc.key))
+            const hasActiveSubChild = visibleSubChildren.some((sc) => sc.path === pathname)
+            return (
+              <Collapsible key={child.key} defaultOpen={hasActiveSubChild}>
+                <CollapsibleTrigger
+                  className={cn(
+                    'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-muted-foreground hover:bg-muted hover:text-foreground',
+                  )}
+                >
+                  <SubIcon className="h-4 w-4 shrink-0" />
+                  <span className="flex-1 text-left">{child.label}</span>
+                  <ChevronDown className="h-3 w-3 shrink-0 transition-transform duration-200" />
+                </CollapsibleTrigger>
+                <CollapsibleContent className="flex flex-col gap-1 mt-1 ml-3 pl-3 border-l">
+                  {visibleSubChildren.map((sc) => renderLink(sc, onNavigate))}
+                </CollapsibleContent>
+              </Collapsible>
+            )
+          }
+          return renderLink(child, onNavigate)
+        })}
       </CollapsibleContent>
     </Collapsible>
   )
