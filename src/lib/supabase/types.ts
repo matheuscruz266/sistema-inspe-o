@@ -268,6 +268,89 @@ export type Database = {
         }
         Relationships: []
       }
+      fuel_records: {
+        Row: {
+          created_at: string
+          driver_id: string | null
+          horimeter: number | null
+          id: string
+          is_deleted: boolean
+          location_id: string | null
+          notes: string | null
+          odometer: number | null
+          quantity: number
+          refuel_date: string
+          refuel_time: string | null
+          supplier_id: string | null
+          total_cost: number
+          unit_value: number
+          vehicle_id: string
+        }
+        Insert: {
+          created_at?: string
+          driver_id?: string | null
+          horimeter?: number | null
+          id?: string
+          is_deleted?: boolean
+          location_id?: string | null
+          notes?: string | null
+          odometer?: number | null
+          quantity?: number
+          refuel_date?: string
+          refuel_time?: string | null
+          supplier_id?: string | null
+          total_cost?: number
+          unit_value?: number
+          vehicle_id: string
+        }
+        Update: {
+          created_at?: string
+          driver_id?: string | null
+          horimeter?: number | null
+          id?: string
+          is_deleted?: boolean
+          location_id?: string | null
+          notes?: string | null
+          odometer?: number | null
+          quantity?: number
+          refuel_date?: string
+          refuel_time?: string | null
+          supplier_id?: string | null
+          total_cost?: number
+          unit_value?: number
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'fuel_records_driver_id_fkey'
+            columns: ['driver_id']
+            isOneToOne: false
+            referencedRelation: 'people'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'fuel_records_location_id_fkey'
+            columns: ['location_id']
+            isOneToOne: false
+            referencedRelation: 'stock_locations'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'fuel_records_supplier_id_fkey'
+            columns: ['supplier_id']
+            isOneToOne: false
+            referencedRelation: 'suppliers'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'fuel_records_vehicle_id_fkey'
+            columns: ['vehicle_id']
+            isOneToOne: false
+            referencedRelation: 'vehicles'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       inspection_plan_consequences: {
         Row: {
           action: string
@@ -2553,6 +2636,65 @@ export type Database = {
           },
           {
             foreignKeyName: 'vehicle_systems_vehicle_id_fkey'
+            columns: ['vehicle_id']
+            isOneToOne: false
+            referencedRelation: 'vehicles'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      vehicle_telemetry: {
+        Row: {
+          battery_voltage: number | null
+          created_at: string
+          engine_temperature: number | null
+          fuel_level: number | null
+          horimeter: number | null
+          id: string
+          is_deleted: boolean
+          latitude: number | null
+          longitude: number | null
+          notes: string | null
+          odometer: number | null
+          recorded_at: string
+          speed: number | null
+          vehicle_id: string
+        }
+        Insert: {
+          battery_voltage?: number | null
+          created_at?: string
+          engine_temperature?: number | null
+          fuel_level?: number | null
+          horimeter?: number | null
+          id?: string
+          is_deleted?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          notes?: string | null
+          odometer?: number | null
+          recorded_at?: string
+          speed?: number | null
+          vehicle_id: string
+        }
+        Update: {
+          battery_voltage?: number | null
+          created_at?: string
+          engine_temperature?: number | null
+          fuel_level?: number | null
+          horimeter?: number | null
+          id?: string
+          is_deleted?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          notes?: string | null
+          odometer?: number | null
+          recorded_at?: string
+          speed?: number | null
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'vehicle_telemetry_vehicle_id_fkey'
             columns: ['vehicle_id']
             isOneToOne: false
             referencedRelation: 'vehicles'

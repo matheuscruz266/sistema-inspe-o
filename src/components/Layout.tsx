@@ -36,6 +36,8 @@ import {
   Warehouse,
   Fuel,
   Activity,
+  FileText,
+  Receipt,
 } from 'lucide-react'
 
 export const menuItems = [
@@ -88,6 +90,8 @@ export const menuItems = [
   { key: 'trips', label: 'Viagens', path: '/viagens', icon: Navigation },
   { key: 'fuel', label: 'Combustível', path: '/combustivel', icon: Fuel },
   { key: 'telemetry', label: 'Telemetria', path: '/telemetria', icon: Activity },
+  { key: 'sales_invoices', label: 'Notas Fiscais', path: '/notas-fiscais', icon: FileText },
+  { key: 'freight_documents', label: 'Documentos Fiscais', path: '/cte', icon: Receipt },
 ]
 
 export default function Layout() {
