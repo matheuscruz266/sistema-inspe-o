@@ -330,6 +330,13 @@ export type Database = {
             foreignKeyName: 'freight_documents_trip_id_fkey'
             columns: ['trip_id']
             isOneToOne: false
+            referencedRelation: 'trip_margin_report'
+            referencedColumns: ['trip_id']
+          },
+          {
+            foreignKeyName: 'freight_documents_trip_id_fkey'
+            columns: ['trip_id']
+            isOneToOne: false
             referencedRelation: 'trips'
             referencedColumns: ['id']
           },
@@ -808,6 +815,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: 'vehicles'
             referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'log_receipts_trip_id_fkey'
+            columns: ['trip_id']
+            isOneToOne: false
+            referencedRelation: 'trip_margin_report'
+            referencedColumns: ['trip_id']
           },
           {
             foreignKeyName: 'log_receipts_trip_id_fkey'
@@ -2005,6 +2019,13 @@ export type Database = {
             foreignKeyName: 'sales_invoices_trip_id_fkey'
             columns: ['trip_id']
             isOneToOne: false
+            referencedRelation: 'trip_margin_report'
+            referencedColumns: ['trip_id']
+          },
+          {
+            foreignKeyName: 'sales_invoices_trip_id_fkey'
+            columns: ['trip_id']
+            isOneToOne: false
             referencedRelation: 'trips'
             referencedColumns: ['id']
           },
@@ -3037,6 +3058,101 @@ export type Database = {
           unit_value: number | null
         }
         Relationships: []
+      }
+      monthly_stock_summary: {
+        Row: {
+          closing_balance: number | null
+          location_id: string | null
+          location_name: string | null
+          month_date: string | null
+          opening_balance: number | null
+          product_code: string | null
+          product_id: string | null
+          product_name: string | null
+          product_unit: string | null
+          quantity_in: number | null
+          quantity_out: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'stock_movements_location_id_fkey'
+            columns: ['location_id']
+            isOneToOne: false
+            referencedRelation: 'stock_locations'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'stock_movements_product_id_fkey'
+            columns: ['product_id']
+            isOneToOne: false
+            referencedRelation: 'current_stock'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'stock_movements_product_id_fkey'
+            columns: ['product_id']
+            isOneToOne: false
+            referencedRelation: 'products'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      trip_margin_report: {
+        Row: {
+          client_name: string | null
+          destination_client_id: string | null
+          freight_cost: number | null
+          fuel_cost: number | null
+          margin: number | null
+          net_weight: number | null
+          product_id: string | null
+          product_name: string | null
+          revenue: number | null
+          route_id: string | null
+          route_label: string | null
+          total_cost: number | null
+          tractor_plate: string | null
+          tractor_vehicle_id: string | null
+          trip_date: string | null
+          trip_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'trips_destination_client_id_fkey'
+            columns: ['destination_client_id']
+            isOneToOne: false
+            referencedRelation: 'clients'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'trips_product_id_fkey'
+            columns: ['product_id']
+            isOneToOne: false
+            referencedRelation: 'current_stock'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'trips_product_id_fkey'
+            columns: ['product_id']
+            isOneToOne: false
+            referencedRelation: 'products'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'trips_route_id_fkey'
+            columns: ['route_id']
+            isOneToOne: false
+            referencedRelation: 'routes'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'trips_tractor_vehicle_id_fkey'
+            columns: ['tractor_vehicle_id']
+            isOneToOne: false
+            referencedRelation: 'vehicles'
+            referencedColumns: ['id']
+          },
+        ]
       }
     }
     Functions: {
