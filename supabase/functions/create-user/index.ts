@@ -77,8 +77,23 @@ Deno.serve(async (req: Request) => {
     }
 
     const permissions = (accessLevel.permissions || {}) as Record<string, unknown>
-    const screens = (permissions.screens || []) as string[]
-    const isAdmin = screens.includes('access_levels') || screens.includes('users')
+    const screensRaw = permissions.screens
+    let isAdmin = false
+    if (Array.isArray(screensRaw)) {
+      const arr = screensRaw as string[]
+      isAdmin = arr.includes('access_levels') || arr.includes('users')
+    } else if (screensRaw && typeof screensRaw === 'object') {
+      const checkScreen = (screen: string): boolean => {
+        const ops = (screensRaw as Record<string, unknown>)[screen]
+        if (typeof ops === 'boolean') return ops
+        if (ops && typeof ops === 'object') {
+          const o = ops as Record<string, boolean>
+          return o.SELECT === true || o.INSERT === true || o.UPDATE === true || o.DELETE === true
+        }
+        return false
+      }
+      isAdmin = checkScreen('access_levels') || checkScreen('users')
+    }
 
     if (!isAdmin) {
       return new Response(

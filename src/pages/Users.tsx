@@ -1,17 +1,18 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
+import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import {
   Select,
-  SelectTrigger,
   SelectContent,
   SelectItem,
+  SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import {
   Table,
   TableHeader,
@@ -20,35 +21,38 @@ import {
   TableRow,
   TableCell,
 } from '@/components/ui/table'
-import { Plus, Pencil } from 'lucide-react'
+import { Plus, Pencil, ShieldX } from 'lucide-react'
 import { toast } from 'sonner'
-import { createUser } from '@/services/create-user'
-import { sanitizeText } from '@/lib/sanitize'
 
 export default function Users() {
+  const { isAdmin } = useAuth()
   const [users, setUsers] = useState<any[]>([])
   const [levels, setLevels] = useState<any[]>([])
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<any>(null)
   const [form, setForm] = useState<Record<string, any>>({})
-  const [saving, setSaving] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   const fetchData = async () => {
-    const [u, l] = await Promise.all([
+    setLoading(true)
+    const [usersRes, levelsRes] = await Promise.all([
       supabase
         .from('app_users')
-        .select('*, access_levels(name)')
+        .select('*')
         .eq('is_deleted', false)
         .order('created_at', { ascending: false }),
       supabase
         .from('access_levels')
         .select('*')
-        .eq('is_active', true)
         .eq('is_deleted', false)
+        .eq('is_active', true)
         .order('name'),
     ])
-    setUsers(u.data || [])
-    setLevels(l.data || [])
+    if (usersRes.error) toast.error(usersRes.error.message)
+    if (levelsRes.error) toast.error(levelsRes.error.message)
+    setUsers(usersRes.data || [])
+    setLevels(levelsRes.data || [])
+    setLoading(false)
   }
 
   useEffect(() => {
@@ -56,62 +60,68 @@ export default function Users() {
   }, [])
 
   const handleOpen = (item?: any) => {
-    if (item) {
-      setForm({ ...item, access_level_id: item.access_level_id || '' })
-      setEditing(item)
-    } else {
-      setForm({})
-      setEditing(null)
-    }
+    setForm(item ? { ...item } : { is_active: true })
+    setEditing(item || null)
     setOpen(true)
   }
 
   const handleSave = async () => {
-    if (saving) return
     if (!form.name || !form.email) {
       toast.error('Nome e email são obrigatórios')
       return
     }
-    setSaving(true)
-    try {
-      const payload = {
-        name: sanitizeText(form.name),
-        email: sanitizeText(form.email),
-        access_level_id: form.access_level_id || null,
-        is_active: form.is_active ?? true,
+    if (editing) {
+      const { error } = await supabase
+        .from('app_users')
+        .update({
+          name: form.name,
+          email: form.email,
+          access_level_id: form.access_level_id || null,
+          is_active: form.is_active ?? true,
+        })
+        .eq('id', editing.id)
+      if (error) {
+        toast.error(error.message)
+        return
       }
-
-      if (editing) {
-        const { error } = await supabase.from('app_users').update(payload).eq('id', editing.id)
-        if (error) {
-          toast.error('Erro ao salvar')
-        } else {
-          toast.success('Salvo com sucesso')
-          setOpen(false)
-          fetchData()
-        }
-      } else {
-        if (!form.password || form.password.length < 8) {
-          toast.error('Senha deve ter no mínimo 8 caracteres')
-          return
-        }
-        const { error: createError } = await createUser({
-          email: sanitizeText(form.email),
-          name: sanitizeText(form.name),
+      toast.success('Atualizado com sucesso')
+    } else {
+      if (!form.password || form.password.length < 8) {
+        toast.error('Senha deve ter no mínimo 8 caracteres')
+        return
+      }
+      const { data, error } = await supabase.functions.invoke('create-user', {
+        body: {
+          email: form.email,
+          name: form.name,
           password: form.password,
           access_level_id: form.access_level_id || null,
-        })
-        if (createError) {
-          toast.error(String(createError), { duration: 5000 })
-          return
-        }
-        toast.success('Usuário criado com sucesso')
-        setOpen(false)
-        fetchData()
+        },
+      })
+      if (error) {
+        toast.error(error.message)
+        return
       }
-    } finally {
-      setSaving(false)
+      if (data?.error) {
+        toast.error(data.error)
+        return
+      }
+      toast.success('Usuário criado com sucesso')
     }
+    setOpen(false)
+    fetchData()
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3 p-4">
+        <ShieldX className="h-12 w-12 text-destructive" />
+        <h2 className="text-xl font-bold">Acesso Negado</h2>
+        <p className="text-muted-foreground text-center max-w-sm">
+          Apenas administradores podem visualizar e gerenciar usuários.
+        </p>
+      </div>
+    )
   }
 
   return (
@@ -135,32 +145,43 @@ export default function Users() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users.length === 0 ? (
+            {loading ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                  Nenhum usuário
+                  Carregando...
+                </TableCell>
+              </TableRow>
+            ) : users.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  Nenhum registro encontrado
                 </TableCell>
               </TableRow>
             ) : (
-              users.map((u) => (
-                <TableRow key={u.id}>
-                  <TableCell>{u.name}</TableCell>
-                  <TableCell>{u.email}</TableCell>
-                  <TableCell>{u.access_levels?.name || '-'}</TableCell>
-                  <TableCell>{u.is_active ? 'Sim' : 'Não'}</TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" onClick={() => handleOpen(u)}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
+              users.map((u) => {
+                const level = levels.find((l) => l.id === u.access_level_id)
+                return (
+                  <TableRow key={u.id}>
+                    <TableCell className="font-medium">{u.name}</TableCell>
+                    <TableCell className="text-sm">{u.email}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {level?.name || '-'}
+                    </TableCell>
+                    <TableCell>{u.is_active ? 'Sim' : 'Não'}</TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="icon" onClick={() => handleOpen(u)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                )
+              })
             )}
           </TableBody>
         </Table>
       </div>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing ? 'Editar' : 'Novo'} Usuário</DialogTitle>
           </DialogHeader>
@@ -178,7 +199,6 @@ export default function Users() {
                 type="email"
                 value={form.email || ''}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                disabled={!!editing}
               />
             </div>
             {!editing && (
@@ -188,20 +208,22 @@ export default function Users() {
                   type="password"
                   value={form.password || ''}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  placeholder="Mínimo 8 caracteres"
                 />
               </div>
             )}
             <div className="space-y-2">
               <Label>Nível de Acesso</Label>
               <Select
-                value={form.access_level_id || ''}
-                onValueChange={(v) => setForm({ ...form, access_level_id: v })}
+                value={form.access_level_id || 'none'}
+                onValueChange={(v) =>
+                  setForm({ ...form, access_level_id: v === 'none' ? null : v })
+                }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione..." />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="none">Nenhum</SelectItem>
                   {levels.map((l) => (
                     <SelectItem key={l.id} value={l.id}>
                       {l.name}
@@ -217,8 +239,8 @@ export default function Users() {
               />
               <Label>Ativo</Label>
             </div>
-            <Button onClick={handleSave} className="w-full" disabled={saving}>
-              {saving ? 'Salvando...' : 'Salvar'}
+            <Button onClick={handleSave} className="w-full">
+              Salvar
             </Button>
           </div>
         </DialogContent>

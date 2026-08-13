@@ -1,6 +1,11 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase/client'
+import {
+  normalizeScreensToFlatArray,
+  safeHasOperation,
+  isPermissionsAdmin,
+} from '@/lib/permissions'
 
 interface AppUserProfile {
   id: string
@@ -19,7 +24,7 @@ interface AuthContextType {
   user: User | null
   session: Session | null
   profile: AppUserProfile | null
-  permissions: string[] | null
+  permissions: string[]
   isAdmin: boolean
   canPerform: (screen: string, operation: string) => boolean
   signIn: (email: string, password: string) => Promise<{ error: any }>
@@ -95,34 +100,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const rawScreens = profile?.access_levels?.permissions?.screens ?? null
-  const permissions: string[] | null = Array.isArray(rawScreens)
-    ? (rawScreens as string[])
-    : rawScreens && typeof rawScreens === 'object'
-      ? Object.entries(rawScreens)
-          .filter(([, ops]: [string, any]) => {
-            if (typeof ops === 'boolean') return ops
-            return (
-              ops?.SELECT === true ||
-              ops?.INSERT === true ||
-              ops?.UPDATE === true ||
-              ops?.DELETE === true
-            )
-          })
-          .map(([key]: [string, any]) => key)
-      : null
-  const isAdmin = !!permissions?.includes('access_levels') || !!permissions?.includes('users')
+  const permissions: string[] = normalizeScreensToFlatArray(rawScreens)
+  const isAdmin = isPermissionsAdmin(rawScreens)
 
   const canPerform = (screen: string, operation: string): boolean => {
     if (isAdmin) return true
-    if (!rawScreens) return false
-    if (Array.isArray(rawScreens)) return (rawScreens as string[]).includes(screen)
-    if (typeof rawScreens === 'object' && rawScreens !== null) {
-      const ops = (rawScreens as Record<string, any>)[screen]
-      if (!ops) return false
-      if (typeof ops === 'boolean') return ops
-      return ops[operation] === true
-    }
-    return false
+    return safeHasOperation(rawScreens, screen, operation)
   }
 
   return (
