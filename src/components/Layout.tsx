@@ -34,6 +34,8 @@ import {
   PackageOpen,
   Navigation,
   Warehouse,
+  Fuel,
+  Activity,
 } from 'lucide-react'
 
 export const menuItems = [
@@ -84,6 +86,8 @@ export const menuItems = [
   },
   { key: 'demands', label: 'Demandas', path: '/demandas', icon: PackageOpen },
   { key: 'trips', label: 'Viagens', path: '/viagens', icon: Navigation },
+  { key: 'fuel', label: 'Combustível', path: '/combustivel', icon: Fuel },
+  { key: 'telemetry', label: 'Telemetria', path: '/telemetria', icon: Activity },
 ]
 
 export default function Layout() {

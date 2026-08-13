@@ -38,6 +38,8 @@ import CarrierContracts from '@/pages/CarrierContracts'
 import Demands from '@/pages/Demands'
 import Trips from '@/pages/Trips'
 import Receipts from '@/pages/Receipts'
+import FuelRecords from '@/pages/FuelRecords'
+import Telemetry from '@/pages/Telemetry'
 
 const App = () => (
   <AuthProvider>
@@ -83,6 +85,8 @@ const App = () => (
             <Route path="/contratos-frete" element={<CarrierContracts />} />
             <Route path="/demandas" element={<Demands />} />
             <Route path="/viagens" element={<Trips />} />
+            <Route path="/combustivel" element={<FuelRecords />} />
+            <Route path="/telemetria" element={<Telemetry />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />

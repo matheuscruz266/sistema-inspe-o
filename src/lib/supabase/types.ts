@@ -545,6 +545,129 @@ export type Database = {
           },
         ]
       }
+      log_receipts: {
+        Row: {
+          created_at: string
+          driver_id: string | null
+          gross_weight: number | null
+          id: string
+          is_deleted: boolean
+          location_id: string | null
+          net_weight: number | null
+          nfe_number: string | null
+          notes: string | null
+          product_id: string | null
+          quantity: number | null
+          receipt_date: string
+          status: string | null
+          supplier_id: string | null
+          tare_weight: number | null
+          tractor_vehicle_id: string | null
+          trailer_vehicle_id: string | null
+          trip_id: string | null
+          unit: Database['public']['Enums']['logistics_default_unit'] | null
+        }
+        Insert: {
+          created_at?: string
+          driver_id?: string | null
+          gross_weight?: number | null
+          id?: string
+          is_deleted?: boolean
+          location_id?: string | null
+          net_weight?: number | null
+          nfe_number?: string | null
+          notes?: string | null
+          product_id?: string | null
+          quantity?: number | null
+          receipt_date: string
+          status?: string | null
+          supplier_id?: string | null
+          tare_weight?: number | null
+          tractor_vehicle_id?: string | null
+          trailer_vehicle_id?: string | null
+          trip_id?: string | null
+          unit?: Database['public']['Enums']['logistics_default_unit'] | null
+        }
+        Update: {
+          created_at?: string
+          driver_id?: string | null
+          gross_weight?: number | null
+          id?: string
+          is_deleted?: boolean
+          location_id?: string | null
+          net_weight?: number | null
+          nfe_number?: string | null
+          notes?: string | null
+          product_id?: string | null
+          quantity?: number | null
+          receipt_date?: string
+          status?: string | null
+          supplier_id?: string | null
+          tare_weight?: number | null
+          tractor_vehicle_id?: string | null
+          trailer_vehicle_id?: string | null
+          trip_id?: string | null
+          unit?: Database['public']['Enums']['logistics_default_unit'] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'log_receipts_driver_id_fkey'
+            columns: ['driver_id']
+            isOneToOne: false
+            referencedRelation: 'people'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'log_receipts_location_id_fkey'
+            columns: ['location_id']
+            isOneToOne: false
+            referencedRelation: 'stock_locations'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'log_receipts_product_id_fkey'
+            columns: ['product_id']
+            isOneToOne: false
+            referencedRelation: 'current_stock'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'log_receipts_product_id_fkey'
+            columns: ['product_id']
+            isOneToOne: false
+            referencedRelation: 'products'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'log_receipts_supplier_id_fkey'
+            columns: ['supplier_id']
+            isOneToOne: false
+            referencedRelation: 'suppliers'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'log_receipts_tractor_vehicle_id_fkey'
+            columns: ['tractor_vehicle_id']
+            isOneToOne: false
+            referencedRelation: 'vehicles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'log_receipts_trailer_vehicle_id_fkey'
+            columns: ['trailer_vehicle_id']
+            isOneToOne: false
+            referencedRelation: 'vehicles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'log_receipts_trip_id_fkey'
+            columns: ['trip_id']
+            isOneToOne: false
+            referencedRelation: 'trips'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       maintenance_plan_labor: {
         Row: {
           created_at: string

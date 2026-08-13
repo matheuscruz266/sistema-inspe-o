@@ -31,6 +31,8 @@ export const AVAILABLE_SCREENS = [
   { key: 'carrier_contracts', label: 'Contratos de Frete' },
   { key: 'demands', label: 'Demandas' },
   { key: 'trips', label: 'Viagens' },
+  { key: 'fuel', label: 'Combustível' },
+  { key: 'telemetry', label: 'Telemetria' },
 ]
 
 export function normalizePermissions(screens: unknown): PermissionMatrixData {
