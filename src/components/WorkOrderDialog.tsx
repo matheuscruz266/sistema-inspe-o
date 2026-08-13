@@ -21,6 +21,7 @@ import {
   TableCell,
 } from '@/components/ui/table'
 import { SubEntityManager, type SubField, type SubColumn } from '@/components/SubEntityManager'
+import { OSMaterialsManager } from '@/components/OSMaterialsManager'
 import { AudioTranscribeButton } from '@/components/AudioTranscribeButton'
 import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/use-auth'
@@ -564,13 +565,7 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
                   </div>
                 </TabsContent>
                 <TabsContent value="materials">
-                  <SubEntityManager
-                    table="os_materials"
-                    parentId={woId}
-                    parentField="work_order_id"
-                    fields={materialFields}
-                    columns={materialCols}
-                  />
+                  <OSMaterialsManager parentId={woId} plate={form.plate || ''} />
                 </TabsContent>
                 <TabsContent value="services">
                   <SubEntityManager

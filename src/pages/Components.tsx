@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -20,8 +20,16 @@ import {
   TableCell,
 } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Plus, Pencil, Trash2, Layers } from 'lucide-react'
+import { Plus, Pencil, Trash2, Layers, Package } from 'lucide-react'
 import { toast } from 'sonner'
+
+interface UsedProduct {
+  product_name: string
+  product_code: string | null
+  total_quantity: number
+  last_used: string
+  os_count: number
+}
 
 export default function Components() {
   const [vehicles, setVehicles] = useState<any[]>([])
@@ -30,6 +38,8 @@ export default function Components() {
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<any>(null)
   const [form, setForm] = useState<Record<string, any>>({})
+  const [usedProducts, setUsedProducts] = useState<UsedProduct[]>([])
+  const [usedLoading, setUsedLoading] = useState(false)
 
   useEffect(() => {
     supabase
@@ -55,6 +65,78 @@ export default function Components() {
   useEffect(() => {
     fetchSystems()
   }, [fetchSystems])
+
+  const selectedPlate = useMemo(
+    () => vehicles.find((v) => v.id === selectedVehicle)?.plate || '',
+    [vehicles, selectedVehicle],
+  )
+
+  const fetchUsedProducts = useCallback(async () => {
+    if (!selectedPlate) {
+      setUsedProducts([])
+      return
+    }
+    setUsedLoading(true)
+    try {
+      const { data: wos } = await supabase
+        .from('work_orders')
+        .select('id')
+        .eq('plate', selectedPlate)
+        .eq('is_deleted', false)
+      const woIds = (wos || []).map((w: any) => w.id)
+      if (woIds.length === 0) {
+        setUsedProducts([])
+        return
+      }
+      const { data: mats } = await supabase
+        .from('os_materials')
+        .select('product_name, quantity, product_id, work_order_id, created_at')
+        .in('work_order_id', woIds)
+        .eq('is_deleted', false)
+      // Buscar códigos dos produtos referenciados
+      const productIds = [...new Set((mats || []).map((m: any) => m.product_id).filter(Boolean))]
+      const codeMap: Record<string, string> = {}
+      if (productIds.length > 0) {
+        const { data: prods } = await supabase
+          .from('products')
+          .select('id, code')
+          .in('id', productIds)
+        ;(prods || []).forEach((p: any) => {
+          if (p.code) codeMap[p.id] = p.code
+        })
+      }
+      // Agrupar por produto, somar quantidades, registrar última vez usado e nº de O.S.
+      const grouped: Record<string, UsedProduct> = {}
+      const osCountMap: Record<string, Set<string>> = {}
+      ;(mats || []).forEach((m: any) => {
+        const name = m.product_name || 'N/A'
+        if (!grouped[name]) {
+          grouped[name] = {
+            product_name: name,
+            product_code: m.product_id ? codeMap[m.product_id] || null : null,
+            total_quantity: 0,
+            last_used: '',
+            os_count: 0,
+          }
+          osCountMap[name] = new Set<string>()
+        }
+        grouped[name].total_quantity += parseFloat(m.quantity) || 0
+        if (m.created_at > grouped[name].last_used) grouped[name].last_used = m.created_at
+        osCountMap[name].add(m.work_order_id)
+      })
+      Object.keys(grouped).forEach((name) => {
+        grouped[name].os_count = osCountMap[name].size
+      })
+      const list = Object.values(grouped).sort((a, b) => b.total_quantity - a.total_quantity)
+      setUsedProducts(list)
+    } finally {
+      setUsedLoading(false)
+    }
+  }, [selectedPlate])
+
+  useEffect(() => {
+    fetchUsedProducts()
+  }, [fetchUsedProducts])
 
   const handleOpen = (item?: any) => {
     setForm(item ? { ...item } : { vehicle_id: selectedVehicle })
@@ -147,6 +229,64 @@ export default function Components() {
             )}
           </TableBody>
         </Table>
+      </div>
+      {/* Produtos Utilizados (histórico da placa) */}
+      <div className="rounded-md border">
+        <div className="flex items-center gap-2 border-b px-4 py-3">
+          <Package className="h-5 w-5 text-primary" />
+          <h2 className="font-semibold">Produtos Utilizados</h2>
+          {selectedPlate && (
+            <Badge variant="secondary" className="ml-1">
+              {selectedPlate}
+            </Badge>
+          )}
+        </div>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Produto</TableHead>
+                <TableHead>Código</TableHead>
+                <TableHead className="text-right">Qtd. Total</TableHead>
+                <TableHead className="text-right">Nº de O.S.</TableHead>
+                <TableHead>Última vez usado</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {!selectedVehicle ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                    Selecione um veículo
+                  </TableCell>
+                </TableRow>
+              ) : usedLoading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                    Carregando...
+                  </TableCell>
+                </TableRow>
+              ) : usedProducts.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                    Nenhum produto registrado para esta placa
+                  </TableCell>
+                </TableRow>
+              ) : (
+                usedProducts.map((p) => (
+                  <TableRow key={p.product_name}>
+                    <TableCell className="font-medium">{p.product_name}</TableCell>
+                    <TableCell className="text-muted-foreground">{p.product_code || '-'}</TableCell>
+                    <TableCell className="text-right">{p.total_quantity}</TableCell>
+                    <TableCell className="text-right">{p.os_count}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {p.last_used ? new Date(p.last_used).toLocaleDateString('pt-BR') : '-'}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
