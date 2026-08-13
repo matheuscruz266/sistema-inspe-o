@@ -123,6 +123,17 @@ Deno.serve(async (req: Request) => {
         screenHasAnyOperation(screens, 'access_levels') || screenHasAnyOperation(screens, 'users')
     }
 
+    // Fallback: consulta a função is_admin() do banco, que valida o nível de
+    // acesso do chamador de forma centralizada (SECURITY DEFINER).
+    let isAdminByRpc = false
+    try {
+      const { data: isAdminData } = await callerClient.rpc('is_admin')
+      isAdminByRpc = isAdminData === true
+    } catch {
+      // Se a RPC falhar, mantém apenas o critério da árvore de permissões.
+    }
+    isAdmin = isAdmin || isAdminByRpc
+
     if (!isAdmin) {
       return new Response(
         JSON.stringify({ error: 'Acesso negado. Apenas administradores podem criar usuários.' }),
@@ -214,8 +225,8 @@ Deno.serve(async (req: Request) => {
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     })
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Erro interno do servidor'
-    return new Response(JSON.stringify({ error: message }), {
+    const message = err instanceof Error ? err.message : 'desconhecido'
+    return new Response(JSON.stringify({ error: 'Erro interno: ' + message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     })
