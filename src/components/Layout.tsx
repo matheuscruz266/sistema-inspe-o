@@ -36,7 +36,6 @@ import {
   Warehouse,
   Fuel,
   Activity,
-  FileText,
   Receipt,
 } from 'lucide-react'
 
