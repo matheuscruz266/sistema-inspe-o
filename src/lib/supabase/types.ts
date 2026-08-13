@@ -3246,6 +3246,13 @@ export type Database = {
       }
     }
     Functions: {
+      _flatten_screens: {
+        Args: { p_screens: Json }
+        Returns: {
+          operations: Json
+          screen: string
+        }[]
+      }
       has_screen_access: { Args: { p_screen: string }; Returns: boolean }
       has_screen_operation: {
         Args: { p_operation: string; p_screen: string }

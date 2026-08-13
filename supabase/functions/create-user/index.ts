@@ -50,7 +50,7 @@ Deno.serve(async (req: Request) => {
 
     const { data: callerProfile, error: profileError } = await adminClient
       .from('app_users')
-      .select('id, is_deleted, access_levels!inner(permissions, is_active, is_deleted)')
+      .select('id, is_deleted, access_levels(permissions, is_active, is_deleted)')
       .eq('email', user.email)
       .single()
 
