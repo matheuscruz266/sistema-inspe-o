@@ -151,7 +151,7 @@ export default function DashYards() {
         </div>
       )}
 
-      <StockReport />
+      <StockReport filterProductType="Insumo" />
     </div>
   )
 }

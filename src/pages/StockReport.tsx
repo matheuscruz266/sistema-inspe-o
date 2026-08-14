@@ -19,7 +19,13 @@ import {
 } from '@/components/ui/table'
 import { Package } from 'lucide-react'
 
-export default function StockReport() {
+interface StockReportProps {
+  /** Quando informado, filtra produtos (e o resumo) por essa categoria
+   *  (ex.: 'Insumo' para mostrar apenas matéria-prima no Dash Pátios). */
+  filterProductType?: string
+}
+
+export default function StockReport({ filterProductType }: StockReportProps) {
   const [data, setData] = useState<any[]>([])
   const [products, setProducts] = useState<any[]>([])
   const [locations, setLocations] = useState<any[]>([])
@@ -31,16 +37,20 @@ export default function StockReport() {
 
   const fetchData = useCallback(async () => {
     setLoading(true)
+    const prodQuery = supabase
+      .from('products')
+      .select('id, name, code')
+      .eq('is_deleted', false)
+      .eq('is_active', true)
+      .order('name')
+    if (filterProductType) prodQuery.eq('category', filterProductType)
+
     const [prod, loc] = await Promise.all([
-      supabase
-        .from('products')
-        .select('id, name, code')
-        .eq('is_deleted', false)
-        .eq('is_active', true)
-        .order('name'),
+      prodQuery,
       supabase.from('stock_locations').select('id, name').eq('is_deleted', false),
     ])
-    setProducts(prod.data || [])
+    const productList = prod.data || []
+    setProducts(productList)
     setLocations(loc.data || [])
 
     let query = supabase
@@ -48,6 +58,11 @@ export default function StockReport() {
       .select('*')
       .order('month_date', { ascending: false })
       .order('product_name')
+    if (filterProductType) {
+      const ids = productList.map((p) => p.id)
+      // Nenhum produto do tipo informado ⇒ nada a mostrar
+      query = query.in('product_id', ids.length ? ids : ['00000000-0000-0000-0000-000000000000'])
+    }
     if (filterProduct) query = query.eq('product_id', filterProduct)
     if (filterLocation) query = query.eq('location_id', filterLocation)
     if (dateFrom) query = query.gte('month_date', dateFrom)
@@ -56,7 +71,7 @@ export default function StockReport() {
     const { data: result } = await query
     setData(result || [])
     setLoading(false)
-  }, [filterProduct, filterLocation, dateFrom, dateTo])
+  }, [filterProduct, filterLocation, dateFrom, dateTo, filterProductType])
 
   useEffect(() => {
     fetchData()

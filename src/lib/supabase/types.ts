@@ -3142,6 +3142,135 @@ export type Database = {
           },
         ]
       }
+      yard_invoice_items: {
+        Row: {
+          amount: number | null
+          created_at: string
+          delivery_date: string | null
+          description: string | null
+          freight_value: number | null
+          id: string
+          invoice_id: string
+          is_deleted: boolean
+          is_manual: boolean
+          nfe_number: string | null
+          receipt_id: string | null
+          total: number | null
+          weight_ton: number | null
+          wood_value: number | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          delivery_date?: string | null
+          description?: string | null
+          freight_value?: number | null
+          id?: string
+          invoice_id: string
+          is_deleted?: boolean
+          is_manual?: boolean
+          nfe_number?: string | null
+          receipt_id?: string | null
+          total?: number | null
+          weight_ton?: number | null
+          wood_value?: number | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          delivery_date?: string | null
+          description?: string | null
+          freight_value?: number | null
+          id?: string
+          invoice_id?: string
+          is_deleted?: boolean
+          is_manual?: boolean
+          nfe_number?: string | null
+          receipt_id?: string | null
+          total?: number | null
+          weight_ton?: number | null
+          wood_value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'yard_invoice_items_invoice_id_fkey'
+            columns: ['invoice_id']
+            isOneToOne: false
+            referencedRelation: 'yard_invoices'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'yard_invoice_items_receipt_id_fkey'
+            columns: ['receipt_id']
+            isOneToOne: false
+            referencedRelation: 'log_receipts'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      yard_invoices: {
+        Row: {
+          created_at: string
+          due_date: string | null
+          id: string
+          invoice_number: string | null
+          is_deleted: boolean
+          modality: string | null
+          notes: string | null
+          patio_id: string | null
+          period_end: string | null
+          period_start: string | null
+          status: string | null
+          supplier_id: string | null
+          total: number | null
+        }
+        Insert: {
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          invoice_number?: string | null
+          is_deleted?: boolean
+          modality?: string | null
+          notes?: string | null
+          patio_id?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          status?: string | null
+          supplier_id?: string | null
+          total?: number | null
+        }
+        Update: {
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          invoice_number?: string | null
+          is_deleted?: boolean
+          modality?: string | null
+          notes?: string | null
+          patio_id?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          status?: string | null
+          supplier_id?: string | null
+          total?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'yard_invoices_patio_id_fkey'
+            columns: ['patio_id']
+            isOneToOne: false
+            referencedRelation: 'patios'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'yard_invoices_supplier_id_fkey'
+            columns: ['supplier_id']
+            isOneToOne: false
+            referencedRelation: 'suppliers'
+            referencedColumns: ['id']
+          },
+        ]
+      }
     }
     Views: {
       current_stock: {
