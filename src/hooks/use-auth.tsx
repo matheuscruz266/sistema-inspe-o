@@ -65,15 +65,65 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   useEffect(() => {
-    if (user) {
-      supabase
-        .from('app_users')
-        .select('*, access_levels(*)')
-        .eq('id', user.id)
-        .single()
-        .then(({ data }) => setProfile(data as AppUserProfile | null))
-    } else {
+    if (!user) {
       setProfile(null)
+      return
+    }
+
+    let cancelled = false
+
+    // Fetch the user's own row WITHOUT the embedded `access_levels(*)` join.
+    // The join is subject to the access_levels RLS, and for users whose access
+    // level does not grant the `access_levels` screen the embedded resource can
+    // come back null — which then cascades into an empty permissions list and an
+    // empty sidebar. Querying the columns we own directly avoids that.
+    supabase
+      .from('app_users')
+      .select('id, name, email, access_level_id, is_active')
+      .eq('id', user.id)
+      .single()
+      .then(async ({ data: userData, error }) => {
+        if (cancelled) return
+        if (error || !userData) {
+          setProfile(null)
+          return
+        }
+
+        let accessLevels: AppUserProfile['access_levels'] = null
+
+        // Separately fetch the access level's permissions by id. The direct
+        // SELECT on access_levels is permitted for all authenticated users, so
+        // this works even for users who cannot manage access levels. Using
+        // maybeSingle() so a missing/locked row simply yields null instead of
+        // an error.
+        if (userData.access_level_id) {
+          const { data: alData } = await supabase
+            .from('access_levels')
+            .select('id, name, permissions')
+            .eq('id', userData.access_level_id)
+            .maybeSingle()
+          if (!cancelled && alData) {
+            accessLevels = {
+              id: alData.id,
+              name: alData.name,
+              permissions: alData.permissions as Record<string, any> | null,
+            }
+          }
+        }
+
+        if (cancelled) return
+        setProfile({
+          id: userData.id,
+          name: userData.name,
+          email: userData.email,
+          access_level_id: userData.access_level_id,
+          is_active: userData.is_active,
+          access_levels: accessLevels,
+        })
+      })
+
+    return () => {
+      cancelled = true
     }
   }, [user])
 
