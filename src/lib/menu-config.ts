@@ -28,6 +28,7 @@ import {
   Container,
   Boxes,
   Wallet,
+  LineChart,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -121,6 +122,12 @@ export const menuGroups: MenuGroupType[] = [
             icon: Wallet,
           },
           { label: 'Dash Pátios', path: '/dash-patios', screen: 'dash_yards', icon: BarChart3 },
+          {
+            label: 'Dashboard Financeiro',
+            path: '/dashboard-financeiro',
+            screen: 'financial_dashboard',
+            icon: LineChart,
+          },
         ],
       },
     ],
