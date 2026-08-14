@@ -43,7 +43,12 @@ export function StockInventoryDialog({ open, onOpenChange }: Props) {
         .select('*, products(name, unit)')
         .eq('is_deleted', false)
         .order('created_at', { ascending: false }),
-      supabase.from('products').select('id, name, unit').eq('is_deleted', false).order('name'),
+      supabase
+        .from('products')
+        .select('id, name, unit')
+        .eq('is_deleted', false)
+        .eq('is_active', true)
+        .order('name'),
       supabase.from('stock_locations').select('id, name').eq('is_deleted', false).order('name'),
     ])
     setRecords(inv.data || [])

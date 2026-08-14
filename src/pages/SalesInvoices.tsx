@@ -60,7 +60,11 @@ export default function SalesInvoices() {
         .eq('is_deleted', false)
         .order('trip_date', { ascending: false }),
       supabase.from('clients').select('id, trade_name').eq('is_deleted', false),
-      supabase.from('products').select('id, name, code').eq('is_deleted', false),
+      supabase
+        .from('products')
+        .select('id, name, code')
+        .eq('is_deleted', false)
+        .eq('is_active', true),
     ])
     setItems(inv.data || [])
     setTrips(trp.data || [])

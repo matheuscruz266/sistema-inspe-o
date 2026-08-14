@@ -32,7 +32,12 @@ export default function StockReport() {
   const fetchData = useCallback(async () => {
     setLoading(true)
     const [prod, loc] = await Promise.all([
-      supabase.from('products').select('id, name, code').eq('is_deleted', false).order('name'),
+      supabase
+        .from('products')
+        .select('id, name, code')
+        .eq('is_deleted', false)
+        .eq('is_active', true)
+        .order('name'),
       supabase.from('stock_locations').select('id, name').eq('is_deleted', false),
     ])
     setProducts(prod.data || [])

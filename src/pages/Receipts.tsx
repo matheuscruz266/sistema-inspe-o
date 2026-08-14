@@ -70,7 +70,12 @@ export default function Receipts() {
         .select('*')
         .eq('is_deleted', false)
         .eq('supplier_type', 'raw_material'),
-      supabase.from('products').select('*').eq('is_deleted', false).order('name'),
+      supabase
+        .from('products')
+        .select('*')
+        .eq('is_deleted', false)
+        .eq('is_active', true)
+        .order('name'),
       supabase.from('patios').select('*').eq('is_deleted', false).order('name'),
       supabase
         .from('trips')

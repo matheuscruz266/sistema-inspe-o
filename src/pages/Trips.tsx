@@ -108,6 +108,7 @@ export default function Trips() {
       .from('products')
       .select('id, name, code')
       .eq('is_deleted', false)
+      .eq('is_active', true)
     setProducts(prod || [])
 
     setLoading(false)

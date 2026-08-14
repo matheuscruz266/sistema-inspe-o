@@ -141,6 +141,7 @@ export function OSMaterialsManager({ parentId, plate }: OSMaterialsManagerProps)
       .select('id, name, code, unit, unit_value')
       .or(orParts.join(','))
       .eq('is_deleted', false)
+      .eq('is_active', true)
       .order('name')
       .limit(15)
     if (error) {

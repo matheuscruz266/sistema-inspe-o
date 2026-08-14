@@ -35,7 +35,12 @@ export default function Stock() {
     if (dateUntil) movQuery = movQuery.lte('created_at', dateUntil + 'T23:59:59')
     const [mov, prods] = await Promise.all([
       movQuery.order('created_at', { ascending: false }),
-      supabase.from('products').select('*').eq('is_deleted', false).order('name'),
+      supabase
+        .from('products')
+        .select('*')
+        .eq('is_deleted', false)
+        .eq('is_active', true)
+        .order('name'),
     ])
     setMovements(mov.data || [])
     setProducts(prods.data || [])

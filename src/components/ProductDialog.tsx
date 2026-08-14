@@ -108,6 +108,29 @@ export function ProductDialog({ open, onOpenChange, editingId, onSaved }: Props)
   const [form, setForm] = useState<Record<string, any>>({})
   const [suppliers, setSuppliers] = useState<any[]>([])
   const [dropdownOptions, setDropdownOptions] = useState<Record<string, string[]>>({})
+  const [newField, setNewField] = useState<string | null>(null)
+  const [draftValue, setDraftValue] = useState('')
+
+  const confirmNewValue = (key: string) => {
+    const value = draftValue.trim()
+    if (!value) {
+      setNewField(null)
+      setDraftValue('')
+      return
+    }
+    setDropdownOptions((prev) => ({
+      ...prev,
+      [key]: prev[key]?.includes(value) ? prev[key] : [...(prev[key] || []), value],
+    }))
+    setForm((p) => ({ ...p, [key]: value }))
+    setNewField(null)
+    setDraftValue('')
+  }
+
+  const cancelNewValue = () => {
+    setNewField(null)
+    setDraftValue('')
+  }
 
   useEffect(() => {
     supabase
@@ -237,10 +260,53 @@ export function ProductDialog({ open, onOpenChange, editingId, onSaved }: Props)
       )
     if (f.type === 'dropdown') {
       const opts = dropdownOptions[f.key] || []
+      if (newField === f.key) {
+        return (
+          <div className="flex gap-1">
+            <Input
+              autoFocus
+              value={draftValue}
+              onChange={(e) => setDraftValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  confirmNewValue(f.key)
+                } else if (e.key === 'Escape') {
+                  e.preventDefault()
+                  cancelNewValue()
+                }
+              }}
+              onBlur={() => {
+                // clicking OK would steal focus before click registers; defer to allow it
+                setTimeout(() => {
+                  if (newField === f.key) cancelNewValue()
+                }, 150)
+              }}
+              placeholder="Digite novo valor"
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => confirmNewValue(f.key)}
+            >
+              OK
+            </Button>
+          </div>
+        )
+      }
+      const current = form[f.key]
       return (
         <Select
-          value={form[f.key] || '__new__'}
-          onValueChange={(v) => setVal(f.key, v === '__new__' ? '' : v)}
+          value={current && opts.includes(current) ? current : undefined}
+          onValueChange={(v) => {
+            if (v === '__new__') {
+              setNewField(f.key)
+              setDraftValue('')
+            } else {
+              setVal(f.key, v)
+            }
+          }}
         >
           <SelectTrigger>
             <SelectValue placeholder="Selecione ou digite..." />
@@ -305,16 +371,6 @@ export function ProductDialog({ open, onOpenChange, editingId, onSaved }: Props)
                 <div key={f.key} className="space-y-1">
                   <Label>{f.label}</Label>
                   {renderField(f)}
-                  {f.type === 'dropdown' &&
-                    !dropdownOptions[f.key]?.includes(form[f.key]) &&
-                    form[f.key] && (
-                      <Input
-                        className="mt-1"
-                        value={form[f.key] || ''}
-                        onChange={(e) => setVal(f.key, e.target.value)}
-                        placeholder="Digite novo valor"
-                      />
-                    )}
                 </div>
               ))}
             </div>
