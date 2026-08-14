@@ -17,6 +17,7 @@ interface Props {
   view: 'month' | 'week'
   onViewChange: (v: 'month' | 'week') => void
   onEventClick?: (event: CalendarEvent) => void
+  onDayClick?: (date: Date) => void
 }
 
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
@@ -84,6 +85,7 @@ export function SchedulingCalendar({
   view,
   onViewChange,
   onEventClick,
+  onDayClick,
 }: Props) {
   const days = getDays(currentDate, view)
   const todayKey = dateKey(new Date())
@@ -145,8 +147,10 @@ export function SchedulingCalendar({
           return (
             <div
               key={i}
+              onClick={() => onDayClick?.(d)}
               className={cn(
                 'min-h-[80px] rounded-md border p-1 text-xs',
+                onDayClick && 'cursor-pointer hover:bg-accent/50 transition-colors',
                 !isCurrentMonth && 'opacity-40',
                 isToday && 'border-primary border-2',
               )}

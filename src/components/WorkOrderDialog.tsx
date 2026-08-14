@@ -44,6 +44,7 @@ const STATUSES = [
 
 // PCM é identificado pelo nome do nível de acesso contendo "PCM" (case-insensitive)
 // ou por permissões administrativas (isAdmin).
+// Resiliente a profile undefined/null (ex: durante o carregamento inicial).
 function isPCMUser(profile: any, isAdmin: boolean): boolean {
   if (isAdmin) return true
   const name = profile?.access_levels?.name
@@ -51,12 +52,15 @@ function isPCMUser(profile: any, isAdmin: boolean): boolean {
   return String(name).toUpperCase().includes('PCM')
 }
 
-// Formata o usuário como "CARGO - Nome" (ex: "PCM - Matheus").
-function userDisplay(profile: any): string {
-  const cargo = profile?.access_levels?.name
-  const nome = profile?.name
-  if (cargo && nome) return `${cargo} - ${nome}`
-  return nome || cargo || ''
+// Nome do nível de acesso do usuário (ex: "PCM", "Mecânico", "Motorista").
+// Usado como label do campo de usuário. Resiliente a profile undefined/null.
+function userCargo(profile: any): string {
+  return profile?.access_levels?.name || 'Usuário'
+}
+
+// Apenas o nome da pessoa (ex: "Matheus"). Resiliente a profile undefined/null.
+function userName(profile: any): string {
+  return profile?.name || ''
 }
 
 const materialFields: SubField[] = [
@@ -88,6 +92,33 @@ interface VehicleOption {
   id: string
   plate: string
   vehicle_type?: string | null
+  brand?: string | null
+  model?: string | null
+  year?: number | null
+  description?: string | null
+}
+
+// Descrição legível do veículo: "PLACA - Marca Modelo Ano".
+// Exibe o que estiver disponível; cai gracefulmente para só a placa.
+function vehicleLabel(v: VehicleOption): string {
+  const parts: string[] = []
+  if (v.brand) parts.push(v.brand)
+  if (v.model) parts.push(v.model)
+  if (v.year) parts.push(String(v.year))
+  const desc = parts.join(' ').trim()
+  if (!desc) return v.plate
+  return `${v.plate} - ${desc}`
+}
+
+// Descrição curta (marca/modelo/ano) usada como secundária no dropdown.
+function vehicleDescription(v: VehicleOption): string {
+  const parts: string[] = []
+  if (v.brand) parts.push(v.brand)
+  if (v.model) parts.push(v.model)
+  if (v.year) parts.push(String(v.year))
+  let desc = parts.join(' ').trim()
+  if (!desc && v.description) desc = String(v.description).trim()
+  return desc
 }
 
 function PlateAutocomplete({
@@ -105,10 +136,21 @@ function PlateAutocomplete({
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // Sincroniza o input quando o valor externo muda (ex: ao editar)
+  // Veículo atualmente selecionado (para exibir a descrição no input).
+  const selectedVehicle = useMemo(
+    () => vehicles.find((v) => v.id === selectedId) || null,
+    [vehicles, selectedId],
+  )
+
+  // Sincroniza o input quando o valor externo muda (ex: ao editar).
+  // Se há um veículo selecionado, mostra "PLACA - Marca Modelo Ano".
   useEffect(() => {
-    setQuery(plate || '')
-  }, [plate, selectedId])
+    if (selectedVehicle) {
+      setQuery(vehicleLabel(selectedVehicle))
+    } else {
+      setQuery(plate || '')
+    }
+  }, [plate, selectedId, selectedVehicle])
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -120,10 +162,17 @@ function PlateAutocomplete({
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
+  // Permite buscar tanto pela placa quanto pela descrição (marca/modelo/ano).
   const suggestions = useMemo(() => {
     const q = query.trim().toLowerCase()
     if (!q) return vehicles.slice(0, 50)
-    return vehicles.filter((v) => (v.plate || '').toLowerCase().includes(q)).slice(0, 50)
+    return vehicles
+      .filter((v) => {
+        const plate = (v.plate || '').toLowerCase()
+        const desc = vehicleDescription(v).toLowerCase()
+        return plate.includes(q) || desc.includes(q)
+      })
+      .slice(0, 50)
   }, [query, vehicles])
 
   return (
@@ -143,25 +192,26 @@ function PlateAutocomplete({
       </div>
       {open && suggestions.length > 0 && (
         <div className="absolute z-50 mt-1 w-full rounded-md border bg-background shadow-md max-h-60 overflow-y-auto">
-          {suggestions.map((v) => (
-            <button
-              key={v.id}
-              type="button"
-              className="flex w-full items-center justify-between px-3 py-2 text-sm hover:bg-accent text-left"
-              onClick={() => {
-                onSelect(v)
-                setQuery(v.plate)
-                setOpen(false)
-              }}
-            >
-              <span className="font-medium">{v.plate}</span>
-              {v.vehicle_type && (
-                <span className="text-xs text-muted-foreground ml-2 truncate">
-                  {v.vehicle_type}
-                </span>
-              )}
-            </button>
-          ))}
+          {suggestions.map((v) => {
+            const desc = vehicleDescription(v)
+            return (
+              <button
+                key={v.id}
+                type="button"
+                className="flex w-full items-center justify-between gap-2 px-3 py-2 text-sm hover:bg-accent text-left"
+                onClick={() => {
+                  onSelect(v)
+                  setQuery(vehicleLabel(v))
+                  setOpen(false)
+                }}
+              >
+                <span className="font-medium whitespace-nowrap">{v.plate}</span>
+                {desc && (
+                  <span className="text-xs text-muted-foreground truncate text-right">{desc}</span>
+                )}
+              </button>
+            )
+          })}
         </div>
       )}
       {open && suggestions.length === 0 && (
@@ -184,7 +234,8 @@ interface Props {
 export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaultStatus }: Props) {
   const { profile, isAdmin } = useAuth()
   const canEditDate = isPCMUser(profile, isAdmin)
-  const userLabel = userDisplay(profile)
+  const cargoLabel = userCargo(profile)
+  const userNome = userName(profile)
   const [woId, setWoId] = useState<string | null>(null)
   const [form, setForm] = useState<Record<string, any>>({})
   const [diagnosis, setDiagnosis] = useState<Record<string, any>>({})
@@ -206,7 +257,7 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
     Promise.all([
       supabase
         .from('vehicles')
-        .select('id, plate, vehicle_type')
+        .select('id, plate, vehicle_type, brand, model, year, description')
         .eq('is_deleted', false)
         .order('plate'),
       supabase.from('mechanics').select('*').eq('is_deleted', false).order('name'),
@@ -527,6 +578,8 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
                 <Label>Odômetro (Km) *</Label>
                 <Input
                   type="number"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   value={form.odometer || ''}
                   onChange={(e) => setVal('odometer', e.target.value)}
                 />
@@ -547,8 +600,8 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
                 </Select>
               </div>
               <div className="col-span-2">
-                <Label>Usuário (automático)</Label>
-                <Input value={userLabel} disabled />
+                <Label>{cargoLabel}</Label>
+                <Input value={userNome} disabled />
               </div>
               <div>
                 <Label>Implemento/Reboque</Label>
@@ -735,6 +788,8 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
                 <Label>Odômetro (Km) *</Label>
                 <Input
                   type="number"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   value={form.odometer || ''}
                   onChange={(e) => setVal('odometer', e.target.value)}
                 />
@@ -755,8 +810,8 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
                 </Select>
               </div>
               <div>
-                <Label>Usuário (automático)</Label>
-                <Input value={userLabel} disabled />
+                <Label>{cargoLabel}</Label>
+                <Input value={userNome} disabled />
               </div>
               <div>
                 <Label>Status</Label>
