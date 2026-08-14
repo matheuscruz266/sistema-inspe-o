@@ -32,7 +32,7 @@ const db: any = supabase
 export interface SubField {
   name: string
   label: string
-  type: 'text' | 'number' | 'select' | 'switch' | 'date'
+  type: 'text' | 'number' | 'select' | 'switch' | 'date' | 'audio-text'
   options?: { label: string; value: string }[]
   dependsOn?: string
   computeValue?: (dependentValue: string) => string
@@ -81,10 +81,7 @@ export function SubEntityManager({ table, parentId, parentField, fields, columns
   const handleSave = async () => {
     const payload = { ...form, [parentField]: parentId }
     const { error } = editing
-      ? await db
-          .from(table)
-          .update(payload)
-          .eq('id', editing.id)
+      ? await db.from(table).update(payload).eq('id', editing.id)
       : await db.from(table).insert(payload)
     if (error) toast.error('Erro ao salvar')
     else {
@@ -95,10 +92,7 @@ export function SubEntityManager({ table, parentId, parentField, fields, columns
   }
 
   const handleDelete = async (id: string) => {
-    const { error: softError } = await db
-      .from(table)
-      .update({ is_deleted: true })
-      .eq('id', id)
+    const { error: softError } = await db.from(table).update({ is_deleted: true }).eq('id', id)
     if (softError) {
       const { error } = await db.from(table).delete().eq('id', id)
       if (error) toast.error('Erro ao excluir')

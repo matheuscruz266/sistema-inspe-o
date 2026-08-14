@@ -23,6 +23,7 @@ import { Plus, Pencil, Search, Upload, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatCurrency } from '@/lib/utils'
 import { uploadFile } from '@/lib/storage'
+import { Textarea } from '@/components/ui/textarea'
 
 function maskPlate(value: string): string {
   const cleaned = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase()
@@ -84,7 +85,7 @@ export default function Vehicles() {
 
   const filtered = search
     ? vehicles.filter((v) =>
-        ['plate', 'brand', 'model', 'cost_center'].some((k) =>
+        ['plate', 'brand', 'model', 'cost_center', 'description'].some((k) =>
           String(v[k] || '')
             .toLowerCase()
             .includes(search.toLowerCase()),
@@ -125,13 +126,14 @@ export default function Vehicles() {
       model: form.model || null,
       year: form.year ? parseInt(form.year) : null,
       axles_count: form.axles_count !== undefined ? parseInt(form.axles_count) : 2,
-      cost_center: form.cost_center ? parseInt(form.cost_center) : null,
+      cost_center: form.cost_center ? String(form.cost_center) : null,
       purchase_cost: form.purchase_cost_display
         ? parseCurrencyInput(form.purchase_cost_display)
         : 0,
       crlv_url: form.crlv_url || null,
       owner_id: form.owner_id || null,
       status: form.status || 'Ativo',
+      description: form.description || null,
     }
     const { error } = editing
       ? await supabase.from('vehicles').update(payload).eq('id', editing.id)
@@ -186,6 +188,7 @@ export default function Vehicles() {
               <TableHead>Ano</TableHead>
               <TableHead>Custo</TableHead>
               <TableHead>Proprietário</TableHead>
+              <TableHead>Descrição</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>CRLV</TableHead>
               <TableHead className="text-right">Ações</TableHead>
@@ -200,7 +203,7 @@ export default function Vehicles() {
               </TableRow>
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
                   Nenhum registro
                 </TableCell>
               </TableRow>
@@ -214,6 +217,13 @@ export default function Vehicles() {
                   <TableCell>{v.year || '-'}</TableCell>
                   <TableCell>{formatCurrency(v.purchase_cost)}</TableCell>
                   <TableCell>{assetOwners.find((o) => o.id === v.owner_id)?.name || '-'}</TableCell>
+                  <TableCell className="max-w-xs truncate" title={v.description || ''}>
+                    {v.description
+                      ? v.description.length > 40
+                        ? `${v.description.slice(0, 40)}...`
+                        : v.description
+                      : '-'}
+                  </TableCell>
                   <TableCell>{v.status || 'Ativo'}</TableCell>
                   <TableCell>
                     {v.crlv_url ? (
@@ -432,6 +442,15 @@ export default function Vehicles() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Descrição do Equipamento</Label>
+              <Textarea
+                value={form.description || ''}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                placeholder="Descreva o equipamento, características, observações..."
+                rows={3}
+              />
             </div>
             <div className="space-y-2">
               <Label>CRLV (Documento)</Label>

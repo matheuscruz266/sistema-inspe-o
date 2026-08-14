@@ -27,8 +27,7 @@ export default function DashYards() {
         stockValue: stock.reduce(
           (s, p) =>
             s +
-            (parseFloat(String(p.current_balance)) || 0) *
-              (parseFloat(String(p.unit_value)) || 0),
+            (parseFloat(String(p.current_balance)) || 0) * (parseFloat(String(p.unit_value)) || 0),
           0,
         ),
       })

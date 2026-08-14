@@ -54,8 +54,7 @@ export default function Index() {
       const pendingInspections = inspections.data?.filter((i) => i.status !== 'Em Dia').length || 0
       const lowStockItems =
         stock.data?.filter(
-          (s) =>
-            parseFloat(String(s.current_balance)) < parseFloat(String(s.min_quantity)),
+          (s) => parseFloat(String(s.current_balance)) < parseFloat(String(s.min_quantity)),
         ).length || 0
       const totalCost =
         orders.data?.reduce((sum, o) => sum + (parseFloat(String(o.total_cost)) || 0), 0) || 0
@@ -80,7 +79,7 @@ export default function Index() {
           const d = new Date(o.date)
           const key = `${monthNames[d.getMonth()]}/${d.getFullYear().toString().slice(2)}`
           if (!monthlyMap[key]) monthlyMap[key] = { cost: 0, orders: 0 }
-          monthlyMap[key].cost += parseFloat(o.total_cost) || 0
+          monthlyMap[key].cost += parseFloat(String(o.total_cost)) || 0
           monthlyMap[key].orders += 1
         }
       })
@@ -102,7 +101,7 @@ export default function Index() {
 
       const plateCost: Record<string, number> = {}
       orders.data?.forEach((o) => {
-        plateCost[o.plate] = (plateCost[o.plate] || 0) + (parseFloat(o.total_cost) || 0)
+        plateCost[o.plate] = (plateCost[o.plate] || 0) + (parseFloat(String(o.total_cost)) || 0)
       })
       const topPlates = Object.entries(plateCost)
         .map(([plate, cost]) => ({ plate, cost }))

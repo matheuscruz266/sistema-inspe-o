@@ -2973,6 +2973,7 @@ export type Database = {
           cost_center: string | null
           created_at: string
           crlv_url: string | null
+          description: string | null
           id: string
           is_deleted: boolean | null
           model: string | null
@@ -2989,6 +2990,7 @@ export type Database = {
           cost_center?: string | null
           created_at?: string
           crlv_url?: string | null
+          description?: string | null
           id?: string
           is_deleted?: boolean | null
           model?: string | null
@@ -3005,6 +3007,7 @@ export type Database = {
           cost_center?: string | null
           created_at?: string
           crlv_url?: string | null
+          description?: string | null
           id?: string
           is_deleted?: boolean | null
           model?: string | null

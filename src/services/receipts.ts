@@ -53,7 +53,7 @@ export async function createReceiptWithStock(payload: Record<string, any>) {
 export async function updateReceiptWithStock(id: string, payload: Record<string, any>) {
   const { data: receipt, error: receiptError } = await supabase
     .from('log_receipts')
-    .update(payload)
+    .update(payload as any)
     .eq('id', id)
     .select()
     .single()

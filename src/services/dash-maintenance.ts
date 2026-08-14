@@ -182,13 +182,13 @@ export async function fetchDashMaintenanceData(filters: Filters = {}) {
       .map((o: any) => o.id)
     const mLabor = labor
       .filter((l: any) => monthWOs.includes(l.work_order_id))
-      .reduce((s, l) => s + (parseFloat(l.cost) || 0), 0)
+      .reduce((s, l) => s + (parseFloat(String(l.cost)) || 0), 0)
     const mParts = materials
       .filter((mt: any) => monthWOs.includes(mt.work_order_id))
-      .reduce((s, mt) => s + (parseFloat(mt.total_cost) || 0), 0)
+      .reduce((s, mt) => s + (parseFloat(String(mt.total_cost)) || 0), 0)
     const mExt = external
       .filter((e: any) => monthWOs.includes(e.work_order_id))
-      .reduce((s, e) => s + (parseFloat(e.total_cost) || 0), 0)
+      .reduce((s, e) => s + (parseFloat(String(e.total_cost)) || 0), 0)
     return { month: m.month, labor: mLabor, parts: mParts, external: mExt }
   })
 
