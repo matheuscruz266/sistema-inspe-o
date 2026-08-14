@@ -168,6 +168,14 @@ export default function Receipts() {
       nfe_number: form.nfe_number || null,
       status: form.status || 'Recebido',
       notes: form.notes || null,
+      valor_ton_madeira: num(form.valor_ton_madeira),
+      total_madeira: totalMadeira,
+      valor_ton_frete: num(form.valor_ton_frete),
+      total_frete: totalFrete,
+      outros_ton: num(form.outros_ton),
+      total_outros: totalOutros,
+      valor_total_carga: valorTotalCarga,
+      m3_estereo: m3Estereo,
     }
     const { error } = editing
       ? await updateReceiptWithStock(editing.id, payload)
