@@ -63,7 +63,7 @@ export function StockInventoryDialog({ open, onOpenChange }: Props) {
         .eq('id', form.product_id)
         .single()
         .then(({ data }) =>
-          setSystemQty(data?.current_balance ? parseFloat(data.current_balance) : 0),
+          setSystemQty(data?.current_balance ? parseFloat(String(data.current_balance)) : 0),
         )
     } else {
       setSystemQty(null)

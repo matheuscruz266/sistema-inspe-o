@@ -122,8 +122,17 @@ export function InspectionPlanDialog({ open, onOpenChange, editingId, onSaved }:
 
   const handleSave = async () => {
     const { data, error } = planId
-      ? await supabase.from('inspection_plans').update(form).eq('id', planId).select().single()
-      : await supabase.from('inspection_plans').insert(form).select().single()
+      ? await supabase
+          .from('inspection_plans')
+          .update(form as any)
+          .eq('id', planId)
+          .select()
+          .single()
+      : await supabase
+          .from('inspection_plans')
+          .insert(form as any)
+          .select()
+          .single()
     if (error) {
       toast.error('Erro ao salvar')
       return

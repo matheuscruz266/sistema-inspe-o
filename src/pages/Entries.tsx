@@ -83,7 +83,10 @@ export default function Entries() {
 
   const handleDelete = async (table: string, id: string, label: string) => {
     if (!window.confirm('Confirmar exclusão?')) return
-    const { error } = await supabase.from(table).update({ is_deleted: true }).eq('id', id)
+    const { error } = await supabase
+      .from(table as any)
+      .update({ is_deleted: true } as any)
+      .eq('id', id)
     if (error) toast.error('Erro ao excluir')
     else {
       toast.success(`${label} excluído`)

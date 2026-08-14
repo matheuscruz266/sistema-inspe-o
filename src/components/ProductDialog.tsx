@@ -197,8 +197,17 @@ export function ProductDialog({ open, onOpenChange, editingId, onSaved }: Props)
       }
     })
     const { data, error } = productId
-      ? await supabase.from('products').update(payload).eq('id', productId).select().single()
-      : await supabase.from('products').insert(payload).select().single()
+      ? await supabase
+          .from('products')
+          .update(payload as any)
+          .eq('id', productId)
+          .select()
+          .single()
+      : await supabase
+          .from('products')
+          .insert(payload as any)
+          .select()
+          .single()
     if (error) {
       toast.error('Erro ao salvar')
       return

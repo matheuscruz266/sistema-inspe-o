@@ -23,6 +23,12 @@ import {
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
+// Cliente sem tipagem de tabela: este componente é genérico e opera sobre nomes
+// de tabela definidos em tempo de execução, o que a tipagem do supabase-js v2
+// não suporta bem (erro de "type instantiation excessively deep"). O `any`
+// local é intencional e mantém a API original intacta.
+const db: any = supabase
+
 export interface SubField {
   name: string
   label: string
@@ -53,7 +59,7 @@ export function SubEntityManager({ table, parentId, parentField, fields, columns
 
   const fetchData = useCallback(async () => {
     if (!parentId) return
-    const { data } = await supabase
+    const { data } = await db
       .from(table)
       .select('*')
       .eq(parentField, parentId)
@@ -75,8 +81,11 @@ export function SubEntityManager({ table, parentId, parentField, fields, columns
   const handleSave = async () => {
     const payload = { ...form, [parentField]: parentId }
     const { error } = editing
-      ? await supabase.from(table).update(payload).eq('id', editing.id)
-      : await supabase.from(table).insert(payload)
+      ? await db
+          .from(table)
+          .update(payload)
+          .eq('id', editing.id)
+      : await db.from(table).insert(payload)
     if (error) toast.error('Erro ao salvar')
     else {
       toast.success('Salvo')
@@ -86,12 +95,12 @@ export function SubEntityManager({ table, parentId, parentField, fields, columns
   }
 
   const handleDelete = async (id: string) => {
-    const { error: softError } = await supabase
+    const { error: softError } = await db
       .from(table)
       .update({ is_deleted: true })
       .eq('id', id)
     if (softError) {
-      const { error } = await supabase.from(table).delete().eq('id', id)
+      const { error } = await db.from(table).delete().eq('id', id)
       if (error) toast.error('Erro ao excluir')
       else {
         toast.success('Excluído')

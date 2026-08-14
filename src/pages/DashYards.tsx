@@ -22,10 +22,13 @@ export default function DashYards() {
       const stock = stk.data || []
       setStats({
         receipts: receipts.length,
-        quantity: receipts.reduce((s, r) => s + (parseFloat(r.quantity) || 0), 0),
+        quantity: receipts.reduce((s, r) => s + (parseFloat(String(r.quantity)) || 0), 0),
         suppliers: (sup.data || []).length,
         stockValue: stock.reduce(
-          (s, p) => s + (parseFloat(p.current_balance) || 0) * (parseFloat(p.unit_value) || 0),
+          (s, p) =>
+            s +
+            (parseFloat(String(p.current_balance)) || 0) *
+              (parseFloat(String(p.unit_value)) || 0),
           0,
         ),
       })

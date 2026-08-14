@@ -41,7 +41,7 @@ export default function Kanban() {
   return (
     <div className="space-y-4 p-4 md:p-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Kanban</h1>
+        <h1 className="text-2xl font-bold">Ordens</h1>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setExtOpen(true)}>
             <Plus className="mr-2 h-4 w-4" /> Nova OS Motorista

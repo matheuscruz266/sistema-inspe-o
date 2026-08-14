@@ -1,13 +1,16 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase/client'
 
+// Cliente sem tipagem de tabela para permitir nomes dinâmicos de tabela.
+const db: any = supabase
+
 export function useCrud<T = any>(table: string) {
   const [data, setData] = useState<T[]>([])
   const [loading, setLoading] = useState(true)
 
   const fetchData = useCallback(async () => {
     setLoading(true)
-    const { data: result, error } = await supabase
+    const { data: result, error } = await db
       .from(table)
       .select('*')
       .eq('is_deleted', false)
@@ -25,25 +28,25 @@ export function useCrud<T = any>(table: string) {
   }, [fetchData])
 
   const create = async (item: Partial<T>) => {
-    const { error } = await supabase.from(table).insert(item)
+    const { error } = await db.from(table).insert(item)
     if (!error) await fetchData()
     return { error }
   }
 
   const update = async (id: string, item: Partial<T>) => {
-    const { error } = await supabase.from(table).update(item).eq('id', id)
+    const { error } = await db.from(table).update(item).eq('id', id)
     if (!error) await fetchData()
     return { error }
   }
 
   const remove = async (id: string) => {
-    const { error } = await supabase.from(table).update({ is_deleted: true }).eq('id', id)
+    const { error } = await db.from(table).update({ is_deleted: true }).eq('id', id)
     if (!error) await fetchData()
     return { error }
   }
 
   const permanentDelete = async (id: string) => {
-    const { error } = await supabase.from(table).delete().eq('id', id)
+    const { error } = await db.from(table).delete().eq('id', id)
     if (!error) await fetchData()
     return { error }
   }

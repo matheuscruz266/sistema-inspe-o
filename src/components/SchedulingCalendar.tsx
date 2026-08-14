@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 export interface CalendarEvent {
+  id?: string
   date: string
   type: 'inspection' | 'work_order' | 'schedule'
   plate: string
@@ -15,6 +16,7 @@ interface Props {
   onNavigate: (dir: 'prev' | 'next' | 'today') => void
   view: 'month' | 'week'
   onViewChange: (v: 'month' | 'week') => void
+  onEventClick?: (event: CalendarEvent) => void
 }
 
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
@@ -75,7 +77,14 @@ const eventLabels: Record<string, string> = {
   schedule: 'Agend',
 }
 
-export function SchedulingCalendar({ events, currentDate, onNavigate, view, onViewChange }: Props) {
+export function SchedulingCalendar({
+  events,
+  currentDate,
+  onNavigate,
+  view,
+  onViewChange,
+  onEventClick,
+}: Props) {
   const days = getDays(currentDate, view)
   const todayKey = dateKey(new Date())
   const eventsByDate = events.reduce(
@@ -147,7 +156,17 @@ export function SchedulingCalendar({ events, currentDate, onNavigate, view, onVi
                 {dayEvents.slice(0, 3).map((e, idx) => (
                   <div
                     key={idx}
-                    className={cn('rounded px-1 py-0.5 truncate', eventColors[e.type])}
+                    onClick={(ev) => {
+                      ev.stopPropagation()
+                      onEventClick?.(e)
+                    }}
+                    className={cn(
+                      'rounded px-1 py-0.5 truncate',
+                      eventColors[e.type],
+                      onEventClick && e.type === 'work_order'
+                        ? 'cursor-pointer hover:opacity-80'
+                        : '',
+                    )}
                   >
                     <span className="font-medium">{eventLabels[e.type]}</span> {e.plate}
                   </div>

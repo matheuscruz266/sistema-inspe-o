@@ -33,6 +33,11 @@ export default function Users() {
   const [editing, setEditing] = useState<any>(null)
   const [form, setForm] = useState<Record<string, any>>({})
   const [loading, setLoading] = useState(true)
+  const [resetOpen, setResetOpen] = useState(false)
+  const [resetTarget, setResetTarget] = useState<any>(null)
+  const [resetPassword, setResetPassword] = useState('')
+  const [resetConfirm, setResetConfirm] = useState('')
+  const [resetLoading, setResetLoading] = useState(false)
 
   const fetchData = async () => {
     setLoading(true)

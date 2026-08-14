@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/table'
 import { SubEntityManager, type SubField, type SubColumn } from '@/components/SubEntityManager'
 import { OSMaterialsManager } from '@/components/OSMaterialsManager'
+import { ServiceAutocomplete } from '@/components/ServiceAutocomplete'
 import { AudioTranscribeButton } from '@/components/AudioTranscribeButton'
 import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/use-auth'
@@ -38,7 +39,17 @@ const STATUSES = [
   'Em Execução',
   'Finalizado',
   'Encerra igual',
+  'Encerrada',
 ]
+
+// PCM é identificado pelo nome do nível de acesso contendo "PCM" (case-insensitive)
+// ou por permissões administrativas (isAdmin).
+function isPCMUser(profile: any, isAdmin: boolean): boolean {
+  if (isAdmin) return true
+  const name = profile?.access_levels?.name
+  if (!name) return false
+  return String(name).toUpperCase().includes('PCM')
+}
 
 const materialFields: SubField[] = [
   { name: 'product_name', label: 'Produto', type: 'text' },
@@ -73,7 +84,8 @@ interface Props {
 }
 
 export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaultStatus }: Props) {
-  const { profile } = useAuth()
+  const { profile, isAdmin } = useAuth()
+  const canEditDate = isPCMUser(profile, isAdmin)
   const [woId, setWoId] = useState<string | null>(null)
   const [form, setForm] = useState<Record<string, any>>({})
   const [diagnosis, setDiagnosis] = useState<Record<string, any>>({})
@@ -116,19 +128,24 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
           setForm(wo.data)
           setWoId(editingId)
         }
+        let diagAndServiceSaved = false
         if (diag.data) {
           setDiagnosis(diag.data)
           setServiceDesc(diag.data.action || '')
           // Já tem diagnóstico (falha) e serviço (ação) salvos?
           const hasDiag = !!(diag.data.symptom && diag.data.symptom.trim())
           const hasServ = !!(diag.data.action && diag.data.action.trim())
-          setDiagSaved(hasDiag && hasServ)
+          diagAndServiceSaved = hasDiag && hasServ
+          setDiagSaved(diagAndServiceSaved)
         } else {
           setServiceDesc('')
           setDiagSaved(false)
         }
         setLaborEntries(lab.data || [])
-        setStage('full')
+        // Preserva o fluxo: só vai para a edição completa se diagnóstico E
+        // serviço já estiverem preenchidos. Caso contrário, volta ao estágio
+        // diagService para concluir essa etapa obrigatória.
+        setStage(diagAndServiceSaved ? 'full' : 'diagService')
       })
     } else if (open) {
       setForm({
@@ -180,7 +197,11 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
       labor_cost: 0,
       total_cost: 0,
     }
-    const { data, error } = await supabase.from('work_orders').insert(payload).select().single()
+    const { data, error } = await supabase
+      .from('work_orders')
+      .insert(payload as any)
+      .select()
+      .single()
     if (error) {
       toast.error('Erro ao criar OS')
       return
@@ -202,8 +223,17 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
     }
     const payload = { ...form, labor_cost: laborCost, total_cost: totalCost }
     const { data, error } = woId
-      ? await supabase.from('work_orders').update(payload).eq('id', woId).select().single()
-      : await supabase.from('work_orders').insert(payload).select().single()
+      ? await supabase
+          .from('work_orders')
+          .update(payload as any)
+          .eq('id', woId)
+          .select()
+          .single()
+      : await supabase
+          .from('work_orders')
+          .insert(payload as any)
+          .select()
+          .single()
     if (error) {
       toast.error('Erro ao salvar OS')
       return
@@ -227,7 +257,7 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
     }
     const { error } = await supabase
       .from('os_diagnosis')
-      .upsert({ ...diagnosis, symptom, action, work_order_id: woId })
+      .upsert({ ...diagnosis, symptom, action, work_order_id: woId } as any)
     if (error) {
       toast.error('Erro ao salvar diagnóstico')
       return
@@ -243,7 +273,7 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
     if (!woId) return
     const { error } = await supabase
       .from('os_diagnosis')
-      .upsert({ ...diagnosis, action: serviceDesc, work_order_id: woId })
+      .upsert({ ...diagnosis, action: serviceDesc, work_order_id: woId } as any)
     if (error) toast.error('Erro ao salvar diagnóstico')
     else toast.success('Diagnóstico salvo')
   }
@@ -285,7 +315,7 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
     const hours = parseFloat(closeHours) || 0
     const { error } = await supabase
       .from('work_orders')
-      .update({ status, hours, labor_cost: laborCost, total_cost: totalCost })
+      .update({ status, hours, labor_cost: laborCost, total_cost: totalCost } as any)
       .eq('id', woId)
     if (error) {
       toast.error('Erro ao finalizar')
@@ -361,8 +391,13 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
             </p>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Data (automático)</Label>
-                <Input type="date" value={form.date || ''} disabled />
+                <Label>{canEditDate ? 'Data' : 'Data (automático)'}</Label>
+                <Input
+                  type="date"
+                  value={form.date || ''}
+                  disabled={!canEditDate}
+                  onChange={canEditDate ? (e) => setVal('date', e.target.value) : undefined}
+                />
               </div>
               <div>
                 <Label>Placa *</Label>
@@ -499,15 +534,19 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
               </div>
             </div>
 
-            <div>
-              <Label>
-                Serviço a ser realizado <span className="text-destructive">*</span>
-              </Label>
+            <div className="space-y-1">
+              <ServiceAutocomplete
+                label="Serviço a ser realizado"
+                required
+                value={serviceDesc}
+                onChange={(v) => setServiceDesc(v)}
+                placeholder="Digite o nome do serviço..."
+              />
               <Textarea
                 value={serviceDesc}
                 onChange={(e) => setServiceDesc(e.target.value)}
-                placeholder="Descreva o serviço que será executado..."
-                rows={3}
+                placeholder="Descreva/complemente o serviço que será executado..."
+                rows={2}
               />
             </div>
 
@@ -557,8 +596,13 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
           <TabsContent value="header" className="space-y-3 mt-2">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Data (automático)</Label>
-                <Input type="date" value={form.date || ''} disabled />
+                <Label>{canEditDate ? 'Data' : 'Data (automático)'}</Label>
+                <Input
+                  type="date"
+                  value={form.date || ''}
+                  disabled={!canEditDate}
+                  onChange={canEditDate ? (e) => setVal('date', e.target.value) : undefined}
+                />
               </div>
               <div>
                 <Label>Placa *</Label>
@@ -677,9 +721,28 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
               <Button onClick={handleSaveHeader} className="flex-1">
                 Atualizar OS
               </Button>
-              {woId && !['Finalizado', 'Encerra igual'].includes(form.status) && (
+              {woId && !['Finalizado', 'Encerra igual', 'Encerrada'].includes(form.status) && (
                 <Button variant="secondary" onClick={() => setShowClose(true)}>
                   Finalizar OS
+                </Button>
+              )}
+              {woId && canEditDate && form.status === 'Finalizado' && (
+                <Button
+                  variant="secondary"
+                  onClick={async () => {
+                    const { error } = await supabase
+                      .from('work_orders')
+                      .update({ status: 'Encerrada' } as any)
+                      .eq('id', woId)
+                    if (error) toast.error('Erro ao encerrar OS')
+                    else {
+                      toast.success('O.S. encerrada e movida para o Histórico')
+                      setForm((p) => ({ ...p, status: 'Encerrada' }))
+                      onSaved()
+                    }
+                  }}
+                >
+                  Encerrar O.S.
                 </Button>
               )}
             </div>
@@ -708,11 +771,20 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
                 onChange={(e) => setDiag('cause', e.target.value)}
               />
             </div>
-            <div>
-              <Label>
-                Serviço a ser realizado <span className="text-destructive">*</span>
-              </Label>
-              <Textarea value={serviceDesc} onChange={(e) => setServiceDesc(e.target.value)} />
+            <div className="space-y-1">
+              <ServiceAutocomplete
+                label="Serviço a ser realizado"
+                required
+                value={serviceDesc}
+                onChange={(v) => setServiceDesc(v)}
+                placeholder="Digite o nome do serviço..."
+              />
+              <Textarea
+                value={serviceDesc}
+                onChange={(e) => setServiceDesc(e.target.value)}
+                placeholder="Complemente a descrição do serviço..."
+                rows={2}
+              />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>

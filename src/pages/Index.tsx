@@ -53,10 +53,12 @@ export default function Index() {
       const openOrders = orders.data?.filter((o) => o.status !== 'Concluída').length || 0
       const pendingInspections = inspections.data?.filter((i) => i.status !== 'Em Dia').length || 0
       const lowStockItems =
-        stock.data?.filter((s) => parseFloat(s.current_balance) < parseFloat(s.min_quantity))
-          .length || 0
+        stock.data?.filter(
+          (s) =>
+            parseFloat(String(s.current_balance)) < parseFloat(String(s.min_quantity)),
+        ).length || 0
       const totalCost =
-        orders.data?.reduce((sum, o) => sum + (parseFloat(o.total_cost) || 0), 0) || 0
+        orders.data?.reduce((sum, o) => sum + (parseFloat(String(o.total_cost)) || 0), 0) || 0
 
       const monthNames = [
         'Jan',

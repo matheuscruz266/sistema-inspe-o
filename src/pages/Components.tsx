@@ -147,8 +147,8 @@ export default function Components() {
   const handleSave = async () => {
     const payload = { ...form, vehicle_id: selectedVehicle }
     const { error } = editing
-      ? await supabase.from('vehicle_systems').update(payload).eq('id', editing.id)
-      : await supabase.from('vehicle_systems').insert(payload)
+      ? await supabase.from('vehicle_systems').update(payload as any).eq('id', editing.id)
+      : await supabase.from('vehicle_systems').insert(payload as any)
     if (error) toast.error('Erro ao salvar')
     else {
       toast.success('Salvo')

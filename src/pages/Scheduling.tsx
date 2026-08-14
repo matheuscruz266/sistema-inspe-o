@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { SchedulingCalendar, type CalendarEvent } from '@/components/SchedulingCalendar'
+import { WorkOrderDetailDialog } from '@/components/WorkOrderDetailDialog'
 import { X } from 'lucide-react'
 
 export default function Scheduling() {
@@ -13,12 +14,17 @@ export default function Scheduling() {
   const [view, setView] = useState<'month' | 'week'>('month')
   const [dateFrom, setDateFrom] = useState('')
   const [dateUntil, setDateUntil] = useState('')
+  const [detailOpen, setDetailOpen] = useState(false)
+  const [detailId, setDetailId] = useState<string | null>(null)
 
   const fetchData = useCallback(async () => {
     setLoading(true)
     const [inspRes, woRes, schedRes] = await Promise.all([
       supabase.from('inspections').select('date, plate, type').eq('is_deleted', false),
-      supabase.from('work_orders').select('date, plate, type, diagnosis').eq('is_deleted', false),
+      supabase
+        .from('work_orders')
+        .select('id, date, plate, type, diagnosis')
+        .eq('is_deleted', false),
       supabase
         .from('schedule_records')
         .select('scheduled_date, vehicles(plate), maintenance_plans(name)')
@@ -42,11 +48,12 @@ export default function Scheduling() {
     ;(woRes.data || []).forEach((w: any) => {
       if (inRange(w.date)) {
         allEvents.push({
+          id: w.id,
           date: w.date,
           type: 'work_order',
           plate: w.plate,
           description: w.diagnosis || w.type,
-        })
+        } as any)
       }
     })
     ;(schedRes.data || []).forEach((s: any) => {
@@ -87,6 +94,14 @@ export default function Scheduling() {
     setDateUntil('')
   }
 
+  // Ao clicar em uma O.S. no calendário, abre a visão detalhada somente leitura
+  const handleEventClick = (event: any) => {
+    if (event.type === 'work_order' && event.id) {
+      setDetailId(event.id)
+      setDetailOpen(true)
+    }
+  }
+
   return (
     <div className="space-y-4 p-4 md:p-6">
       <h1 className="text-2xl font-bold">Agendamento</h1>
@@ -124,8 +139,14 @@ export default function Scheduling() {
           onNavigate={handleNavigate}
           view={view}
           onViewChange={setView}
+          onEventClick={handleEventClick}
         />
       )}
+      <WorkOrderDetailDialog
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        workOrderId={detailId}
+      />
     </div>
   )
 }

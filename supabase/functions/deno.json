@@ -1,6 +1,6 @@
 {
   "_versions": {
-    "create-user": 39,
-    "reset-user-password": 3
+    "create-user": 44,
+    "reset-user-password": 8
   }
 }
