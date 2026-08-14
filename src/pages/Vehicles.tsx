@@ -53,6 +53,8 @@ export default function Vehicles() {
   const [models, setModels] = useState<string[]>([])
   const [newBrand, setNewBrand] = useState(false)
   const [newModel, setNewModel] = useState(false)
+  const [newOwner, setNewOwner] = useState(false)
+  const [savingOwner, setSavingOwner] = useState(false)
   const [assetOwners, setAssetOwners] = useState<any[]>([])
 
   const fetchData = useCallback(async () => {
@@ -111,6 +113,7 @@ export default function Vehicles() {
     setEditing(item || null)
     setNewBrand(false)
     setNewModel(false)
+    setNewOwner(false)
     setOpen(true)
   }
 
@@ -185,10 +188,10 @@ export default function Vehicles() {
               <TableHead>Tipo</TableHead>
               <TableHead>Marca</TableHead>
               <TableHead>Modelo</TableHead>
+              <TableHead>Descrição</TableHead>
               <TableHead>Ano</TableHead>
               <TableHead>Custo</TableHead>
               <TableHead>Proprietário</TableHead>
-              <TableHead>Descrição</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>CRLV</TableHead>
               <TableHead className="text-right">Ações</TableHead>
@@ -197,7 +200,7 @@ export default function Vehicles() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
                   Carregando...
                 </TableCell>
               </TableRow>
@@ -214,9 +217,6 @@ export default function Vehicles() {
                   <TableCell>{v.vehicle_type}</TableCell>
                   <TableCell>{v.brand || '-'}</TableCell>
                   <TableCell>{v.model || '-'}</TableCell>
-                  <TableCell>{v.year || '-'}</TableCell>
-                  <TableCell>{formatCurrency(v.purchase_cost)}</TableCell>
-                  <TableCell>{assetOwners.find((o) => o.id === v.owner_id)?.name || '-'}</TableCell>
                   <TableCell className="max-w-xs truncate" title={v.description || ''}>
                     {v.description
                       ? v.description.length > 40
@@ -224,6 +224,9 @@ export default function Vehicles() {
                         : v.description
                       : '-'}
                   </TableCell>
+                  <TableCell>{v.year || '-'}</TableCell>
+                  <TableCell>{formatCurrency(v.purchase_cost)}</TableCell>
+                  <TableCell>{assetOwners.find((o) => o.id === v.owner_id)?.name || '-'}</TableCell>
                   <TableCell>{v.status || 'Ativo'}</TableCell>
                   <TableCell>
                     {v.crlv_url ? (
@@ -292,13 +295,28 @@ export default function Vehicles() {
                       onChange={(e) => setForm({ ...form, brand: e.target.value })}
                       placeholder="Nova marca"
                     />
-                    <Button size="sm" variant="outline" onClick={() => setNewBrand(false)}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        const value = (form.brand || '').trim()
+                        if (!value) {
+                          setNewBrand(false)
+                          return
+                        }
+                        if (!brands.includes(value)) {
+                          setBrands((prev) => [...prev, value])
+                        }
+                        setForm({ ...form, brand: value })
+                        setNewBrand(false)
+                      }}
+                    >
                       OK
                     </Button>
                   </div>
                 ) : (
                   <Select
-                    value={form.brand || '__new__'}
+                    value={form.brand && brands.includes(form.brand) ? form.brand : undefined}
                     onValueChange={(v) => {
                       if (v === '__new__') {
                         setNewBrand(true)
@@ -331,13 +349,28 @@ export default function Vehicles() {
                       onChange={(e) => setForm({ ...form, model: e.target.value })}
                       placeholder="Novo modelo"
                     />
-                    <Button size="sm" variant="outline" onClick={() => setNewModel(false)}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        const value = (form.model || '').trim()
+                        if (!value) {
+                          setNewModel(false)
+                          return
+                        }
+                        if (!models.includes(value)) {
+                          setModels((prev) => [...prev, value])
+                        }
+                        setForm({ ...form, model: value })
+                        setNewModel(false)
+                      }}
+                    >
                       OK
                     </Button>
                   </div>
                 ) : (
                   <Select
-                    value={form.model || '__new__'}
+                    value={form.model && models.includes(form.model) ? form.model : undefined}
                     onValueChange={(v) => {
                       if (v === '__new__') {
                         setNewModel(true)
@@ -409,22 +442,70 @@ export default function Vehicles() {
               </div>
               <div className="space-y-2">
                 <Label>Proprietário</Label>
-                <Select
-                  value={form.owner_id || '__none__'}
-                  onValueChange={(v) => setForm({ ...form, owner_id: v === '__none__' ? null : v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">—</SelectItem>
-                    {assetOwners.map((o) => (
-                      <SelectItem key={o.id} value={o.id}>
-                        {o.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {newOwner ? (
+                  <div className="flex gap-1">
+                    <Input
+                      value={form.newOwnerName || ''}
+                      onChange={(e) => setForm({ ...form, newOwnerName: e.target.value })}
+                      placeholder="Novo proprietário"
+                      disabled={savingOwner}
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={savingOwner}
+                      onClick={async () => {
+                        const name = (form.newOwnerName || '').trim()
+                        if (!name) {
+                          setNewOwner(false)
+                          return
+                        }
+                        setSavingOwner(true)
+                        const { data: created, error } = await supabase
+                          .from('asset_owners')
+                          .insert({ name })
+                          .select('id, name')
+                          .single()
+                        setSavingOwner(false)
+                        if (error || !created) {
+                          toast.error('Erro ao criar proprietário')
+                          return
+                        }
+                        setAssetOwners((prev) => [...prev, created])
+                        setForm({ ...form, owner_id: created.id, newOwnerName: '' })
+                        setNewOwner(false)
+                        toast.success('Proprietário adicionado')
+                      }}
+                    >
+                      {savingOwner ? '...' : 'OK'}
+                    </Button>
+                  </div>
+                ) : (
+                  <Select
+                    value={form.owner_id || '__none__'}
+                    onValueChange={(v) => {
+                      if (v === '__new__') {
+                        setNewOwner(true)
+                        setForm({ ...form, newOwnerName: '' })
+                      } else {
+                        setForm({ ...form, owner_id: v === '__none__' ? null : v })
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">—</SelectItem>
+                      {assetOwners.map((o) => (
+                        <SelectItem key={o.id} value={o.id}>
+                          {o.name}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="__new__">➕ Adicionar novo...</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Status</Label>
