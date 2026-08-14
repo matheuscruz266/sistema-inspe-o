@@ -10,6 +10,13 @@ import {
   SelectItem,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import {
   Table,
@@ -19,7 +26,7 @@ import {
   TableRow,
   TableCell,
 } from '@/components/ui/table'
-import { Wrench, ClipboardCheck, DollarSign, Pencil } from 'lucide-react'
+import { Wrench, ClipboardCheck, DollarSign, Pencil, Trash2, RotateCcw } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { useAuth } from '@/hooks/use-auth'
 import { WorkOrderDialog } from '@/components/WorkOrderDialog'
@@ -34,6 +41,12 @@ function isPCMUser(profile: any, isAdmin: boolean): boolean {
   return String(name).toUpperCase().includes('PCM')
 }
 
+function shorten(text: string | null | undefined, max = 60): string {
+  if (!text) return '-'
+  const t = text.trim()
+  return t.length > max ? `${t.slice(0, max)}...` : t
+}
+
 export default function History() {
   const { profile, isAdmin } = useAuth()
   const canEditClosed = isPCMUser(profile, isAdmin)
@@ -44,11 +57,14 @@ export default function History() {
   const [closedOrders, setClosedOrders] = useState<any[]>([])
   const [woOpen, setWoOpen] = useState(false)
   const [editingWO, setEditingWO] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<any | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const fetchClosed = useCallback(async () => {
+    // Inclui o diagnóstico (symptom/action) para exibir serviço e falha resumidos.
     const { data } = await supabase
       .from('work_orders')
-      .select('*')
+      .select('*, os_diagnosis(symptom, action)')
       .eq('status', 'Encerrada')
       .eq('is_deleted', false)
       .order('date', { ascending: false })
@@ -98,17 +114,40 @@ export default function History() {
     })
   }, [selected])
 
+  // Reabrir: volta para "Aberta" e retorna ao Kanban (coluna Aberta).
   const handleReopen = async (id: string) => {
-    if (!window.confirm('Reabrir esta O.S.? Ela voltará para o quadro de Ordens.')) return
-    const { error } = await supabase
-      .from('work_orders')
-      .update({ status: 'Finalizado' })
-      .eq('id', id)
+    if (!window.confirm('Reabrir esta O.S.? Ela voltará para o quadro de Ordens na coluna Aberta.'))
+      return
+    const { error } = await supabase.from('work_orders').update({ status: 'Aberta' }).eq('id', id)
     if (error) toast.error('Erro ao reabrir O.S.')
     else {
-      toast.success('O.S. reaberta')
+      toast.success('O.S. reaberta e devolvida ao Kanban')
       fetchClosed()
     }
+  }
+
+  // Excluir definitivamente: remove a O.S. e seus materiais/serviços vinculados.
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    setDeleting(true)
+    const id = deleteTarget.id
+    // Limpa os registros filhos antes de remover a O.S.
+    await Promise.all([
+      supabase.from('os_materials').delete().eq('work_order_id', id),
+      supabase.from('os_services').delete().eq('work_order_id', id),
+      supabase.from('os_labor').delete().eq('work_order_id', id),
+      supabase.from('os_diagnosis').delete().eq('work_order_id', id),
+      supabase.from('os_external').delete().eq('work_order_id', id),
+    ])
+    const { error } = await supabase.from('work_orders').delete().eq('id', id)
+    setDeleting(false)
+    if (error) {
+      toast.error('Erro ao excluir O.S.')
+      return
+    }
+    toast.success('O.S. excluída definitivamente')
+    setDeleteTarget(null)
+    fetchClosed()
   }
 
   return (
@@ -207,8 +246,8 @@ export default function History() {
           <p className="text-sm text-muted-foreground">
             Ordens de Serviço encerradas pelo PCM.{' '}
             {canEditClosed
-              ? 'Você pode editar ou reabrir uma O.S.'
-              : 'Apenas o PCM pode editar ou reabrir.'}
+              ? 'Você pode editar, reabrir ou excluir definitivamente uma O.S.'
+              : 'Apenas o PCM pode editar, reabrir ou excluir.'}
           </p>
           <div className="rounded-md border overflow-x-auto">
             <Table>
@@ -216,16 +255,17 @@ export default function History() {
                 <TableRow>
                   <TableHead>Data</TableHead>
                   <TableHead>Placa</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Usuário</TableHead>
-                  <TableHead>Custo</TableHead>
+                  <TableHead>Serviço</TableHead>
+                  <TableHead>Diagnóstico</TableHead>
+                  <TableHead>Custo Total</TableHead>
+                  <TableHead>Fechamento</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {closedOrders.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       Nenhuma O.S. encerrada
                     </TableCell>
                   </TableRow>
@@ -234,17 +274,27 @@ export default function History() {
                     <TableRow key={o.id}>
                       <TableCell>{formatDate(o.date)}</TableCell>
                       <TableCell className="font-medium">{o.plate}</TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">{o.type}</Badge>
+                      <TableCell
+                        className="max-w-[200px] truncate"
+                        title={o.os_diagnosis?.action || ''}
+                      >
+                        {shorten(o.os_diagnosis?.action, 40)}
                       </TableCell>
-                      <TableCell>{o.user_name || '-'}</TableCell>
+                      <TableCell
+                        className="max-w-[220px] truncate"
+                        title={o.os_diagnosis?.symptom || ''}
+                      >
+                        {shorten(o.os_diagnosis?.symptom, 40)}
+                      </TableCell>
                       <TableCell>{formatCurrency(o.total_cost)}</TableCell>
+                      <TableCell>{formatDate(o.created_at)}</TableCell>
                       <TableCell className="text-right whitespace-nowrap">
                         {canEditClosed && (
                           <>
                             <Button
                               variant="ghost"
                               size="icon"
+                              title="Editar"
                               onClick={() => {
                                 setEditingWO(o.id)
                                 setWoOpen(true)
@@ -252,8 +302,21 @@ export default function History() {
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
-                            <Button size="sm" variant="outline" onClick={() => handleReopen(o.id)}>
-                              Reabrir
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Reabrir"
+                              onClick={() => handleReopen(o.id)}
+                            >
+                              <RotateCcw className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Excluir definitivamente"
+                              onClick={() => setDeleteTarget(o)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
                           </>
                         )}
@@ -273,6 +336,27 @@ export default function History() {
         onSaved={fetchClosed}
         editingId={editingWO}
       />
+
+      <Dialog open={!!deleteTarget} onOpenChange={(v) => !v && setDeleteTarget(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Excluir O.S. definitivamente</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground py-2">
+            Tem certeza que deseja excluir definitivamente esta O.S.
+            {deleteTarget ? ` (${deleteTarget.plate})` : ''}? Esta ação não pode ser desfeita e
+            removerá também os materiais e serviços vinculados.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={deleting}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+              {deleting ? 'Excluindo...' : 'Excluir definitivamente'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

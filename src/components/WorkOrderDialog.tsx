@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -28,7 +28,7 @@ import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/use-auth'
 import { toast } from 'sonner'
 import { formatCurrency } from '@/lib/utils'
-import { Plus, Trash2, ArrowRight } from 'lucide-react'
+import { Plus, Trash2, ArrowRight, Search } from 'lucide-react'
 
 const OS_TYPES = ['Preventiva', 'Corretiva não planejada/emergencial', 'Corretiva planejada']
 const STATUSES = [
@@ -49,6 +49,14 @@ function isPCMUser(profile: any, isAdmin: boolean): boolean {
   const name = profile?.access_levels?.name
   if (!name) return false
   return String(name).toUpperCase().includes('PCM')
+}
+
+// Formata o usuário como "CARGO - Nome" (ex: "PCM - Matheus").
+function userDisplay(profile: any): string {
+  const cargo = profile?.access_levels?.name
+  const nome = profile?.name
+  if (cargo && nome) return `${cargo} - ${nome}`
+  return nome || cargo || ''
 }
 
 const materialFields: SubField[] = [
@@ -75,6 +83,96 @@ const serviceCols: SubColumn[] = [
   { key: 'cost', label: 'Custo' },
 ]
 
+// ─── Autocomplete de placa: busca em public.vehicles (case-insensitive) ───
+interface VehicleOption {
+  id: string
+  plate: string
+  vehicle_type?: string | null
+}
+
+function PlateAutocomplete({
+  vehicles,
+  selectedId,
+  plate,
+  onSelect,
+}: {
+  vehicles: VehicleOption[]
+  selectedId: string | null
+  plate: string
+  onSelect: (v: VehicleOption) => void
+}) {
+  const [query, setQuery] = useState(plate || '')
+  const [open, setOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  // Sincroniza o input quando o valor externo muda (ex: ao editar)
+  useEffect(() => {
+    setQuery(plate || '')
+  }, [plate, selectedId])
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  const suggestions = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return vehicles.slice(0, 50)
+    return vehicles.filter((v) => (v.plate || '').toLowerCase().includes(q)).slice(0, 50)
+  }, [query, vehicles])
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <div className="relative">
+        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+        <Input
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value)
+            setOpen(true)
+          }}
+          onFocus={() => setOpen(true)}
+          placeholder="Digite a placa..."
+          className="pl-8"
+        />
+      </div>
+      {open && suggestions.length > 0 && (
+        <div className="absolute z-50 mt-1 w-full rounded-md border bg-background shadow-md max-h-60 overflow-y-auto">
+          {suggestions.map((v) => (
+            <button
+              key={v.id}
+              type="button"
+              className="flex w-full items-center justify-between px-3 py-2 text-sm hover:bg-accent text-left"
+              onClick={() => {
+                onSelect(v)
+                setQuery(v.plate)
+                setOpen(false)
+              }}
+            >
+              <span className="font-medium">{v.plate}</span>
+              {v.vehicle_type && (
+                <span className="text-xs text-muted-foreground ml-2 truncate">
+                  {v.vehicle_type}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+      {open && suggestions.length === 0 && (
+        <div className="absolute z-50 mt-1 w-full rounded-md border bg-background shadow-md px-3 py-2 text-sm text-muted-foreground">
+          Nenhum veículo encontrado
+        </div>
+      )}
+    </div>
+  )
+}
+
 interface Props {
   open: boolean
   onOpenChange: (v: boolean) => void
@@ -86,11 +184,12 @@ interface Props {
 export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaultStatus }: Props) {
   const { profile, isAdmin } = useAuth()
   const canEditDate = isPCMUser(profile, isAdmin)
+  const userLabel = userDisplay(profile)
   const [woId, setWoId] = useState<string | null>(null)
   const [form, setForm] = useState<Record<string, any>>({})
   const [diagnosis, setDiagnosis] = useState<Record<string, any>>({})
   const [serviceDesc, setServiceDesc] = useState<string>('')
-  const [vehicles, setVehicles] = useState<any[]>([])
+  const [vehicles, setVehicles] = useState<VehicleOption[]>([])
   const [mechanics, setMechanics] = useState<any[]>([])
   const [laborEntries, setLaborEntries] = useState<any[]>([])
   const [newLabor, setNewLabor] = useState<Record<string, any>>({})
@@ -105,7 +204,11 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
   useEffect(() => {
     if (!open) return
     Promise.all([
-      supabase.from('vehicles').select('id, plate').eq('is_deleted', false).order('plate'),
+      supabase
+        .from('vehicles')
+        .select('id, plate, vehicle_type')
+        .eq('is_deleted', false)
+        .order('plate'),
       supabase.from('mechanics').select('*').eq('is_deleted', false).order('name'),
     ]).then(([v, m]) => {
       setVehicles(v.data || [])
@@ -132,7 +235,6 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
         if (diag.data) {
           setDiagnosis(diag.data)
           setServiceDesc(diag.data.action || '')
-          // Já tem diagnóstico (falha) e serviço (ação) salvos?
           const hasDiag = !!(diag.data.symptom && diag.data.symptom.trim())
           const hasServ = !!(diag.data.action && diag.data.action.trim())
           diagAndServiceSaved = hasDiag && hasServ
@@ -142,9 +244,6 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
           setDiagSaved(false)
         }
         setLaborEntries(lab.data || [])
-        // Preserva o fluxo: só vai para a edição completa se diagnóstico E
-        // serviço já estiverem preenchidos. Caso contrário, volta ao estágio
-        // diagService para concluir essa etapa obrigatória.
         setStage(diagAndServiceSaved ? 'full' : 'diagService')
       })
     } else if (open) {
@@ -181,13 +280,23 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
   const setVal = (k: string, v: any) => setForm((p) => ({ ...p, [k]: v }))
   const setDiag = (k: string, v: any) => setDiagnosis((p) => ({ ...p, [k]: v }))
 
+  const selectVehicle = (v: VehicleOption) => {
+    setVal('vehicle_id', v.id)
+    setVal('plate', v.plate)
+  }
+
+  // Campos obrigatórios para CRIAR a O.S. (estágio create): Placa + Data.
+  // Os demais obrigatórios (Serviço e Diagnóstico) são exigidos no estágio
+  // diagService, completando o conjunto: Placa, Data, Serviço, Diagnóstico.
+  const createRequiredMet = !!(form.plate && form.plate.trim() && form.date)
+
   const handleCreate = async () => {
     if (!form.plate) {
       toast.error('Placa é obrigatória')
       return
     }
-    if (!form.odometer && form.odometer !== 0) {
-      toast.error('Odômetro é obrigatório')
+    if (!form.date) {
+      toast.error('Data é obrigatória')
       return
     }
     // Criação inicial: status sempre "Aberta"
@@ -217,8 +326,8 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
       toast.error('Placa é obrigatória')
       return
     }
-    if (!form.odometer && form.odometer !== 0) {
-      toast.error('Odômetro é obrigatório')
+    if (!form.date) {
+      toast.error('Data é obrigatória')
       return
     }
     const payload = { ...form, labor_cost: laborCost, total_cost: totalCost }
@@ -391,35 +500,28 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
             </p>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>{canEditDate ? 'Data' : 'Data (automático)'}</Label>
+                <Label>
+                  Data {!canEditDate && <span className="text-muted-foreground">(automático)</span>}{' '}
+                  *
+                </Label>
                 <Input
                   type="date"
                   value={form.date || ''}
                   disabled={!canEditDate}
                   onChange={canEditDate ? (e) => setVal('date', e.target.value) : undefined}
+                  className={!form.date ? 'border-destructive' : ''}
                 />
+                {!form.date && <p className="text-xs text-destructive mt-1">Preencha a data</p>}
               </div>
               <div>
                 <Label>Placa *</Label>
-                <Select
-                  value={form.vehicle_id || ''}
-                  onValueChange={(v) => {
-                    const vh = vehicles.find((x) => x.id === v)
-                    setVal('vehicle_id', v)
-                    setVal('plate', vh?.plate || '')
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {vehicles.map((v) => (
-                      <SelectItem key={v.id} value={v.id}>
-                        {v.plate}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <PlateAutocomplete
+                  vehicles={vehicles}
+                  selectedId={form.vehicle_id || null}
+                  plate={form.plate || ''}
+                  onSelect={selectVehicle}
+                />
+                {!form.plate && <p className="text-xs text-destructive mt-1">Selecione a placa</p>}
               </div>
               <div>
                 <Label>Odômetro (Km) *</Label>
@@ -446,7 +548,7 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
               </div>
               <div className="col-span-2">
                 <Label>Usuário (automático)</Label>
-                <Input value={form.user_name || ''} disabled />
+                <Input value={userLabel} disabled />
               </div>
               <div>
                 <Label>Implemento/Reboque</Label>
@@ -467,8 +569,14 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
             <div className="rounded-md bg-muted/50 px-3 py-2 text-sm">
               Status inicial: <strong>Aberta</strong> (definido automaticamente)
             </div>
+            {!createRequiredMet && (
+              <p className="text-xs text-muted-foreground">
+                Preencha os campos obrigatórios (*) para liberar a criação. O diagnóstico e o
+                serviço serão pedidos na próxima etapa.
+              </p>
+            )}
             <div className="flex gap-2 pt-1">
-              <Button onClick={handleCreate} className="flex-1">
+              <Button onClick={handleCreate} className="flex-1" disabled={!createRequiredMet}>
                 Criar O.S. <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
               <Button variant="outline" onClick={() => onOpenChange(false)}>
@@ -512,7 +620,11 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
                 onChange={(e) => setDiag('symptom', e.target.value)}
                 placeholder="Descreva a falha apresentada..."
                 rows={3}
+                className={!symptomOk ? 'border-destructive' : ''}
               />
+              {!symptomOk && (
+                <p className="text-xs text-destructive mt-1">Descreva a falha (obrigatório)</p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -547,7 +659,13 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
                 onChange={(e) => setServiceDesc(e.target.value)}
                 placeholder="Descreva/complemente o serviço que será executado..."
                 rows={2}
+                className={!serviceOk ? 'border-destructive' : ''}
               />
+              {!serviceOk && (
+                <p className="text-xs text-destructive mt-1">
+                  Descreva o serviço a ser realizado (obrigatório)
+                </p>
+              )}
             </div>
 
             <div className="flex gap-2 pt-1">
@@ -596,7 +714,7 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
           <TabsContent value="header" className="space-y-3 mt-2">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>{canEditDate ? 'Data' : 'Data (automático)'}</Label>
+                <Label>{canEditDate ? 'Data' : 'Data (automático)'} *</Label>
                 <Input
                   type="date"
                   value={form.date || ''}
@@ -606,25 +724,12 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
               </div>
               <div>
                 <Label>Placa *</Label>
-                <Select
-                  value={form.vehicle_id || ''}
-                  onValueChange={(v) => {
-                    const vh = vehicles.find((x) => x.id === v)
-                    setVal('vehicle_id', v)
-                    setVal('plate', vh?.plate || '')
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {vehicles.map((v) => (
-                      <SelectItem key={v.id} value={v.id}>
-                        {v.plate}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <PlateAutocomplete
+                  vehicles={vehicles}
+                  selectedId={form.vehicle_id || null}
+                  plate={form.plate || ''}
+                  onSelect={selectVehicle}
+                />
               </div>
               <div>
                 <Label>Odômetro (Km) *</Label>
@@ -651,7 +756,7 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
               </div>
               <div>
                 <Label>Usuário (automático)</Label>
-                <Input value={form.user_name || ''} disabled />
+                <Input value={userLabel} disabled />
               </div>
               <div>
                 <Label>Status</Label>

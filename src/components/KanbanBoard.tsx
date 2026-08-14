@@ -1,10 +1,13 @@
 import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 
 interface KanbanBoardProps {
   items: any[]
   onMove: (id: string, newStatus: string) => void
   onCardClick: (item: any) => void
+  onEncerrar?: (id: string) => void
+  canEncerrar?: boolean
 }
 
 const COLUMNS = [
@@ -14,7 +17,13 @@ const COLUMNS = [
   { id: 'Finalizado', label: 'Finalizado' },
 ]
 
-export function KanbanBoard({ items, onMove, onCardClick }: KanbanBoardProps) {
+export function KanbanBoard({
+  items,
+  onMove,
+  onCardClick,
+  onEncerrar,
+  canEncerrar,
+}: KanbanBoardProps) {
   const [draggedId, setDraggedId] = useState<string | null>(null)
 
   const handleDrop = (status: string) => {
@@ -45,14 +54,28 @@ export function KanbanBoard({ items, onMove, onCardClick }: KanbanBoardProps) {
                   key={item.id}
                   draggable
                   onDragStart={() => setDraggedId(item.id)}
-                  onClick={() => onCardClick(item)}
                   className="cursor-move rounded-md border bg-background p-3 hover:shadow-md transition-shadow"
                 >
-                  <p className="font-medium text-sm">{item.plate}</p>
-                  <p className="text-xs text-muted-foreground truncate">{item.type}</p>
-                  <Badge variant="outline" className="mt-1 text-xs">
-                    {item.status}
-                  </Badge>
+                  <div onClick={() => onCardClick(item)}>
+                    <p className="font-medium text-sm">{item.plate}</p>
+                    <p className="text-xs text-muted-foreground truncate">{item.type}</p>
+                    <Badge variant="outline" className="mt-1 text-xs">
+                      {item.status}
+                    </Badge>
+                  </div>
+                  {col.id === 'Finalizado' && onEncerrar && canEncerrar && (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="mt-2 w-full"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onEncerrar(item.id)
+                      }}
+                    >
+                      Encerrar
+                    </Button>
+                  )}
                 </div>
               ))}
               {colItems.length === 0 && (

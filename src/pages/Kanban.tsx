@@ -2,11 +2,24 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
+import { toast } from 'sonner'
 import { KanbanBoard } from '@/components/KanbanBoard'
 import { WorkOrderDialog } from '@/components/WorkOrderDialog'
 import { ExternalOSDialog } from '@/components/ExternalOSDialog'
+import { useAuth } from '@/hooks/use-auth'
+
+// PCM é identificado pelo nome do nível de acesso contendo "PCM" (case-insensitive)
+// ou por permissões administrativas (isAdmin).
+function isPCMUser(profile: any, isAdmin: boolean): boolean {
+  if (isAdmin) return true
+  const name = profile?.access_levels?.name
+  if (!name) return false
+  return String(name).toUpperCase().includes('PCM')
+}
 
 export default function Kanban() {
+  const { profile, isAdmin } = useAuth()
+  const canEncerrar = isPCMUser(profile, isAdmin)
   const [items, setItems] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [woOpen, setWoOpen] = useState(false)
@@ -17,7 +30,7 @@ export default function Kanban() {
     const { data } = await supabase
       .from('work_orders')
       .select('*')
-      .in('status', ['O.S Motorista', 'O.S PCM', 'Finalizado', 'O.S Mecânico'])
+      .in('status', ['Aberta', 'O.S Motorista', 'O.S PCM', 'Finalizado', 'O.S Mecânico'])
       .eq('is_deleted', false)
       .order('created_at', { ascending: false })
     setItems(data || [])
@@ -31,6 +44,20 @@ export default function Kanban() {
   const handleMove = async (id: string, newStatus: string) => {
     await supabase.from('work_orders').update({ status: newStatus }).eq('id', id)
     fetchData()
+  }
+
+  // Encerrar: O.S. sai do Kanban (Finalizado) e vai para o Histórico (Encerrada).
+  const handleEncerrar = async (id: string) => {
+    if (!window.confirm('Encerrar esta O.S.? Ela sairá do quadro e aparecerá no Histórico.')) return
+    const { error } = await supabase
+      .from('work_orders')
+      .update({ status: 'Encerrada' })
+      .eq('id', id)
+    if (error) toast.error('Erro ao encerrar O.S.')
+    else {
+      toast.success('O.S. encerrada e movida para o Histórico')
+      fetchData()
+    }
   }
 
   const handleCardClick = (item: any) => {
@@ -59,7 +86,13 @@ export default function Kanban() {
       {loading ? (
         <p className="text-muted-foreground">Carregando...</p>
       ) : (
-        <KanbanBoard items={items} onMove={handleMove} onCardClick={handleCardClick} />
+        <KanbanBoard
+          items={items}
+          onMove={handleMove}
+          onCardClick={handleCardClick}
+          onEncerrar={handleEncerrar}
+          canEncerrar={canEncerrar}
+        />
       )}
       <WorkOrderDialog
         open={woOpen}

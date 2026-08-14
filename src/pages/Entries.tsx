@@ -2,8 +2,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import {
   Table,
@@ -22,7 +20,6 @@ import {
   ArrowRight,
   Pencil,
   Trash2,
-  X,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatDate, formatCurrency } from '@/lib/utils'
@@ -38,8 +35,6 @@ export default function Entries() {
   const [ncs, setNcs] = useState<any[]>([])
   const [orders, setOrders] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateUntil, setDateUntil] = useState('')
   const [inspOpen, setInspOpen] = useState(false)
   const [editingInsp, setEditingInsp] = useState<string | null>(null)
   const [ncOpen, setNcOpen] = useState(false)
@@ -50,32 +45,28 @@ export default function Entries() {
   const canDelete = canPerform('entries', 'DELETE')
 
   const fetchData = useCallback(async () => {
-    let inspQuery = supabase.from('inspections').select('*').eq('is_deleted', false)
-    let ncQuery = supabase
-      .from('non_conformities')
-      .select('*, inspections(plate, date)')
-      .eq('is_deleted', false)
-    let woQuery = supabase.from('work_orders').select('*').eq('is_deleted', false)
-    if (dateFrom) {
-      inspQuery = inspQuery.gte('date', dateFrom)
-      ncQuery = ncQuery.gte('created_at', dateFrom)
-      woQuery = woQuery.gte('date', dateFrom)
-    }
-    if (dateUntil) {
-      inspQuery = inspQuery.lte('date', dateUntil)
-      ncQuery = ncQuery.lte('created_at', dateUntil + 'T23:59:59')
-      woQuery = woQuery.lte('date', dateUntil)
-    }
     const [insp, nc, wo] = await Promise.all([
-      inspQuery.order('created_at', { ascending: false }),
-      ncQuery.order('created_at', { ascending: false }),
-      woQuery.order('created_at', { ascending: false }),
+      supabase
+        .from('inspections')
+        .select('*')
+        .eq('is_deleted', false)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('non_conformities')
+        .select('*, inspections(plate, date)')
+        .eq('is_deleted', false)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('work_orders')
+        .select('*')
+        .eq('is_deleted', false)
+        .order('created_at', { ascending: false }),
     ])
     setInspections(insp.data || [])
     setNcs(nc.data || [])
     setOrders(wo.data || [])
     setLoading(false)
-  }, [dateFrom, dateUntil])
+  }, [])
 
   useEffect(() => {
     fetchData()
@@ -121,38 +112,6 @@ export default function Entries() {
   return (
     <div className="space-y-4 p-4 md:p-6">
       <h1 className="text-2xl font-bold">Lançamentos Operacionais</h1>
-      <div className="flex items-end gap-3 flex-wrap">
-        <div className="space-y-1">
-          <Label className="text-xs">Data Inicial</Label>
-          <Input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            className="w-[160px]"
-          />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs">Data Final</Label>
-          <Input
-            type="date"
-            value={dateUntil}
-            onChange={(e) => setDateUntil(e.target.value)}
-            className="w-[160px]"
-          />
-        </div>
-        {(dateFrom || dateUntil) && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setDateFrom('')
-              setDateUntil('')
-            }}
-          >
-            <X className="h-4 w-4 mr-1" /> Limpar
-          </Button>
-        )}
-      </div>
       <Tabs defaultValue="insp">
         <TabsList>
           <TabsTrigger value="insp">

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -19,7 +19,7 @@ import {
   TableRow,
   TableCell,
 } from '@/components/ui/table'
-import { Plus, Pencil, Search, Upload, FileText } from 'lucide-react'
+import { Plus, Pencil, Search, Upload, FileText, ArrowUp, ArrowDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatCurrency } from '@/lib/utils'
 import { uploadFile } from '@/lib/storage'
@@ -42,6 +42,34 @@ function parseCurrencyInput(value: string): number {
   return parseFloat(cleaned) || 0
 }
 
+// Colunas ordenáveis (cabeçalhos clicáveis A-Z / 0-9)
+type SortField =
+  | 'plate'
+  | 'vehicle_type'
+  | 'brand'
+  | 'model'
+  | 'description'
+  | 'year'
+  | 'purchase_cost'
+  | 'owner_name'
+  | 'status'
+  | 'chassis'
+  | 'renavam'
+
+const COLUMNS: { field: SortField; label: string; hideMobile?: boolean }[] = [
+  { field: 'plate', label: 'Placa' },
+  { field: 'vehicle_type', label: 'Tipo' },
+  { field: 'brand', label: 'Marca' },
+  { field: 'model', label: 'Modelo' },
+  { field: 'description', label: 'Descrição', hideMobile: true },
+  { field: 'year', label: 'Ano' },
+  { field: 'purchase_cost', label: 'Custo' },
+  { field: 'owner_name', label: 'Proprietário', hideMobile: true },
+  { field: 'status', label: 'Status' },
+  { field: 'chassis', label: 'Chassi', hideMobile: true },
+  { field: 'renavam', label: 'Renavam', hideMobile: true },
+]
+
 export default function Vehicles() {
   const [vehicles, setVehicles] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -56,6 +84,8 @@ export default function Vehicles() {
   const [newOwner, setNewOwner] = useState(false)
   const [savingOwner, setSavingOwner] = useState(false)
   const [assetOwners, setAssetOwners] = useState<any[]>([])
+  const [sortField, setSortField] = useState<SortField>('plate')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
 
   const fetchData = useCallback(async () => {
     const { data } = await supabase
@@ -85,15 +115,48 @@ export default function Vehicles() {
     fetchData()
   }, [fetchData])
 
-  const filtered = search
-    ? vehicles.filter((v) =>
-        ['plate', 'brand', 'model', 'cost_center', 'description'].some((k) =>
-          String(v[k] || '')
-            .toLowerCase()
-            .includes(search.toLowerCase()),
-        ),
-      )
-    : vehicles
+  // Linhas enriquecidas com o nome do proprietário para ordenação/filtro.
+  const enriched = useMemo(
+    () =>
+      vehicles.map((v) => ({
+        ...v,
+        owner_name: assetOwners.find((o) => o.id === v.owner_id)?.name || '',
+      })),
+    [vehicles, assetOwners],
+  )
+
+  const filtered = useMemo(() => {
+    const base = search
+      ? enriched.filter((v) =>
+          ['plate', 'brand', 'model', 'cost_center', 'description', 'chassis', 'renavam'].some(
+            (k) =>
+              String(v[k] || '')
+                .toLowerCase()
+                .includes(search.toLowerCase()),
+          ),
+        )
+      : enriched
+    // Ordenação client-side A-Z / 0-9 sobre a coluna ativa.
+    const dir = sortDirection === 'asc' ? 1 : -1
+    return [...base].sort((a, b) => {
+      const av = a[sortField]
+      const bv = b[sortField]
+      if (av == null && bv == null) return 0
+      if (av == null) return 1
+      if (bv == null) return -1
+      if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir
+      return String(av).localeCompare(String(bv), 'pt-BR') * dir
+    })
+  }, [enriched, search, sortField, sortDirection])
+
+  const toggleSort = (field: SortField) => {
+    if (field === sortField) {
+      setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortField(field)
+      setSortDirection('asc')
+    }
+  }
 
   const handleOpen = (item?: any) => {
     if (item) {
@@ -137,6 +200,8 @@ export default function Vehicles() {
       owner_id: form.owner_id || null,
       status: form.status || 'Ativo',
       description: form.description || null,
+      chassis: form.chassis || null,
+      renavam: form.renavam || null,
     }
     const { error } = editing
       ? await supabase.from('vehicles').update(payload).eq('id', editing.id)
@@ -174,7 +239,7 @@ export default function Vehicles() {
       <div className="relative max-w-sm">
         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Buscar..."
+          placeholder="Buscar por placa, marca, modelo, chassi, renavam..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-8"
@@ -184,15 +249,23 @@ export default function Vehicles() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Placa</TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead>Marca</TableHead>
-              <TableHead>Modelo</TableHead>
-              <TableHead>Descrição</TableHead>
-              <TableHead>Ano</TableHead>
-              <TableHead>Custo</TableHead>
-              <TableHead>Proprietário</TableHead>
-              <TableHead>Status</TableHead>
+              {COLUMNS.map((c) => (
+                <TableHead
+                  key={c.field}
+                  className={`cursor-pointer select-none hover:bg-muted/50 ${c.hideMobile ? 'hidden md:table-cell' : ''}`}
+                  onClick={() => toggleSort(c.field)}
+                >
+                  <span className="inline-flex items-center gap-1">
+                    {c.label}
+                    {sortField === c.field &&
+                      (sortDirection === 'asc' ? (
+                        <ArrowUp className="h-3 w-3" />
+                      ) : (
+                        <ArrowDown className="h-3 w-3" />
+                      ))}
+                  </span>
+                </TableHead>
+              ))}
               <TableHead>CRLV</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -200,13 +273,13 @@ export default function Vehicles() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={13} className="text-center py-8 text-muted-foreground">
                   Carregando...
                 </TableCell>
               </TableRow>
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={13} className="text-center py-8 text-muted-foreground">
                   Nenhum registro
                 </TableCell>
               </TableRow>
@@ -217,7 +290,10 @@ export default function Vehicles() {
                   <TableCell>{v.vehicle_type}</TableCell>
                   <TableCell>{v.brand || '-'}</TableCell>
                   <TableCell>{v.model || '-'}</TableCell>
-                  <TableCell className="max-w-xs truncate" title={v.description || ''}>
+                  <TableCell
+                    className="hidden md:table-cell max-w-xs truncate"
+                    title={v.description || ''}
+                  >
                     {v.description
                       ? v.description.length > 40
                         ? `${v.description.slice(0, 40)}...`
@@ -226,8 +302,10 @@ export default function Vehicles() {
                   </TableCell>
                   <TableCell>{v.year || '-'}</TableCell>
                   <TableCell>{formatCurrency(v.purchase_cost)}</TableCell>
-                  <TableCell>{assetOwners.find((o) => o.id === v.owner_id)?.name || '-'}</TableCell>
+                  <TableCell className="hidden md:table-cell">{v.owner_name || '-'}</TableCell>
                   <TableCell>{v.status || 'Ativo'}</TableCell>
+                  <TableCell className="hidden md:table-cell">{v.chassis || '-'}</TableCell>
+                  <TableCell className="hidden md:table-cell">{v.renavam || '-'}</TableCell>
                   <TableCell>
                     {v.crlv_url ? (
                       <a
@@ -532,6 +610,24 @@ export default function Vehicles() {
                 placeholder="Descreva o equipamento, características, observações..."
                 rows={3}
               />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Chassi</Label>
+                <Input
+                  value={form.chassis || ''}
+                  onChange={(e) => setForm({ ...form, chassis: e.target.value })}
+                  placeholder="Chassi (opcional)"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Renavam</Label>
+                <Input
+                  value={form.renavam || ''}
+                  onChange={(e) => setForm({ ...form, renavam: e.target.value })}
+                  placeholder="Renavam (opcional)"
+                />
+              </div>
             </div>
             <div className="space-y-2">
               <Label>CRLV (Documento)</Label>

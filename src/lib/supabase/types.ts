@@ -2970,6 +2970,7 @@ export type Database = {
         Row: {
           axles_count: number | null
           brand: string | null
+          chassis: string | null
           cost_center: string | null
           created_at: string
           crlv_url: string | null
@@ -2980,6 +2981,7 @@ export type Database = {
           owner_id: string | null
           plate: string
           purchase_cost: number | null
+          renavam: string | null
           status: string | null
           vehicle_type: string
           year: number | null
@@ -2987,6 +2989,7 @@ export type Database = {
         Insert: {
           axles_count?: number | null
           brand?: string | null
+          chassis?: string | null
           cost_center?: string | null
           created_at?: string
           crlv_url?: string | null
@@ -2997,6 +3000,7 @@ export type Database = {
           owner_id?: string | null
           plate: string
           purchase_cost?: number | null
+          renavam?: string | null
           status?: string | null
           vehicle_type: string
           year?: number | null
@@ -3004,6 +3008,7 @@ export type Database = {
         Update: {
           axles_count?: number | null
           brand?: string | null
+          chassis?: string | null
           cost_center?: string | null
           created_at?: string
           crlv_url?: string | null
@@ -3014,6 +3019,7 @@ export type Database = {
           owner_id?: string | null
           plate?: string
           purchase_cost?: number | null
+          renavam?: string | null
           status?: string | null
           vehicle_type?: string
           year?: number | null
