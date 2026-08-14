@@ -5,9 +5,14 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 const FILE_URL =
   'https://dagtlwojkqyivnjgveda.supabase.co/storage/v1/object/public/message-attachments/999ac628-99db-45ae-a1be-0c24116e404e/imobilizado-v1-a9526.xlsx'
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'authorization, apikey, content-type',
+}
+
 // Regras de identificação de fabricante. "modelCode" = identifica a marca pelo
 // código do modelo (ACTROS, XF, FH, R500...) e mantém a descrição como modelo.
-// As demais identificam pelo NOME do fabricante e removem o nome da descrição.
 const BRAND_RULES: {
   re: RegExp
   brand: string
@@ -85,15 +90,22 @@ function parseVehicle(
   return { brand: null, model: desc }
 }
 
+// Converte o valor da coluna "Ano" (ex.: "2016/17", "2023/23", 2024, "") em
+// um inteiro de 4 dígitos (ano modelo). Retorna null se não for possível.
+function parseYear(raw: unknown): number | null {
+  if (raw === null || raw === undefined) return null
+  const s = String(raw).trim()
+  if (!s) return null
+  const m = s.match(/(\d{4})/)
+  if (!m) return null
+  const y = parseInt(m[1], 10)
+  if (y < 1900 || y > 2100) return null
+  return y
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'authorization, apikey, content-type',
-      },
-    })
+    return new Response('ok', { headers: corsHeaders })
   }
 
   const res = await fetch(FILE_URL)
@@ -109,28 +121,41 @@ Deno.serve(async (req: Request) => {
     { auth: { autoRefreshToken: false, persistSession: false } },
   )
 
-  const candidates: { plate: string; brand: string | null; model: string | null }[] = []
+  interface Candidate {
+    plate: string
+    brand: string | null
+    model: string | null
+    year: number | null
+  }
+  const candidates: Candidate[] = []
   for (const row of rows) {
     const rawPlate = String(row['Placa'] || '').trim()
     const veiculo = String(row['VEÍCULO'] || '').trim()
     if (!rawPlate || !veiculo) continue
     const parsed = parseVehicle(veiculo, rawPlate)
     if (!parsed.brand && !parsed.model) continue
-    candidates.push({ plate: rawPlate, brand: parsed.brand, model: parsed.model })
+    candidates.push({
+      plate: rawPlate,
+      brand: parsed.brand,
+      model: parsed.model,
+      year: parseYear(row['Ano']),
+    })
   }
 
   let updated = 0
   const matched: string[] = []
   const notMatched: string[] = []
 
-  // Atualiza apenas onde marca ainda está vazia (não sobrescreve existentes).
-  // Cruza pela placa.
+  // Atualiza incondicionalmente pelo cruzamento da placa (sobrescreve marca/
+  // modelo/ano). Não usa filtro de "brand IS NULL" para evitar perder veículos
+  // cuja marca já havia sido preenchida parcialmente.
   for (const c of candidates) {
+    const payload: Record<string, any> = { brand: c.brand, model: c.model }
+    if (c.year !== null) payload.year = c.year
     const { data, error } = await supabase
       .from('vehicles')
-      .update({ brand: c.brand, model: c.model })
+      .update(payload)
       .eq('plate', c.plate)
-      .or('brand.is.null,brand.eq.')
       .select('plate')
     if (error) {
       notMatched.push(`${c.plate} (erro: ${error.message})`)
@@ -147,7 +172,11 @@ Deno.serve(async (req: Request) => {
   return new Response(
     JSON.stringify({ candidates: candidates.length, updated, matched, notMatched }, null, 2),
     {
-      headers: { 'Content-Type': 'application/json', Connection: 'keep-alive' },
+      headers: {
+        'Content-Type': 'application/json',
+        Connection: 'keep-alive',
+        ...corsHeaders,
+      },
     },
   )
 })
