@@ -27,7 +27,7 @@ import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/use-auth'
 import { toast } from 'sonner'
 import { formatCurrency } from '@/lib/utils'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, ArrowRight } from 'lucide-react'
 
 const OS_TYPES = ['Preventiva', 'Corretiva não planejada/emergencial', 'Corretiva planejada']
 const STATUSES = [
@@ -77,6 +77,7 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
   const [woId, setWoId] = useState<string | null>(null)
   const [form, setForm] = useState<Record<string, any>>({})
   const [diagnosis, setDiagnosis] = useState<Record<string, any>>({})
+  const [serviceDesc, setServiceDesc] = useState<string>('')
   const [vehicles, setVehicles] = useState<any[]>([])
   const [mechanics, setMechanics] = useState<any[]>([])
   const [laborEntries, setLaborEntries] = useState<any[]>([])
@@ -84,6 +85,10 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
   const [showClose, setShowClose] = useState(false)
   const [closeHours, setCloseHours] = useState('')
   const [closeReleased, setCloseReleased] = useState<'Sim' | 'Não' | null>(null)
+  // "diagSaved" = diagnóstico E serviço obrigatórios já foram salvos?
+  const [diagSaved, setDiagSaved] = useState(false)
+  // Estágio do fluxo: 'create' | 'diagService' | 'full'
+  const [stage, setStage] = useState<'create' | 'diagService' | 'full'>('create')
 
   useEffect(() => {
     if (!open) return
@@ -111,8 +116,19 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
           setForm(wo.data)
           setWoId(editingId)
         }
-        if (diag.data) setDiagnosis(diag.data)
+        if (diag.data) {
+          setDiagnosis(diag.data)
+          setServiceDesc(diag.data.action || '')
+          // Já tem diagnóstico (falha) e serviço (ação) salvos?
+          const hasDiag = !!(diag.data.symptom && diag.data.symptom.trim())
+          const hasServ = !!(diag.data.action && diag.data.action.trim())
+          setDiagSaved(hasDiag && hasServ)
+        } else {
+          setServiceDesc('')
+          setDiagSaved(false)
+        }
         setLaborEntries(lab.data || [])
+        setStage('full')
       })
     } else if (open) {
       setForm({
@@ -130,8 +146,11 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
         hours: 0,
       })
       setDiagnosis({})
+      setServiceDesc('')
       setWoId(null)
       setLaborEntries([])
+      setDiagSaved(false)
+      setStage('create')
     }
   }, [open, editingId, profile, defaultStatus])
 
@@ -145,7 +164,34 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
   const setVal = (k: string, v: any) => setForm((p) => ({ ...p, [k]: v }))
   const setDiag = (k: string, v: any) => setDiagnosis((p) => ({ ...p, [k]: v }))
 
-  const handleSave = async () => {
+  const handleCreate = async () => {
+    if (!form.plate) {
+      toast.error('Placa é obrigatória')
+      return
+    }
+    if (!form.odometer && form.odometer !== 0) {
+      toast.error('Odômetro é obrigatório')
+      return
+    }
+    // Criação inicial: status sempre "Aberta"
+    const payload = {
+      ...form,
+      status: 'Aberta',
+      labor_cost: 0,
+      total_cost: 0,
+    }
+    const { data, error } = await supabase.from('work_orders').insert(payload).select().single()
+    if (error) {
+      toast.error('Erro ao criar OS')
+      return
+    }
+    toast.success('OS criada. Preencha o diagnóstico e o serviço.')
+    setWoId(data.id)
+    setStage('diagService')
+    onSaved()
+  }
+
+  const handleSaveHeader = async () => {
     if (!form.plate) {
       toast.error('Placa é obrigatória')
       return
@@ -167,11 +213,37 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
     onSaved()
   }
 
-  const handleSaveDiag = async () => {
+  const handleSaveDiagService = async () => {
+    if (!woId) return
+    const symptom = (diagnosis.symptom || '').trim()
+    const action = (serviceDesc || '').trim()
+    if (!symptom) {
+      toast.error('Descreva a falha (diagnóstico) — campo obrigatório')
+      return
+    }
+    if (!action) {
+      toast.error('Descreva o serviço a ser realizado — campo obrigatório')
+      return
+    }
+    const { error } = await supabase
+      .from('os_diagnosis')
+      .upsert({ ...diagnosis, symptom, action, work_order_id: woId })
+    if (error) {
+      toast.error('Erro ao salvar diagnóstico')
+      return
+    }
+    toast.success('Diagnóstico e serviço salvos')
+    setDiagnosis((p) => ({ ...p, symptom, action }))
+    setDiagSaved(true)
+    setStage('full')
+    onSaved()
+  }
+
+  const handleUpdateDiag = async () => {
     if (!woId) return
     const { error } = await supabase
       .from('os_diagnosis')
-      .upsert({ ...diagnosis, work_order_id: woId })
+      .upsert({ ...diagnosis, action: serviceDesc, work_order_id: woId })
     if (error) toast.error('Erro ao salvar diagnóstico')
     else toast.success('Diagnóstico salvo')
   }
@@ -225,15 +297,15 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
     onSaved()
   }
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{woId ? 'Editar OS' : 'Nova Ordem de Serviço'}</DialogTitle>
-        </DialogHeader>
-        {showClose ? (
+  // Se showClose está ativo, mostra a finalização.
+  if (showClose) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Finalização da OS</DialogTitle>
+          </DialogHeader>
           <div className="space-y-4 py-4">
-            <h3 className="font-semibold">Finalização da OS</h3>
             <div>
               <Label>Horas gastas *</Label>
               <Input
@@ -269,317 +341,503 @@ export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaul
               </Button>
             </div>
           </div>
-        ) : (
-          <Tabs defaultValue="header">
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="header">Cabeçalho</TabsTrigger>
-              <TabsTrigger value="diag" disabled={!woId}>
-                Diagnóstico
-              </TabsTrigger>
-              <TabsTrigger value="labor" disabled={!woId}>
-                Mão de Obra
-              </TabsTrigger>
-              <TabsTrigger value="materials" disabled={!woId}>
-                Materiais
-              </TabsTrigger>
-              <TabsTrigger value="services" disabled={!woId}>
-                Serviços
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="header" className="space-y-3 mt-2">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>Data (automático)</Label>
-                  <Input type="date" value={form.date || ''} disabled />
-                </div>
-                <div>
-                  <Label>Placa *</Label>
-                  <Select
-                    value={form.vehicle_id || ''}
-                    onValueChange={(v) => {
-                      const vh = vehicles.find((x) => x.id === v)
-                      setVal('vehicle_id', v)
-                      setVal('plate', vh?.plate || '')
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {vehicles.map((v) => (
-                        <SelectItem key={v.id} value={v.id}>
-                          {v.plate}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Odômetro (Km) *</Label>
-                  <Input
-                    type="number"
-                    value={form.odometer || ''}
-                    onChange={(e) => setVal('odometer', e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label>Tipo</Label>
-                  <Select
-                    value={form.type || 'Preventiva'}
-                    onValueChange={(v) => setVal('type', v)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {OS_TYPES.map((t) => (
-                        <SelectItem key={t} value={t}>
-                          {t}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Usuário (automático)</Label>
-                  <Input value={form.user_name || ''} disabled />
-                </div>
-                <div>
-                  <Label>Status</Label>
-                  <Select
-                    value={form.status || 'Aberta'}
-                    onValueChange={(v) => setVal('status', v)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {STATUSES.map((s) => (
-                        <SelectItem key={s} value={s}>
-                          {s}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Implemento/Reboque</Label>
-                  <Input
-                    value={form.implement_plate || ''}
-                    onChange={(e) => setVal('implement_plate', e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label>Horímetro (h)</Label>
-                  <Input
-                    type="number"
-                    value={form.horimeter || ''}
-                    onChange={(e) => setVal('horimeter', e.target.value)}
-                  />
-                </div>
+        </DialogContent>
+      </Dialog>
+    )
+  }
+
+  // ─── Estágio CREATE: formulário enxuto, sem abas, status automático "Aberta" ───
+  if (stage === 'create') {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Nova Ordem de Serviço</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <p className="text-sm text-muted-foreground">
+              Informe os dados essenciais para abrir a O.S. Após criar, você será levado ao
+              diagnóstico e serviço.
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Data (automático)</Label>
+                <Input type="date" value={form.date || ''} disabled />
               </div>
-              <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <Label>Peças</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={form.parts_cost || 0}
-                    onChange={(e) => setVal('parts_cost', e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label>Serv. Externo</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={form.external_cost || 0}
-                    onChange={(e) => setVal('external_cost', e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label>Outros</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={form.other_cost || 0}
-                    onChange={(e) => setVal('other_cost', e.target.value)}
-                  />
-                </div>
+              <div>
+                <Label>Placa *</Label>
+                <Select
+                  value={form.vehicle_id || ''}
+                  onValueChange={(v) => {
+                    const vh = vehicles.find((x) => x.id === v)
+                    setVal('vehicle_id', v)
+                    setVal('plate', vh?.plate || '')
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {vehicles.map((v) => (
+                      <SelectItem key={v.id} value={v.id}>
+                        {v.plate}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="flex justify-between rounded-lg border p-3 font-bold">
-                <span>Total (M.O.: {formatCurrency(laborCost)}):</span>
-                <span>{formatCurrency(totalCost)}</span>
+              <div>
+                <Label>Odômetro (Km) *</Label>
+                <Input
+                  type="number"
+                  value={form.odometer || ''}
+                  onChange={(e) => setVal('odometer', e.target.value)}
+                />
               </div>
-              <div className="flex gap-2">
-                <Button onClick={handleSave} className="flex-1">
-                  {woId ? 'Atualizar OS' : 'Salvar OS'}
-                </Button>
-                {woId && !['Finalizado', 'Encerra igual'].includes(form.status) && (
-                  <Button variant="secondary" onClick={() => setShowClose(true)}>
-                    Finalizar OS
-                  </Button>
-                )}
+              <div>
+                <Label>Tipo</Label>
+                <Select value={form.type || 'Preventiva'} onValueChange={(v) => setVal('type', v)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {OS_TYPES.map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {t}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            </TabsContent>
-            {woId && (
-              <>
-                <TabsContent value="diag" className="space-y-3 mt-2">
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <Label>Problema/Diagnóstico</Label>
-                      <AudioTranscribeButton
-                        value={diagnosis.symptom || ''}
-                        onChange={(v) => setDiag('symptom', v)}
-                      />
-                    </div>
-                    <Textarea
-                      value={diagnosis.symptom || ''}
-                      onChange={(e) => setDiag('symptom', e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label>Causa</Label>
-                    <Textarea
-                      value={diagnosis.cause || ''}
-                      onChange={(e) => setDiag('cause', e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label>Ação</Label>
-                    <Textarea
-                      value={diagnosis.action || ''}
-                      onChange={(e) => setDiag('action', e.target.value)}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label>Sistema</Label>
-                      <Input
-                        value={diagnosis.system || ''}
-                        onChange={(e) => setDiag('system', e.target.value)}
-                        placeholder="Ex: Freios"
-                      />
-                    </div>
-                    <div>
-                      <Label>Componente</Label>
-                      <Input
-                        value={diagnosis.component || ''}
-                        onChange={(e) => setDiag('component', e.target.value)}
-                        placeholder="Ex: Compressor"
-                      />
-                    </div>
-                  </div>
-                  <Button onClick={handleSaveDiag} className="w-full">
-                    Salvar Diagnóstico
-                  </Button>
-                </TabsContent>
-                <TabsContent value="labor" className="space-y-3 mt-2">
-                  <div className="rounded-md border overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Mecânico</TableHead>
-                          <TableHead>Horas</TableHead>
-                          <TableHead>Custo/Hora</TableHead>
-                          <TableHead>Total</TableHead>
-                          <TableHead className="text-right">Ações</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {laborEntries.length === 0 ? (
-                          <TableRow>
-                            <TableCell
-                              colSpan={5}
-                              className="text-center py-4 text-muted-foreground"
-                            >
-                              Nenhum registro
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          laborEntries.map((l) => (
-                            <TableRow key={l.id}>
-                              <TableCell>{l.mechanic_name}</TableCell>
-                              <TableCell>{l.hours}</TableCell>
-                              <TableCell>{formatCurrency(l.hourly_rate)}</TableCell>
-                              <TableCell>{formatCurrency(l.cost)}</TableCell>
-                              <TableCell className="text-right">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleDeleteLabor(l.id)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                  <div className="grid grid-cols-12 gap-2 items-end">
-                    <div className="col-span-5">
-                      <Label>Mecânico</Label>
-                      <Select
-                        value={newLabor.mechanic_name || ''}
-                        onValueChange={(v) => {
-                          const m = mechanics.find((x) => x.name === v)
-                          setNewLabor({
-                            ...newLabor,
-                            mechanic_name: v,
-                            hourly_rate: m?.hourly_rate || 0,
-                          })
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {mechanics.map((m) => (
-                            <SelectItem key={m.id} value={m.name}>
-                              {m.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="col-span-3">
-                      <Label>Horas</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={newLabor.hours || ''}
-                        onChange={(e) => setNewLabor({ ...newLabor, hours: e.target.value })}
-                      />
-                    </div>
-                    <div className="col-span-2">
-                      <Label>Custo/Hora</Label>
-                      <Input type="number" disabled value={newLabor.hourly_rate || ''} />
-                    </div>
-                    <div className="col-span-2">
-                      <Button onClick={handleAddLabor} className="w-full">
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </TabsContent>
-                <TabsContent value="materials">
-                  <OSMaterialsManager parentId={woId} plate={form.plate || ''} />
-                </TabsContent>
-                <TabsContent value="services">
-                  <SubEntityManager
-                    table="os_services"
-                    parentId={woId}
-                    parentField="work_order_id"
-                    fields={serviceFields}
-                    columns={serviceCols}
-                  />
-                </TabsContent>
-              </>
+              <div className="col-span-2">
+                <Label>Usuário (automático)</Label>
+                <Input value={form.user_name || ''} disabled />
+              </div>
+              <div>
+                <Label>Implemento/Reboque</Label>
+                <Input
+                  value={form.implement_plate || ''}
+                  onChange={(e) => setVal('implement_plate', e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>Horímetro (h)</Label>
+                <Input
+                  type="number"
+                  value={form.horimeter || ''}
+                  onChange={(e) => setVal('horimeter', e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="rounded-md bg-muted/50 px-3 py-2 text-sm">
+              Status inicial: <strong>Aberta</strong> (definido automaticamente)
+            </div>
+            <div className="flex gap-2 pt-1">
+              <Button onClick={handleCreate} className="flex-1">
+                Criar O.S. <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    )
+  }
+
+  // ─── Estágio DIAG & SERVIÇO: etapa obrigatória logo após criar ───
+  if (stage === 'diagService') {
+    const symptomOk = !!(diagnosis.symptom && diagnosis.symptom.trim())
+    const serviceOk = !!(serviceDesc && serviceDesc.trim())
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Diagnóstico e Serviço — O.S. {form.plate}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-800">
+              Para prosseguir, é obrigatório descrever a <strong>falha (diagnóstico)</strong> e o
+              <strong> serviço a ser realizado</strong>.
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between">
+                <Label>
+                  Falha / Diagnóstico <span className="text-destructive">*</span>
+                </Label>
+                <AudioTranscribeButton
+                  value={diagnosis.symptom || ''}
+                  onChange={(v) => setDiag('symptom', v)}
+                />
+              </div>
+              <Textarea
+                value={diagnosis.symptom || ''}
+                onChange={(e) => setDiag('symptom', e.target.value)}
+                placeholder="Descreva a falha apresentada..."
+                rows={3}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Sistema</Label>
+                <Input
+                  value={diagnosis.system || ''}
+                  onChange={(e) => setDiag('system', e.target.value)}
+                  placeholder="Ex: Freios"
+                />
+              </div>
+              <div>
+                <Label>Componente</Label>
+                <Input
+                  value={diagnosis.component || ''}
+                  onChange={(e) => setDiag('component', e.target.value)}
+                  placeholder="Ex: Compressor"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label>
+                Serviço a ser realizado <span className="text-destructive">*</span>
+              </Label>
+              <Textarea
+                value={serviceDesc}
+                onChange={(e) => setServiceDesc(e.target.value)}
+                placeholder="Descreva o serviço que será executado..."
+                rows={3}
+              />
+            </div>
+
+            <div className="flex gap-2 pt-1">
+              <Button
+                onClick={handleSaveDiagService}
+                className="flex-1"
+                disabled={!symptomOk || !serviceOk}
+              >
+                Salvar e abrir edição completa
+              </Button>
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                Continuar depois
+              </Button>
+            </div>
+            {(!symptomOk || !serviceOk) && (
+              <p className="text-xs text-muted-foreground text-center">
+                O diagnóstico e o serviço são obrigatórios para liberar as demais seções.
+              </p>
             )}
-          </Tabs>
-        )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    )
+  }
+
+  // ─── Estágio FULL: edição normal com abas ───
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Editar OS — {form.plate}</DialogTitle>
+        </DialogHeader>
+        <Tabs defaultValue="header">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="header">Cabeçalho</TabsTrigger>
+            <TabsTrigger value="diag">Diagnóstico</TabsTrigger>
+            <TabsTrigger value="labor">Mão de Obra</TabsTrigger>
+            <TabsTrigger value="materials" disabled={!diagSaved}>
+              Peças
+            </TabsTrigger>
+            <TabsTrigger value="services" disabled={!diagSaved}>
+              Serviços
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="header" className="space-y-3 mt-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Data (automático)</Label>
+                <Input type="date" value={form.date || ''} disabled />
+              </div>
+              <div>
+                <Label>Placa *</Label>
+                <Select
+                  value={form.vehicle_id || ''}
+                  onValueChange={(v) => {
+                    const vh = vehicles.find((x) => x.id === v)
+                    setVal('vehicle_id', v)
+                    setVal('plate', vh?.plate || '')
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {vehicles.map((v) => (
+                      <SelectItem key={v.id} value={v.id}>
+                        {v.plate}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Odômetro (Km) *</Label>
+                <Input
+                  type="number"
+                  value={form.odometer || ''}
+                  onChange={(e) => setVal('odometer', e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>Tipo</Label>
+                <Select value={form.type || 'Preventiva'} onValueChange={(v) => setVal('type', v)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {OS_TYPES.map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {t}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Usuário (automático)</Label>
+                <Input value={form.user_name || ''} disabled />
+              </div>
+              <div>
+                <Label>Status</Label>
+                <Select value={form.status || 'Aberta'} onValueChange={(v) => setVal('status', v)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUSES.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {s}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Implemento/Reboque</Label>
+                <Input
+                  value={form.implement_plate || ''}
+                  onChange={(e) => setVal('implement_plate', e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>Horímetro (h)</Label>
+                <Input
+                  type="number"
+                  value={form.horimeter || ''}
+                  onChange={(e) => setVal('horimeter', e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                <Label>Peças</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={form.parts_cost || 0}
+                  onChange={(e) => setVal('parts_cost', e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>Serv. Externo</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={form.external_cost || 0}
+                  onChange={(e) => setVal('external_cost', e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>Outros</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={form.other_cost || 0}
+                  onChange={(e) => setVal('other_cost', e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="flex justify-between rounded-lg border p-3 font-bold">
+              <span>Total (M.O.: {formatCurrency(laborCost)}):</span>
+              <span>{formatCurrency(totalCost)}</span>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleSaveHeader} className="flex-1">
+                Atualizar OS
+              </Button>
+              {woId && !['Finalizado', 'Encerra igual'].includes(form.status) && (
+                <Button variant="secondary" onClick={() => setShowClose(true)}>
+                  Finalizar OS
+                </Button>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="diag" className="space-y-3 mt-2">
+            <div>
+              <div className="flex items-center justify-between">
+                <Label>
+                  Falha / Diagnóstico <span className="text-destructive">*</span>
+                </Label>
+                <AudioTranscribeButton
+                  value={diagnosis.symptom || ''}
+                  onChange={(v) => setDiag('symptom', v)}
+                />
+              </div>
+              <Textarea
+                value={diagnosis.symptom || ''}
+                onChange={(e) => setDiag('symptom', e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Causa</Label>
+              <Textarea
+                value={diagnosis.cause || ''}
+                onChange={(e) => setDiag('cause', e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>
+                Serviço a ser realizado <span className="text-destructive">*</span>
+              </Label>
+              <Textarea value={serviceDesc} onChange={(e) => setServiceDesc(e.target.value)} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Sistema</Label>
+                <Input
+                  value={diagnosis.system || ''}
+                  onChange={(e) => setDiag('system', e.target.value)}
+                  placeholder="Ex: Freios"
+                />
+              </div>
+              <div>
+                <Label>Componente</Label>
+                <Input
+                  value={diagnosis.component || ''}
+                  onChange={(e) => setDiag('component', e.target.value)}
+                  placeholder="Ex: Compressor"
+                />
+              </div>
+            </div>
+            <Button onClick={handleUpdateDiag} className="w-full">
+              Salvar Diagnóstico
+            </Button>
+          </TabsContent>
+
+          <TabsContent value="labor" className="space-y-3 mt-2">
+            <div className="rounded-md border overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Mecânico</TableHead>
+                    <TableHead>Horas</TableHead>
+                    <TableHead>Custo/Hora</TableHead>
+                    <TableHead>Total</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {laborEntries.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+                        Nenhum registro
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    laborEntries.map((l) => (
+                      <TableRow key={l.id}>
+                        <TableCell>{l.mechanic_name}</TableCell>
+                        <TableCell>{l.hours}</TableCell>
+                        <TableCell>{formatCurrency(l.hourly_rate)}</TableCell>
+                        <TableCell>{formatCurrency(l.cost)}</TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDeleteLabor(l.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+            <div className="grid grid-cols-12 gap-2 items-end">
+              <div className="col-span-5">
+                <Label>Mecânico</Label>
+                <Select
+                  value={newLabor.mechanic_name || ''}
+                  onValueChange={(v) => {
+                    const m = mechanics.find((x) => x.name === v)
+                    setNewLabor({
+                      ...newLabor,
+                      mechanic_name: v,
+                      hourly_rate: m?.hourly_rate || 0,
+                    })
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {mechanics.map((m) => (
+                      <SelectItem key={m.id} value={m.name}>
+                        {m.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="col-span-3">
+                <Label>Horas</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={newLabor.hours || ''}
+                  onChange={(e) => setNewLabor({ ...newLabor, hours: e.target.value })}
+                />
+              </div>
+              <div className="col-span-2">
+                <Label>Custo/Hora</Label>
+                <Input type="number" disabled value={newLabor.hourly_rate || ''} />
+              </div>
+              <div className="col-span-2">
+                <Button onClick={handleAddLabor} className="w-full">
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="materials">
+            <OSMaterialsManager parentId={woId || ''} plate={form.plate || ''} />
+          </TabsContent>
+          <TabsContent value="services">
+            <SubEntityManager
+              table="os_services"
+              parentId={woId || ''}
+              parentField="work_order_id"
+              fields={serviceFields}
+              columns={serviceCols}
+            />
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   )
