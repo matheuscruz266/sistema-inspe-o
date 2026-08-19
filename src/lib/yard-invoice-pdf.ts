@@ -1,19 +1,15 @@
-import jsPDF from 'jspdf'
+import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { formatCurrency, formatDate } from '@/lib/utils'
 
-export interface InvoicePdfDelivery {
-  delivery_date: string | null
-  nfe_number: string | null
-  weight_ton: number | null
-  wood_value: number | null
-  freight_value: number | null
-  total: number | null
-}
-
-export interface InvoicePdfManualItem {
+export interface InvoicePdfItem {
   description: string | null
-  amount: number | null
+  ticket_number: string | null
+  nfe_number: string | null
+  quantity: number | null
+  unit_value: number | null
+  total: number | null
+  is_manual: boolean
 }
 
 export interface InvoicePdfData {
@@ -25,176 +21,141 @@ export interface InvoicePdfData {
   due_date: string | null
   modality: string | null
   total: number
-  deliveries: InvoicePdfDelivery[]
-  manualItems: InvoicePdfManualItem[]
+  items: InvoicePdfItem[]
 }
 
-const MODALITY_LABEL: Record<string, string> = {
+const modalityLabels: Record<string, string> = {
   quinzenal_1: 'Quinzenal 1',
   quinzenal_2: 'Quinzenal 2',
   semanal: 'Semanal',
 }
 
-function modalityLabel(m: string | null | undefined) {
-  if (!m) return '-'
-  return MODALITY_LABEL[m] || m
+const num = (value: unknown) => {
+  const parsed = Number.parseFloat(String(value ?? ''))
+  return Number.isFinite(parsed) ? parsed : 0
 }
 
-const fmtMoney = (v: number | null | undefined) =>
-  formatCurrency(typeof v === 'number' ? v : parseFloat(String(v ?? '0')) || 0)
-const fmtNum = (v: number | null | undefined, decimals = 2) =>
-  (typeof v === 'number' ? v : parseFloat(String(v ?? '0')) || 0).toLocaleString('pt-BR', {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
+const money = (value: unknown) => formatCurrency(num(value))
+const quantity = (value: unknown) =>
+  num(value).toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   })
 
-/**
- * Gera e baixa o PDF de uma fatura de pátio com o cabeçalho Julitago.
- */
-export function exportYardInvoicePdf(inv: InvoicePdfData) {
+const getLastTableY = (doc: jsPDF, fallbackY: number) => {
+  const tableDocument = doc as jsPDF & { lastAutoTable?: { finalY?: number } }
+  return (tableDocument.lastAutoTable?.finalY ?? fallbackY) + 20
+}
+
+const safeFilePart = (value: string) =>
+  value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
+export function exportYardInvoicePdf(invoice: InvoicePdfData) {
   const doc = new jsPDF({ unit: 'pt', format: 'a4' })
   const pageWidth = doc.internal.pageSize.getWidth()
+  const pageHeight = doc.internal.pageSize.getHeight()
   const marginX = 40
   let y = 40
 
-  // ---------- Cabeçalho Julitago ----------
-  // Faixa de destaque
-  doc.setFillColor(15, 61, 46) // verde escuro (identidade Julitago)
+  doc.setFillColor(15, 61, 46)
   doc.rect(0, 0, pageWidth, 70, 'F')
-
-  // Nome JULITAGO em destaque
   doc.setTextColor(255, 255, 255)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(28)
   doc.text('JULITAGO', marginX, 44)
-
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(10)
   doc.text('Gestão de Pátios · Fatura de Fornecedor', marginX, 60)
-
-  // Número da fatura à direita
   doc.setFontSize(11)
-  doc.text(`Fatura: ${inv.invoice_number || '-'}`, pageWidth - marginX, 44, { align: 'right' })
+  doc.text(`Fatura: ${invoice.invoice_number || '-'}`, pageWidth - marginX, 44, { align: 'right' })
   doc.setFontSize(9)
   doc.text(`Emitida em: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - marginX, 60, {
     align: 'right',
   })
 
-  y = 90
+  y = 94
   doc.setTextColor(20, 20, 20)
-
-  // ---------- Dados do cabeçalho ----------
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(12)
   doc.text('Dados da Fatura', marginX, y)
-  y += 6
-  doc.setDrawColor(200, 200, 200)
-  doc.line(marginX, y, pageWidth - marginX, y)
-  y += 16
-
-  const headerRows: [string, string][] = [
-    ['Fornecedor', inv.supplier_name || '-'],
-    ['Pátio', inv.patio_name || '-'],
-    ['Período', `${formatDate(inv.period_start)} a ${formatDate(inv.period_end)}`],
-    ['Vencimento', formatDate(inv.due_date)],
-    ['Modalidade', modalityLabel(inv.modality)],
-  ]
+  y += 10
 
   autoTable(doc, {
     startY: y,
-    body: headerRows,
+    body: [
+      ['Fornecedor', invoice.supplier_name || '-'],
+      ['Pátio', invoice.patio_name || '-'],
+      ['Período', `${formatDate(invoice.period_start)} a ${formatDate(invoice.period_end)}`],
+      ['Vencimento', formatDate(invoice.due_date)],
+      ['Modalidade', modalityLabels[invoice.modality || ''] || invoice.modality || '-'],
+    ],
     theme: 'plain',
     styles: { fontSize: 10, cellPadding: 3 },
-    columnStyles: {
-      0: { fontStyle: 'bold', textColor: [90, 90, 90], cellWidth: 110 },
-    },
+    columnStyles: { 0: { fontStyle: 'bold', textColor: [90, 90, 90], cellWidth: 110 } },
     margin: { left: marginX, right: marginX },
   })
-  // @ts-expect-error lastAutoTable is injected by the plugin
-  y = doc.lastAutoTable.finalY + 24
 
-  // ---------- Tabela de entregas ----------
+  y = getLastTableY(doc, y)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(12)
-  doc.text('Entregas', marginX, y)
+  doc.text('Itens da Fatura', marginX, y)
   y += 8
 
-  const deliveryRows = inv.deliveries.map((d) => [
-    formatDate(d.delivery_date),
-    d.nfe_number || '-',
-    fmtNum(d.weight_ton),
-    fmtMoney(d.wood_value),
-    fmtMoney(d.freight_value),
-    fmtMoney(d.total),
+  const rows = invoice.items.map((item) => [
+    item.is_manual ? 'Manual' : 'Recebimento',
+    item.description || '-',
+    item.ticket_number || '-',
+    item.nfe_number || '-',
+    quantity(item.quantity),
+    money(item.unit_value),
+    money(item.total),
   ])
 
   autoTable(doc, {
     startY: y,
-    head: [
-      ['Data Entrega', 'NF', 'Peso (ton)', 'Valor Madeira (R$)', 'Valor Frete (R$)', 'Total (R$)'],
-    ],
-    body: deliveryRows.length ? deliveryRows : [['—', '—', '—', '—', '—', '—']],
+    head: [['Tipo', 'Descrição', 'Ticket', 'NF', 'Qtd.', 'Valor Unit. (R$)', 'Total (R$)']],
+    body: rows.length > 0 ? rows : [['-', '-', '-', '-', '-', '-', '-']],
     theme: 'striped',
-    headStyles: { fillColor: [15, 61, 46], textColor: [255, 255, 255], fontSize: 9 },
-    bodyStyles: { fontSize: 9 },
+    headStyles: { fillColor: [15, 61, 46], textColor: [255, 255, 255], fontSize: 8 },
+    bodyStyles: { fontSize: 8 },
     columnStyles: {
-      2: { halign: 'right' },
-      3: { halign: 'right' },
       4: { halign: 'right' },
       5: { halign: 'right' },
+      6: { halign: 'right' },
     },
     margin: { left: marginX, right: marginX },
   })
-  // @ts-expect-error lastAutoTable is injected by the plugin
-  y = doc.lastAutoTable.finalY + 20
 
-  // ---------- Itens adicionais / manuais ----------
-  if (inv.manualItems.length > 0) {
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(12)
-    doc.text('Itens Adicionais', marginX, y)
-    y += 8
-
-    const manualRows = inv.manualItems.map((m) => [m.description || '-', fmtMoney(m.amount)])
-    autoTable(doc, {
-      startY: y,
-      head: [['Descrição', 'Valor (R$)']],
-      body: manualRows,
-      theme: 'striped',
-      headStyles: { fillColor: [15, 61, 46], textColor: [255, 255, 255], fontSize: 9 },
-      bodyStyles: { fontSize: 9 },
-      columnStyles: { 1: { halign: 'right' } },
-      margin: { left: marginX, right: marginX },
-    })
-    // @ts-expect-error lastAutoTable is injected by the plugin
-    y = doc.lastAutoTable.finalY + 20
-  }
-
-  // ---------- Total geral em destaque ----------
-  const boxHeight = 40
-  const boxY = Math.max(y, doc.internal.pageSize.getHeight() - 120)
+  y = getLastTableY(doc, y)
+  const totalBoxY = Math.max(y, pageHeight - 105)
   doc.setFillColor(15, 61, 46)
-  doc.rect(marginX, boxY, pageWidth - marginX * 2, boxHeight, 'F')
+  doc.rect(marginX, totalBoxY, pageWidth - marginX * 2, 40, 'F')
   doc.setTextColor(255, 255, 255)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(13)
-  doc.text('TOTAL GERAL', marginX + 14, boxY + boxHeight / 2 + 4)
+  doc.text('TOTAL GERAL', marginX + 14, totalBoxY + 26)
   doc.setFontSize(14)
-  doc.text(fmtMoney(inv.total), pageWidth - marginX - 14, boxY + boxHeight / 2 + 5, {
-    align: 'right',
-  })
+  doc.text(money(invoice.total), pageWidth - marginX - 14, totalBoxY + 26, { align: 'right' })
 
-  // Rodapé
   doc.setTextColor(140, 140, 140)
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(8)
   doc.text(
     'Documento gerado automaticamente pelo sistema Julitago.',
     pageWidth / 2,
-    doc.internal.pageSize.getHeight() - 20,
-    { align: 'center' },
+    pageHeight - 20,
+    {
+      align: 'center',
+    },
   )
 
-  const fileName = `fatura-${inv.supplier_name || 'patio'}-${inv.invoice_number || inv.due_date || Date.now()}.pdf`
-  doc.save(fileName.replace(/\s+/g, '-'))
+  const supplier = safeFilePart(invoice.supplier_name || 'fornecedor')
+  const invoiceNumber = safeFilePart(
+    invoice.invoice_number || invoice.due_date || String(Date.now()),
+  )
+  doc.save(`fatura-${supplier}-${invoiceNumber}.pdf`)
 }
