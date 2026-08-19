@@ -47,10 +47,6 @@ import {
 } from '@/services/yard-invoices'
 import { exportYardInvoicePdf } from '@/lib/yard-invoice-pdf'
 
-// Cliente sem tipagem de tabela para as novas tabelas (yard_invoices / yard_invoice_items),
-// ainda não presentes no Database gerado.
-const db: any = supabase
-
 const num = (v: any) => {
   const n = parseFloat(String(v ?? ''))
   return Number.isFinite(n) ? n : 0
@@ -95,7 +91,7 @@ export default function YardPayments() {
   const fetchData = useCallback(async () => {
     setLoading(true)
     const [inv, sup, pat, rec] = await Promise.all([
-      db
+      supabase
         .from('yard_invoices')
         .select('*')
         .eq('is_deleted', false)
@@ -173,7 +169,7 @@ export default function YardPayments() {
     const isOpen = !!expanded[id]
     setExpanded((p) => ({ ...p, [id]: !isOpen }))
     if (!isOpen && !itemMap[id]) {
-      const { data } = await db
+      const { data } = await supabase
         .from('yard_invoice_items')
         .select('*')
         .eq('invoice_id', id)
@@ -192,7 +188,8 @@ export default function YardPayments() {
       })
       setEditing(item)
       // carrega itens
-      db.from('yard_invoice_items')
+      supabase
+        .from('yard_invoice_items')
         .select('*')
         .eq('invoice_id', item.id)
         .eq('is_deleted', false)
@@ -332,7 +329,7 @@ export default function YardPayments() {
   const handleExportFromRow = async (inv: YardInvoice) => {
     let its = itemMap[inv.id]
     if (!its) {
-      const { data } = await db
+      const { data } = await supabase
         .from('yard_invoice_items')
         .select('*')
         .eq('invoice_id', inv.id)
