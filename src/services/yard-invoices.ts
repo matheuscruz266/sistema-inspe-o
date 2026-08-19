@@ -1,9 +1,5 @@
 import { supabase } from '@/lib/supabase/client'
 
-// Cliente sem tipagem de tabela para as novas tabelas (yard_invoices / yard_invoice_items),
-// ainda não presentes no Database gerado.
-const db: any = supabase
-
 export interface YardInvoiceItem {
   id?: string
   invoice_id?: string
@@ -83,9 +79,9 @@ export async function createInvoiceWithItems(
     amount: num(it.amount),
   }))
   if (rows.length) {
-    const { error: itemError } = await db.from('yard_invoice_items').insert(rows)
+    const { error: itemError } = await supabase.from('yard_invoice_items').insert(rows)
     if (itemError) {
-      await db.from('yard_invoices').delete().eq('id', inv.id)
+      await supabase.from('yard_invoices').delete().eq('id', inv.id)
       return { error: itemError }
     }
   }
@@ -113,7 +109,7 @@ export async function updateInvoiceWithItems(
     .single()
   if (error) return { error }
 
-  await db.from('yard_invoice_items').delete().eq('invoice_id', id)
+  await supabase.from('yard_invoice_items').delete().eq('invoice_id', id)
   const rows = items.map((it) => ({
     invoice_id: id,
     receipt_id: it.receipt_id || null,
@@ -128,14 +124,14 @@ export async function updateInvoiceWithItems(
     amount: num(it.amount),
   }))
   if (rows.length) {
-    const { error: itemError } = await db.from('yard_invoice_items').insert(rows)
+    const { error: itemError } = await supabase.from('yard_invoice_items').insert(rows)
     if (itemError) return { error: itemError }
   }
   return { data: inv, error: null }
 }
 
 export async function deleteInvoice(id: string) {
-  await db.from('yard_invoice_items').delete().eq('invoice_id', id)
-  const { error } = await db.from('yard_invoices').update({ is_deleted: true }).eq('id', id)
+  await supabase.from('yard_invoice_items').delete().eq('invoice_id', id)
+  const { error } = await supabase.from('yard_invoices').update({ is_deleted: true }).eq('id', id)
   return { error }
 }
