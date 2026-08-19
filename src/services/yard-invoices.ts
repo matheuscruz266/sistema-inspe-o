@@ -1,7 +1,6 @@
 import { supabase } from '@/lib/supabase/client'
 
-// Cliente sem tipagem de tabela para as novas tabelas (yard_invoices / yard_invoice_items),
-// ainda não presentes no Database gerado.
+// As tabelas de fatura podem não existir nos tipos gerados do Supabase.
 const db: any = supabase
 
 export interface YardInvoiceItem {
@@ -9,13 +8,18 @@ export interface YardInvoiceItem {
   invoice_id?: string
   receipt_id?: string | null
   delivery_date?: string | null
+  ticket_number?: string | null
   nfe_number?: string | null
+  description?: string | null
+  quantity?: number | null
+  unit_value?: number | null
+  total?: number | null
+  is_manual?: boolean
+
+  // Campos legados preservados para compatibilidade com faturas antigas.
   weight_ton?: number | null
   wood_value?: number | null
   freight_value?: number | null
-  total?: number | null
-  is_manual?: boolean
-  description?: string | null
   amount?: number | null
 }
 
@@ -36,102 +40,109 @@ export interface YardInvoice {
 }
 
 export const INVOICE_STATUSES = ['Pendente', 'Pago', 'Cancelado']
+
 export const MODALITIES = [
   { label: 'Quinzenal 1', value: 'quinzenal_1' },
   { label: 'Quinzenal 2', value: 'quinzenal_2' },
   { label: 'Semanal', value: 'semanal' },
 ]
 
-export const modalityLabel = (m: string | null | undefined) =>
-  MODALITIES.find((x) => x.value === m)?.label || m || '-'
+export const modalityLabel = (modality: string | null | undefined) =>
+  MODALITIES.find((item) => item.value === modality)?.label || modality || '-'
 
-const num = (v: any) => {
-  const n = parseFloat(String(v ?? ''))
-  return Number.isFinite(n) ? n : 0
+const num = (value: unknown) => {
+  const parsed = Number.parseFloat(String(value ?? ''))
+  return Number.isFinite(parsed) ? parsed : 0
 }
 
-/**
- * Cria uma fatura com seus itens. Calcula o total a partir dos itens.
- */
+const normalizeItem = (item: YardInvoiceItem) => {
+  const quantity = Math.max(0, num(item.quantity ?? item.weight_ton))
+  const legacyTotal = num(item.total ?? item.amount ?? item.wood_value)
+  const unitValue = Math.max(0, num(item.unit_value ?? (quantity > 0 ? legacyTotal / quantity : 0)))
+  const total = quantity * unitValue
+
+  return {
+    receipt_id: item.receipt_id || null,
+    delivery_date: item.delivery_date || null,
+    ticket_number: item.ticket_number?.trim() || null,
+    nfe_number: item.nfe_number?.trim() || null,
+    description: item.description?.trim() || null,
+    quantity,
+    unit_value: unitValue,
+    total,
+    is_manual: Boolean(item.is_manual),
+
+    // O frete nunca é copiado automaticamente para a fatura.
+    freight_value: 0,
+    weight_ton: quantity,
+    wood_value: item.is_manual ? 0 : total,
+    amount: total,
+  }
+}
+
+const calculateInvoiceTotal = (items: YardInvoiceItem[]) =>
+  items.reduce((sum, item) => sum + normalizeItem(item).total, 0)
+
 export async function createInvoiceWithItems(
-  invoice: Record<string, any>,
+  invoice: Record<string, unknown>,
   items: YardInvoiceItem[],
 ) {
-  const total = items.reduce((sum, it) => {
-    if (it.is_manual) return sum + num(it.amount)
-    return sum + num(it.total)
-  }, 0)
+  const normalizedItems = items.map(normalizeItem)
+  const total = calculateInvoiceTotal(items)
 
-  const { data: inv, error } = await db
+  const { data: createdInvoice, error: invoiceError } = await db
     .from('yard_invoices')
     .insert({ ...invoice, total })
     .select()
     .single()
-  if (error) return { error }
 
-  const rows = items.map((it) => ({
-    invoice_id: inv.id,
-    receipt_id: it.receipt_id || null,
-    delivery_date: it.delivery_date || null,
-    nfe_number: it.nfe_number || null,
-    weight_ton: num(it.weight_ton),
-    wood_value: num(it.wood_value),
-    freight_value: num(it.freight_value),
-    total: it.is_manual ? num(it.amount) : num(it.total),
-    is_manual: !!it.is_manual,
-    description: it.description || null,
-    amount: num(it.amount),
+  if (invoiceError) return { error: invoiceError }
+
+  if (normalizedItems.length === 0) return { data: createdInvoice, error: null }
+
+  const rows = normalizedItems.map((item) => ({
+    ...item,
+    invoice_id: createdInvoice.id,
   }))
-  if (rows.length) {
-    const { error: itemError } = await db.from('yard_invoice_items').insert(rows)
-    if (itemError) {
-      await db.from('yard_invoices').delete().eq('id', inv.id)
-      return { error: itemError }
-    }
+
+  const { error: itemError } = await db.from('yard_invoice_items').insert(rows)
+
+  if (itemError) {
+    await db.from('yard_invoices').delete().eq('id', createdInvoice.id)
+    return { error: itemError }
   }
-  return { data: inv, error: null }
+
+  return { data: createdInvoice, error: null }
 }
 
-/**
- * Atualiza uma fatura e seus itens (substitui todos os itens).
- */
 export async function updateInvoiceWithItems(
   id: string,
-  invoice: Record<string, any>,
+  invoice: Record<string, unknown>,
   items: YardInvoiceItem[],
 ) {
-  const total = items.reduce((sum, it) => {
-    if (it.is_manual) return sum + num(it.amount)
-    return sum + num(it.total)
-  }, 0)
+  const normalizedItems = items.map(normalizeItem)
+  const total = calculateInvoiceTotal(items)
 
-  const { data: inv, error } = await db
+  const { data: updatedInvoice, error: invoiceError } = await db
     .from('yard_invoices')
     .update({ ...invoice, total })
     .eq('id', id)
     .select()
     .single()
-  if (error) return { error }
 
-  await db.from('yard_invoice_items').delete().eq('invoice_id', id)
-  const rows = items.map((it) => ({
-    invoice_id: id,
-    receipt_id: it.receipt_id || null,
-    delivery_date: it.delivery_date || null,
-    nfe_number: it.nfe_number || null,
-    weight_ton: num(it.weight_ton),
-    wood_value: num(it.wood_value),
-    freight_value: num(it.freight_value),
-    total: it.is_manual ? num(it.amount) : num(it.total),
-    is_manual: !!it.is_manual,
-    description: it.description || null,
-    amount: num(it.amount),
-  }))
-  if (rows.length) {
-    const { error: itemError } = await db.from('yard_invoice_items').insert(rows)
-    if (itemError) return { error: itemError }
-  }
-  return { data: inv, error: null }
+  if (invoiceError) return { error: invoiceError }
+
+  const { error: deleteError } = await db.from('yard_invoice_items').delete().eq('invoice_id', id)
+  if (deleteError) return { error: deleteError }
+
+  if (normalizedItems.length === 0) return { data: updatedInvoice, error: null }
+
+  const rows = normalizedItems.map((item) => ({ ...item, invoice_id: id }))
+  const { error: itemError } = await db.from('yard_invoice_items').insert(rows)
+
+  if (itemError) return { error: itemError }
+
+  return { data: updatedInvoice, error: null }
 }
 
 export async function deleteInvoice(id: string) {
