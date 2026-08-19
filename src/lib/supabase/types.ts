@@ -1,4 +1,3 @@
-// AVOID UPDATING THIS FILE DIRECTLY. It is automatically generated.
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
