@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
+import 'jspdf-autotable'
 import { formatCurrency, formatDate } from '@/lib/utils'
 
 export interface InvoicePdfDelivery {
@@ -100,7 +100,7 @@ export function exportYardInvoicePdf(inv: InvoicePdfData) {
     ['Modalidade', modalityLabel(inv.modality)],
   ]
 
-  autoTable(doc, {
+  doc.autoTable({
     startY: y,
     body: headerRows,
     theme: 'plain',
@@ -128,7 +128,7 @@ export function exportYardInvoicePdf(inv: InvoicePdfData) {
     fmtMoney(d.total),
   ])
 
-  autoTable(doc, {
+  doc.autoTable({
     startY: y,
     head: [
       ['Data Entrega', 'NF', 'Peso (ton)', 'Valor Madeira (R$)', 'Valor Frete (R$)', 'Total (R$)'],
@@ -156,7 +156,7 @@ export function exportYardInvoicePdf(inv: InvoicePdfData) {
     y += 8
 
     const manualRows = inv.manualItems.map((m) => [m.description || '-', fmtMoney(m.amount)])
-    autoTable(doc, {
+    doc.autoTable({
       startY: y,
       head: [['Descrição', 'Valor (R$)']],
       body: manualRows,
