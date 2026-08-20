@@ -178,3 +178,144 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     </AuthContext.Provider>
   )
 }
+
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { supabase } from '@/lib/supabase/client'
+import { useAuth } from '@/hooks/use-auth'
+
+interface RealtimeOptions {
+  tables: string[]
+  onRefresh: () => void
+  onConflict?: (table: string, payload: any) => void
+  enabled?: boolean
+}
+
+export function useRealtimeRefresh({
+  tables,
+  onRefresh,
+  onConflict,
+  enabled = true,
+}: RealtimeOptions) {
+  const { profile } = useAuth()
+  const channelRef = useRef<any>(null)
+  const isProcessingRef = useRef(false)
+  const lastEventRef = useRef<string>('')
+
+  const handlePostgresChange = useCallback(
+    (payload: any) => {
+      if (!enabled) return
+
+      const eventKey = `${payload.table}-${payload.eventType}-${payload.new?.id || payload.old?.id}-${Date.now()}`
+      if (lastEventRef.current === eventKey) return
+      lastEventRef.current = eventKey
+
+      if (
+        payload.eventType === 'INSERT' ||
+        payload.eventType === 'UPDATE' ||
+        payload.eventType === 'DELETE'
+      ) {
+        if (payload.new?.updated_by && payload.new.updated_by === profile?.id) {
+          return
+        }
+        if (payload.old?.updated_by && payload.old.updated_by === profile?.id) {
+          return
+        }
+
+        if (onConflict && payload.eventType === 'UPDATE' && payload.new) {
+          onConflict(payload.table, payload.new)
+        }
+
+        if (!isProcessingRef.current) {
+          isProcessingRef.current = true
+          setTimeout(() => {
+            onRefresh()
+            isProcessingRef.current = false
+          }, 100)
+        }
+      }
+    },
+    [enabled, onRefresh, onConflict, profile?.id],
+  )
+
+  useEffect(() => {
+    if (!enabled || tables.length === 0) return
+
+    const channelName = `realtime-refresh-${tables.join('-')}-${Date.now()}`
+    const channel = supabase.channel(channelName)
+
+    tables.forEach((table) => {
+      channel.on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table,
+        },
+        handlePostgresChange,
+      )
+    })
+
+    channel.subscribe((status) => {
+      if (status !== 'SUBSCRIBED') {
+        console.warn(`Realtime channel ${channelName} status:`, status)
+      }
+    })
+
+    channelRef.current = channel
+
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current)
+        channelRef.current = null
+      }
+    }
+  }, [tables.join(','), enabled, handlePostgresChange])
+
+  const refresh = useCallback(() => {
+    onRefresh()
+  }, [onRefresh])
+
+  return { refresh }
+}
+
+export function useRealtimeConflictDetection(openEntityId: string | null, entityType: string) {
+  const { profile } = useAuth()
+  const [conflict, setConflict] = useState<{ hasConflict: boolean; userName?: string }>({
+    hasConflict: false,
+  })
+
+  useEffect(() => {
+    if (!openEntityId) {
+      setConflict({ hasConflict: false })
+      return
+    }
+
+    const channel = supabase
+      .channel(`conflict-${entityType}-${openEntityId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: entityType,
+          filter: `id=eq.${openEntityId}`,
+        },
+        (payload) => {
+          if (payload.new?.updated_by && payload.new.updated_by !== profile?.id) {
+            setConflict({
+              hasConflict: true,
+              userName: payload.new.updated_by_name || 'Outro usuário',
+            })
+          }
+        },
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+      setConflict({ hasConflict: false })
+    }
+  }, [openEntityId, entityType, profile?.id])
+
+  return conflict
+}
