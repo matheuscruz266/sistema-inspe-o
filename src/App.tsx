@@ -73,8 +73,7 @@ const App = () => (
             <Route path="/planos-inspecao" element={<InspectionPlans />} />
             <Route path="/lancamentos" element={<Entries />} />
             <Route path="/agendamento" element={<Scheduling />} />
-            <Route path="/execucao-inspecao" element={<Entries />} /> // usa InspectionExecution
-            exportado de Entries
+            <Route path="/execucao-inspecao" element={<Entries />} />
             <Route path="/estoque" element={<Stock />} />
             <Route path="/recebimentos" element={<Receipts />} />
             <Route path="/produtos" element={<Products />} />
