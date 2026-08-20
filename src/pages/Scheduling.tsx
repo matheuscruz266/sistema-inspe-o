@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { SchedulingCalendar, type CalendarEvent } from '@/components/SchedulingCalendar'
 import { WorkOrderDetailDialog } from '@/components/WorkOrderDetailDialog'
-import { InspectionDetailDialog } from '@/components/InspectionDetailDialog'
+import { InspectionDetailDialog } from '@/components/WorkOrderDetailDialog'
 import { X } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 
@@ -21,13 +21,11 @@ export default function Scheduling() {
   const [detailOpen, setDetailOpen] = useState(false)
   const [detailId, setDetailId] = useState<string | null>(null)
   const [detailType, setDetailType] = useState<'work_order' | 'inspection' | null>(null)
-  // Dia selecionado para o popover "Eventos do dia"
   const [dayPopover, setDayPopover] = useState<Date | null>(null)
 
   const dateKey = (d: Date): string =>
     `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 
-  // Filtra eventos do dia selecionado a partir dos eventos já carregados
   const dayEvents = useMemo(() => {
     if (!dayPopover) return { workOrders: [], inspections: [] }
     const key = dateKey(dayPopover)
@@ -43,12 +41,7 @@ export default function Scheduling() {
       }))
     const inspections = events
       .filter((e) => e.type === 'inspection' && (e.date || '').split('T')[0] === key)
-      .map((e) => ({
-        id: e.id,
-        plate: e.plate,
-        type: e.description,
-        status: '',
-      }))
+      .map((e) => ({ id: e.id, plate: e.plate, type: e.description, status: '' }))
     return { workOrders, inspections }
   }, [dayPopover, events])
 
@@ -76,12 +69,11 @@ export default function Scheduling() {
     }
 
     ;(inspRes.data || []).forEach((i: any) => {
-      if (inRange(i.date)) {
+      if (inRange(i.date))
         allEvents.push({ date: i.date, type: 'inspection', plate: i.plate, description: i.type })
-      }
     })
     ;(woRes.data || []).forEach((w: any) => {
-      if (inRange(w.date)) {
+      if (inRange(w.date))
         allEvents.push({
           id: w.id,
           date: w.date,
@@ -89,17 +81,15 @@ export default function Scheduling() {
           plate: w.plate,
           description: w.diagnosis || w.type,
         } as any)
-      }
     })
     ;(schedRes.data || []).forEach((s: any) => {
-      if (inRange(s.scheduled_date)) {
+      if (inRange(s.scheduled_date))
         allEvents.push({
           date: s.scheduled_date,
           type: 'schedule',
           plate: s.vehicles?.plate || '',
           description: s.maintenance_plans?.name || '',
         })
-      }
     })
 
     setEvents(allEvents)
@@ -116,11 +106,8 @@ export default function Scheduling() {
       return
     }
     const newDate = new Date(currentDate)
-    if (view === 'month') {
-      newDate.setMonth(newDate.getMonth() + (dir === 'next' ? 1 : -1))
-    } else {
-      newDate.setDate(newDate.getDate() + (dir === 'next' ? 7 : -7))
-    }
+    if (view === 'month') newDate.setMonth(newDate.getMonth() + (dir === 'next' ? 1 : -1))
+    else newDate.setDate(newDate.getDate() + (dir === 'next' ? 7 : -7))
     setCurrentDate(newDate)
   }
 
@@ -129,7 +116,6 @@ export default function Scheduling() {
     setDateUntil('')
   }
 
-  // Ao clicar em uma O.S. no calendário, abre a visão detalhada somente leitura
   const handleEventClick = (event: any) => {
     if (event.type === 'work_order' && event.id) {
       setDetailId(event.id)
@@ -142,20 +128,15 @@ export default function Scheduling() {
     }
   }
 
-  // Ao clicar em um dia, abre o popover com os eventos daquele dia.
   const handleDayClick = (date: Date) => {
     setDayPopover(date)
   }
-
-  // Ao clicar em uma O.S. na lista do dia, abre o detalhe completo.
   const openOrderDetail = (id: string) => {
     setDayPopover(null)
     setDetailId(id)
     setDetailType('work_order')
     setDetailOpen(true)
   }
-
-  // Ao clicar em uma inspeção na lista do dia, abre o detalhe completo.
   const openInspectionDetail = (id: string) => {
     setDayPopover(null)
     setDetailId(id)
@@ -205,7 +186,6 @@ export default function Scheduling() {
         />
       )}
 
-      {/* Popover: lista de eventos do dia clicado */}
       <Dialog open={!!dayPopover} onOpenChange={(v) => !v && setDayPopover(null)}>
         <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
