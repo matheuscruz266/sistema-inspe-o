@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/use-auth'
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible'
-import { Menu, LogOut, User, ChevronDown, AlertCircle } from 'lucide-react'
+import { Menu, LogOut, User, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { menuGroups, menuItems, type MenuItemType } from '@/lib/menu-config'
 
@@ -43,42 +43,11 @@ function NavItem({
 }
 
 function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
-  const { canPerform, isAdmin, profile, loading } = useAuth()
-
-  // DEBUG: log no console
-  useEffect(() => {
-    console.log('[Layout Debug] Auth state:', {
-      isAdmin,
-      profile: profile
-        ? {
-            id: profile.id,
-            name: profile.name,
-            email: profile.email,
-            access_level_id: profile.access_level_id,
-            access_levels: profile.access_levels,
-          }
-        : null,
-      loading,
-      permissions: profile?.access_levels?.permissions,
-    })
-  }, [isAdmin, profile, loading])
-
-  const hasAccess = (screen: string) => {
-    // FALLBACK: mostra tudo se admin ou carregando
-    if (isAdmin) return true
-    if (loading) return true
-    if (!profile) return true // fallback se profile null
-    return canPerform(screen, 'SELECT')
-  }
-
+  const { canPerform, isAdmin } = useAuth()
+  const hasAccess = (screen: string) => isAdmin || canPerform(screen, 'SELECT')
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
   const toggle = (key: string) => setOpenGroups((prev) => ({ ...prev, [key]: !prev[key] }))
   const isOpen = (key: string) => openGroups[key] !== false
-
-  // Debug visual
-  if (loading) {
-    return <div className="p-4 text-center text-muted-foreground">Carregando menu...</div>
-  }
 
   return (
     <ScrollArea className="h-full">
@@ -146,14 +115,6 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             </Collapsible>
           )
         })}
-
-        {/* DEBUG INFO */}
-        <div className="mt-4 p-2 text-xs text-muted-foreground border-t">
-          <div>Admin: {isAdmin ? 'SIM' : 'NÃO'}</div>
-          <div>Profile: {profile?.name || 'null'}</div>
-          <div>Level: {profile?.access_levels?.name || 'null'}</div>
-          <div>Loading: {loading ? 'SIM' : 'NÃO'}</div>
-        </div>
       </nav>
     </ScrollArea>
   )
