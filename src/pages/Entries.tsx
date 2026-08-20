@@ -20,6 +20,8 @@ import {
   ArrowRight,
   Pencil,
   Trash2,
+  ChevronRight,
+  CheckCircle,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatDate, formatCurrency } from '@/lib/utils'
@@ -38,7 +40,7 @@ import {
   SelectItem,
   SelectValue,
 } from '@/components/ui/select'
-import { AlertCircle, CheckCircle, XCircle } from 'lucide-react'
+import { AlertCircle, CheckCircle, XCircle, AlertTriangle } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
 export default function Entries() {
@@ -362,7 +364,7 @@ export default function Entries() {
 }
 
 // ============================================
-// INSPECTION EXECUTION (página de execução de checklist)
+// INSPECTION EXECUTION - Checklist guiado com navegação
 // ============================================
 
 interface InspectionPlanItem {
@@ -404,7 +406,7 @@ export function InspectionExecution() {
   const [saving, setSaving] = useState(false)
 
   const [responses, setResponses] = useState<Record<string, { value: string; notes: string }>>({})
-  const [activeTab, setActiveTab] = useState<string>('')
+  const [activeTabIndex, setActiveTabIndex] = useState(0)
 
   const fetchPlanData = useCallback(async () => {
     if (!planId) return
@@ -428,8 +430,8 @@ export function InspectionExecution() {
       if (planRes.data) setPlan(planRes.data)
       if (itemsRes.data) {
         setItems(itemsRes.data)
-        if (itemsRes.data.length > 0 && !activeTab) {
-          setActiveTab(itemsRes.data[0].id)
+        if (itemsRes.data.length > 0) {
+          setActiveTabIndex(0)
         }
       }
       if (consRes.data) setInspectionPlanConsequences(consRes.data)
@@ -438,7 +440,7 @@ export function InspectionExecution() {
     } finally {
       setLoading(false)
     }
-  }, [planId, activeTab])
+  }, [planId])
 
   useEffect(() => {
     fetchPlanData()
@@ -473,9 +475,36 @@ export function InspectionExecution() {
     )
   }
 
-  const validateForm = () => {
+  // Agrupa itens por módulo (primeira parte antes de " — ")
+  const groupedItems = items.reduce(
+    (acc, item) => {
+      const module = item.item.split(' — ')[0] || 'Geral'
+      if (!acc[module]) acc[module] = []
+      acc[module].push(item)
+      return acc
+    },
+    {} as Record<string, InspectionPlanItem[]>,
+  )
+
+  const modules = Object.keys(groupedItems)
+
+  // Valida se o módulo atual está completo (todos os itens respondidos)
+  const isCurrentModuleComplete = () => {
+    const currentModule = modules[activeTabIndex]
+    if (!currentModule) return true
+    const moduleItems = groupedItems[currentModule]
+    return moduleItems.every((item) => {
+      const resp = responses[item.id]?.value
+      return resp && (resp !== 'NOK' || (resp === 'NOK' && responses[item.id]?.notes?.trim()))
+    })
+  }
+
+  const validateCurrentModule = () => {
+    const currentModule = modules[activeTabIndex]
+    if (!currentModule) return []
+    const moduleItems = groupedItems[currentModule]
     const errors: string[] = []
-    items.forEach((item) => {
+    moduleItems.forEach((item) => {
       const response = responses[item.id]?.value
       if (!response) {
         errors.push(`Item ${item.sequence}: ${item.item} - resposta obrigatória`)
@@ -486,10 +515,40 @@ export function InspectionExecution() {
     return errors
   }
 
-  const handleSave = async () => {
-    const errors = validateForm()
+  const handleNext = () => {
+    const errors = validateCurrentModule()
     if (errors.length > 0) {
       toast.error(errors.join('; '))
+      return
+    }
+    if (activeTabIndex < modules.length - 1) {
+      setActiveTabIndex((prev) => prev + 1)
+    }
+  }
+
+  const handlePrevious = () => {
+    if (activeTabIndex > 0) {
+      setActiveTabIndex((prev) => prev - 1)
+    }
+  }
+
+  const isLastModule = activeTabIndex === modules.length - 1
+
+  const handleSave = async () => {
+    // Valida todos os módulos antes de finalizar
+    const allErrors: string[] = []
+    items.forEach((item) => {
+      const response = responses[item.id]?.value
+      if (!response) {
+        allErrors.push(`Item ${item.sequence}: ${item.item} - resposta obrigatória`)
+      } else if (response === 'NOK' && !responses[item.id]?.notes?.trim()) {
+        allErrors.push(
+          `Item ${item.sequence}: ${item.item} - descrição da falha obrigatória para NOK`,
+        )
+      }
+    })
+    if (allErrors.length > 0) {
+      toast.error(allErrors.join('; '))
       return
     }
 
@@ -536,26 +595,14 @@ export function InspectionExecution() {
           .eq('id', inspection.id)
       }
 
-      toast.success('Inspeção registrada com sucesso')
-      navigate('/lancamentos')
+      toast.success('Inspeção finalizada com sucesso')
+      navigate('/lancamentos?tab=wo') // Retorna para Ordens de Serviço
     } catch (error: any) {
       toast.error(error.message || 'Erro ao salvar inspeção')
     } finally {
       setSaving(false)
     }
   }
-
-  const groupedItems = items.reduce(
-    (acc, item) => {
-      const module = item.item.split(' — ')[0] || 'Geral'
-      if (!acc[module]) acc[module] = []
-      acc[module].push(item)
-      return acc
-    },
-    {} as Record<string, InspectionPlanItem[]>,
-  )
-
-  const modules = Object.keys(groupedItems)
 
   if (loading) {
     return (
@@ -577,6 +624,9 @@ export function InspectionExecution() {
       </div>
     )
   }
+
+  const currentModule = modules[activeTabIndex]
+  const currentModuleItems = currentModule ? groupedItems[currentModule] : []
 
   return (
     <div className="space-y-4 p-4 md:p-6">
@@ -615,24 +665,52 @@ export function InspectionExecution() {
         </div>
       </div>
 
-      <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 max-h-[60px] overflow-x-auto">
+      {/* Progresso dos módulos */}
+      <div className="mb-4">
+        <div className="flex items-center gap-2 overflow-x-auto pb-2">
           {modules.map((module, idx) => (
-            <TabsTrigger
-              key={module}
-              value={groupedItems[module][0]?.id || ''}
-              className="text-xs px-2"
-            >
-              {module}
-              {items.some((i) => groupedItems[module].includes(i) && isItemCritical(i.id)) && (
-                <AlertTriangle className="h-3 w-3 ml-1 text-destructive" />
+            <div key={module} className="flex items-center gap-1 shrink-0">
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-colors ${
+                  idx < activeTabIndex
+                    ? 'bg-green-500 text-white'
+                    : idx === activeTabIndex
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted text-muted-foreground'
+                }`}
+              >
+                {idx < activeTabIndex ? <CheckCircle className="h-4 w-4" /> : idx + 1}
+              </div>
+              <span
+                className={`text-xs font-medium hidden sm:inline ${idx === activeTabIndex ? 'text-primary' : ''}`}
+              >
+                {module}
+              </span>
+              {idx < modules.length - 1 && (
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
               )}
+            </div>
+          ))}
+        </div>
+        <div className="h-1 bg-muted rounded overflow-hidden">
+          <div
+            className="h-full bg-primary transition-all duration-300"
+            style={{ width: `${(activeTabIndex / Math.max(modules.length - 1, 1)) * 100}%` }}
+          />
+        </div>
+      </div>
+
+      <Tabs defaultValue={currentModule} onValueChange={() => {}} className="space-y-4">
+        <TabsList className="hidden">
+          {modules.map((module) => (
+            <TabsTrigger key={module} value={module}>
+              {module}
             </TabsTrigger>
           ))}
         </TabsList>
 
         {modules.map((module) => (
-          <TabsContent key={module} value={groupedItems[module][0]?.id || ''} className="space-y-3">
+          <TabsContent key={module} value={module} className="space-y-3">
             {groupedItems[module].map((item) => {
               const response = responses[item.id]?.value || ''
               const itemNotes = responses[item.id]?.notes || ''
@@ -771,13 +849,22 @@ export function InspectionExecution() {
         ))}
       </Tabs>
 
-      <div className="flex justify-end gap-3 pt-4 border-t">
-        <Button variant="outline" onClick={() => navigate('/lancamentos')}>
-          Cancelar
+      {/* Navegação inferior */}
+      <div className="flex justify-between pt-4 border-t">
+        <Button variant="outline" onClick={handlePrevious} disabled={activeTabIndex === 0}>
+          Anterior
         </Button>
-        <Button onClick={handleSave} disabled={saving} className="w-[200px]">
-          {saving ? 'Salvando...' : 'Finalizar Inspeção'}
-        </Button>
+        <div className="flex gap-2">
+          {isLastModule ? (
+            <Button onClick={handleSave} disabled={saving} className="w-[200px]">
+              {saving ? 'Salvando...' : 'Finalizar Inspeção'}
+            </Button>
+          ) : (
+            <Button onClick={handleNext} className="w-[140px]">
+              Próxima <ChevronRight className="ml-1 h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   )
