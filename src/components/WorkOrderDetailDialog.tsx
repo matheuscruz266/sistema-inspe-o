@@ -12,6 +12,10 @@ import {
 } from '@/components/ui/table'
 import { supabase } from '@/lib/supabase/client'
 import { formatCurrency, formatDate } from '@/lib/utils'
+import { useState, useEffect } from 'react'
+import { supabase } from '@/lib/supabase/client'
+import { formatDate } from '@/lib/utils'
+import { CheckCircle, XCircle, AlertCircle, AlertTriangle } from 'lucide-react'
 
 interface Props {
   open: boolean
@@ -91,7 +95,6 @@ export function WorkOrderDetailDialog({ open, onOpenChange, workOrderId }: Props
           <p className="text-muted-foreground py-6 text-center">Carregando...</p>
         ) : wo ? (
           <div className="space-y-4">
-            {/* Cabeçalho */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <Info label="Data" value={formatDate(wo.date)} />
               <Info label="Placa" value={wo.plate || '-'} />
@@ -109,7 +112,6 @@ export function WorkOrderDetailDialog({ open, onOpenChange, workOrderId }: Props
               <Info label="Custo total" value={formatCurrency(totalCost)} />
             </div>
 
-            {/* Diagnóstico / descrição do que foi feito */}
             <Section title="Diagnóstico / Descrição">
               {diag?.symptom || wo.diagnosis ? (
                 <p className="text-sm whitespace-pre-wrap">{diag?.symptom || wo.diagnosis}</p>
@@ -124,7 +126,6 @@ export function WorkOrderDetailDialog({ open, onOpenChange, workOrderId }: Props
               )}
             </Section>
 
-            {/* Custo detalhado */}
             <Section title="Custo Detalhado">
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
                 <CostRow label="Peças" value={wo.parts_cost} />
@@ -139,7 +140,6 @@ export function WorkOrderDetailDialog({ open, onOpenChange, workOrderId }: Props
               </div>
             </Section>
 
-            {/* Materiais lançados */}
             <Section title="Itens Lançados (Materiais)">
               {materials.length === 0 ? (
                 <Empty />
@@ -171,7 +171,6 @@ export function WorkOrderDetailDialog({ open, onOpenChange, workOrderId }: Props
               )}
             </Section>
 
-            {/* Mão de obra (detalhada) */}
             {labor.length > 0 && (
               <Section title="Mão de Obra">
                 <div className="rounded-md border overflow-x-auto">
@@ -201,7 +200,6 @@ export function WorkOrderDetailDialog({ open, onOpenChange, workOrderId }: Props
               </Section>
             )}
 
-            {/* Serviços */}
             {services.length > 0 && (
               <Section title="Serviços">
                 <div className="rounded-md border overflow-x-auto">
@@ -272,13 +270,9 @@ function CostRow({ label, value }: { label: string; value: number | string | nul
   )
 }
 
-import { useState, useEffect } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { supabase } from '@/lib/supabase/client'
-import { formatDate } from '@/lib/utils'
-import { CheckCircle, XCircle, AlertCircle, AlertTriangle } from 'lucide-react'
+// ============================================
+// INSPECTION DETAIL DIALOG (adicionado para calendário)
+// ============================================
 
 interface InspectionDetailDialogProps {
   open: boolean
@@ -434,8 +428,6 @@ export function InspectionDetailDialog({
                   {results.map((r) => {
                     const item = r.inspection_plan_items
                     const isNOK = r.status === 'NOK' || r.result_value === 'NOK'
-                    const isNA = r.result_value === 'N/A' || r.status === 'N/A'
-
                     return (
                       <div
                         key={r.id}
@@ -478,8 +470,7 @@ export function InspectionDetailDialog({
             {inspection.failed_items && inspection.failed_items.length > 0 && (
               <div className="space-y-2 p-3 rounded-md bg-destructive/10 border border-destructive/20">
                 <h3 className="text-sm font-semibold text-destructive flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4" />
-                  Itens com Falha (NOK)
+                  <AlertTriangle className="h-4 w-4" /> Itens com Falha (NOK)
                 </h3>
                 <ul className="list-disc list-inside text-sm text-destructive">
                   {inspection.failed_items.map((item, idx) => (
