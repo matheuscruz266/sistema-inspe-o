@@ -22,6 +22,8 @@ import {
   Trash2,
   ChevronRight,
   CheckCircle,
+  AlertCircle,
+  XCircle,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatDate, formatCurrency } from '@/lib/utils'
@@ -40,7 +42,6 @@ import {
   SelectItem,
   SelectValue,
 } from '@/components/ui/select'
-import { AlertCircle, CheckCircle, XCircle, AlertTriangle } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
 export default function Entries() {
