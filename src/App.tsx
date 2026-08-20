@@ -14,7 +14,7 @@ import NotFound from '@/pages/NotFound'
 import Vehicles from '@/pages/Vehicles'
 import MaintenancePlans from '@/pages/MaintenancePlans'
 import InspectionPlans from '@/pages/InspectionPlans'
-import Entries from '@/pages/Entries'
+import Entries, { InspectionExecution } from '@/pages/Entries'
 import Scheduling from '@/pages/Scheduling'
 import Stock from '@/pages/Stock'
 import Products from '@/pages/Products'
@@ -73,7 +73,7 @@ const App = () => (
             <Route path="/planos-inspecao" element={<InspectionPlans />} />
             <Route path="/lancamentos" element={<Entries />} />
             <Route path="/agendamento" element={<Scheduling />} />
-            <Route path="/execucao-inspecao" element={<Entries />} />
+            <Route path="/execucao-inspecao" element={<InspectionExecution />} />
             <Route path="/estoque" element={<Stock />} />
             <Route path="/recebimentos" element={<Receipts />} />
             <Route path="/produtos" element={<Products />} />
