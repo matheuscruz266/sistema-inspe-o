@@ -271,3 +271,232 @@ function CostRow({ label, value }: { label: string; value: number | string | nul
     </div>
   )
 }
+
+import { useState, useEffect } from 'react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { supabase } from '@/lib/supabase/client'
+import { formatDate } from '@/lib/utils'
+import { CheckCircle, XCircle, AlertCircle, AlertTriangle } from 'lucide-react'
+
+interface InspectionDetailDialogProps {
+  open: boolean
+  onOpenChange: (v: boolean) => void
+  inspectionId: string | null
+}
+
+interface InspectionData {
+  id: string
+  date: string | null
+  plate: string | null
+  type: string | null
+  driver_name: string | null
+  status: string | null
+  notes: string | null
+  failed_items: string[] | null
+}
+
+interface InspectionResult {
+  id: string
+  item_id: string
+  result_value: string
+  status: string
+  notes: string | null
+  inspection_plan_items: {
+    sequence: number
+    item: string
+    verification: string | null
+    response_type: string
+    expected_value: string | null
+  } | null
+}
+
+export function InspectionDetailDialog({
+  open,
+  onOpenChange,
+  inspectionId,
+}: InspectionDetailDialogProps) {
+  const [inspection, setInspection] = useState<InspectionData | null>(null)
+  const [results, setResults] = useState<InspectionResult[]>([])
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!open || !inspectionId) return
+    setLoading(true)
+    Promise.all([
+      supabase.from('inspections').select('*').eq('id', inspectionId).single(),
+      supabase
+        .from('inspection_results')
+        .select('*, inspection_plan_items(*)')
+        .eq('inspection_id', inspectionId)
+        .eq('is_deleted', false)
+        .order('created_at', { ascending: true }),
+    ]).then(([inspRes, resRes]) => {
+      setInspection(inspRes.data as InspectionData)
+      setResults((resRes.data || []) as InspectionResult[])
+      setLoading(false)
+    })
+  }, [open, inspectionId])
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'OK':
+        return <CheckCircle className="h-4 w-4 text-green-600" />
+      case 'NOK':
+        return <XCircle className="h-4 w-4 text-red-600" />
+      case 'N/A':
+        return <AlertCircle className="h-4 w-4 text-gray-400" />
+      default:
+        return <AlertCircle className="h-4 w-4 text-gray-400" />
+    }
+  }
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'OK':
+        return <Badge variant="default">{status}</Badge>
+      case 'NOK':
+        return <Badge variant="destructive">{status}</Badge>
+      case 'N/A':
+        return <Badge variant="secondary">{status}</Badge>
+      default:
+        return <Badge variant="outline">{status}</Badge>
+    }
+  }
+
+  const getInspectionStatusBadge = (status: string) => {
+    switch (status) {
+      case 'OK':
+        return <Badge variant="default">{status}</Badge>
+      case 'Atenção':
+        return <Badge variant="destructive">{status}</Badge>
+      case 'NOK':
+        return <Badge variant="destructive">{status}</Badge>
+      default:
+        return <Badge variant="outline">{status}</Badge>
+    }
+  }
+
+  if (!open) return null
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            Detalhes da Inspeção
+            {inspection?.plate && (
+              <span className="text-muted-foreground font-normal">— {inspection.plate}</span>
+            )}
+          </DialogTitle>
+        </DialogHeader>
+        {loading ? (
+          <p className="text-muted-foreground py-6 text-center">Carregando...</p>
+        ) : inspection ? (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div>
+                <p className="text-xs text-muted-foreground">Data</p>
+                <p className="text-sm font-medium">{formatDate(inspection.date)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Placa</p>
+                <p className="text-sm font-medium">{inspection.plate || '-'}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Tipo / Periodicidade</p>
+                <p className="text-sm font-medium">{inspection.type || '-'}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Status</p>
+                {getInspectionStatusBadge(inspection.status || '-')}
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Motorista / Responsável</p>
+                <p className="text-sm font-medium">{inspection.driver_name || '-'}</p>
+              </div>
+            </div>
+
+            {inspection.notes && (
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold">Observações Gerais</h3>
+                <p className="text-sm whitespace-pre-wrap">{inspection.notes}</p>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold">Itens Verificados ({results.length})</h3>
+              {results.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhum item verificado.</p>
+              ) : (
+                <div className="space-y-2">
+                  {results.map((r) => {
+                    const item = r.inspection_plan_items
+                    const isNOK = r.status === 'NOK' || r.result_value === 'NOK'
+                    const isNA = r.result_value === 'N/A' || r.status === 'N/A'
+
+                    return (
+                      <div
+                        key={r.id}
+                        className={`rounded-md border p-3 ${isNOK ? 'border-destructive/50 bg-destructive/5' : ''}`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="flex-shrink-0 w-8 text-center text-sm font-medium text-muted-foreground">
+                            {item?.sequence || '-'}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{item?.item || 'Item'}</span>
+                              {getStatusIcon(r.status || r.result_value || 'OK')}
+                              {getStatusBadge(r.status || r.result_value || 'OK')}
+                              {item?.expected_value && (
+                                <span className="text-xs text-muted-foreground px-2 py-0.5 rounded bg-muted">
+                                  Esperado: {item.expected_value}
+                                </span>
+                              )}
+                            </div>
+                            {item?.verification && (
+                              <p className="text-sm text-muted-foreground mt-1">
+                                {item.verification}
+                              </p>
+                            )}
+                            {r.notes && (
+                              <p className={`text-sm mt-1 ${isNOK ? 'text-destructive' : ''}`}>
+                                {r.notes}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            {inspection.failed_items && inspection.failed_items.length > 0 && (
+              <div className="space-y-2 p-3 rounded-md bg-destructive/10 border border-destructive/20">
+                <h3 className="text-sm font-semibold text-destructive flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  Itens com Falha (NOK)
+                </h3>
+                <ul className="list-disc list-inside text-sm text-destructive">
+                  {inspection.failed_items.map((item, idx) => (
+                    <li key={idx}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div className="flex justify-end pt-2">
+              <Button onClick={() => onOpenChange(false)}>Fechar</Button>
+            </div>
+          </div>
+        ) : (
+          <p className="text-muted-foreground py-6 text-center">Inspeção não encontrada.</p>
+        )}
+      </DialogContent>
+    </Dialog>
+  )
+}
