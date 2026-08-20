@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase/client'
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useCallback, useRef } from 'react'
 
 interface Profile {
   id: string
@@ -101,7 +101,7 @@ export function useAuth() {
 }
 
 // ============================================
-// REALTIME HOOKS (adicionado para colaboração)
+// REALTIME HOOKS
 // ============================================
 
 export function useRealtimeRefresh({

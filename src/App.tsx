@@ -1,3 +1,4 @@
+/* Main App Component */
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Toaster } from '@/components/ui/toaster'
 import { Toaster as Sonner } from '@/components/ui/sonner'
@@ -13,7 +14,6 @@ import NotFound from '@/pages/NotFound'
 import Vehicles from '@/pages/Vehicles'
 import MaintenancePlans from '@/pages/MaintenancePlans'
 import InspectionPlans from '@/pages/InspectionPlans'
-import InspectionExecution from '@/pages/InspectionExecution'
 import Entries from '@/pages/Entries'
 import Scheduling from '@/pages/Scheduling'
 import Stock from '@/pages/Stock'
@@ -73,7 +73,8 @@ const App = () => (
             <Route path="/planos-inspecao" element={<InspectionPlans />} />
             <Route path="/lancamentos" element={<Entries />} />
             <Route path="/agendamento" element={<Scheduling />} />
-            <Route path="/execucao-inspecao" element={<InspectionExecution />} />
+            <Route path="/execucao-inspecao" element={<Entries />} /> // usa InspectionExecution
+            exportado de Entries
             <Route path="/estoque" element={<Stock />} />
             <Route path="/recebimentos" element={<Receipts />} />
             <Route path="/produtos" element={<Products />} />

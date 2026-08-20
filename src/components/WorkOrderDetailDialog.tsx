@@ -12,9 +12,6 @@ import {
 } from '@/components/ui/table'
 import { supabase } from '@/lib/supabase/client'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase/client'
-import { formatDate } from '@/lib/utils'
 import { CheckCircle, XCircle, AlertCircle, AlertTriangle } from 'lucide-react'
 
 interface Props {
@@ -239,39 +236,8 @@ export function WorkOrderDetailDialog({ open, onOpenChange, workOrderId }: Props
   )
 }
 
-function Info({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-sm font-medium">{value}</p>
-    </div>
-  )
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-2">
-      <h3 className="text-sm font-semibold">{title}</h3>
-      {children}
-    </div>
-  )
-}
-
-function Empty() {
-  return <p className="text-sm text-muted-foreground">Nenhum registro.</p>
-}
-
-function CostRow({ label, value }: { label: string; value: number | string | null | undefined }) {
-  return (
-    <div className="flex justify-between border-b pb-1">
-      <span className="text-muted-foreground">{label}</span>
-      <span>{formatCurrency(value)}</span>
-    </div>
-  )
-}
-
 // ============================================
-// INSPECTION DETAIL DIALOG (adicionado para calendário)
+// INSPECTION DETAIL DIALOG (para calendário)
 // ============================================
 
 interface InspectionDetailDialogProps {
@@ -489,5 +455,36 @@ export function InspectionDetailDialog({
         )}
       </DialogContent>
     </Dialog>
+  )
+}
+
+function Info({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-sm font-medium">{value}</p>
+    </div>
+  )
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-2">
+      <h3 className="text-sm font-semibold">{title}</h3>
+      {children}
+    </div>
+  )
+}
+
+function Empty() {
+  return <p className="text-sm text-muted-foreground">Nenhum registro.</p>
+}
+
+function CostRow({ label, value }: { label: string; value: number | string | null | undefined }) {
+  return (
+    <div className="flex justify-between border-b pb-1">
+      <span className="text-muted-foreground">{label}</span>
+      <span>{formatCurrency(value)}</span>
+    </div>
   )
 }
