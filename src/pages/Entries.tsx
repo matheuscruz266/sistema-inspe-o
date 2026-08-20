@@ -627,7 +627,6 @@ export function InspectionExecution() {
   }
 
   const currentModule = modules[activeTabIndex]
-  const currentModuleItems = currentModule ? groupedItems[currentModule] : []
 
   return (
     <div className="space-y-4 p-4 md:p-6">
@@ -701,15 +700,12 @@ export function InspectionExecution() {
         </div>
       </div>
 
-      <Tabs defaultValue={currentModule} onValueChange={() => {}} className="space-y-4">
-        <TabsList className="hidden">
-          {modules.map((module) => (
-            <TabsTrigger key={module} value={module}>
-              {module}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-
+      {/* Tabs CONTROLADO pelo activeTabIndex */}
+      <Tabs
+        value={modules[activeTabIndex]}
+        onValueChange={(val) => setActiveTabIndex(modules.indexOf(val))}
+        className="space-y-4"
+      >
         {modules.map((module) => (
           <TabsContent key={module} value={module} className="space-y-3">
             {groupedItems[module].map((item) => {
