@@ -23,28 +23,26 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatDate, formatCurrency } from '@/lib/utils'
-import { WorkOrderDialog } from '@/components/WorkOrderDialog'
+import {
+  WorkOrderDialog,
+  WorkOrderDetailDialog,
+  InspectionDetailDialog,
+} from '@/components/WorkOrderDetailDialog'
 import { InspectionDialog } from '@/components/InspectionDialog'
 import { NonConformityDialog } from '@/components/NonConformityDialog'
 import { generateOSFromNonConformity } from '@/services/cmms'
 import { useAuth } from '@/hooks/use-auth'
-
-interface UnifiedOrder {
-  id: string
-  date: string
-  plate: string
-  type: string
-  status: string
-  origin: string
-  total_cost: number
-  diagnosis?: string
-  hours?: number
-  parts_cost?: number
-  external_cost?: number
-  labor_cost?: number
-  source: 'work_order' | 'inspection'
-  driver_name?: string
-}
+import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from '@/components/ui/select'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 export default function Entries() {
   const { canPerform } = useAuth()
@@ -58,6 +56,10 @@ export default function Entries() {
   const [editingNc, setEditingNc] = useState<string | null>(null)
   const [woOpen, setWoOpen] = useState(false)
   const [editingWO, setEditingWO] = useState<string | null>(null)
+  // Detail view (read-only) state
+  const [detailOpen, setDetailOpen] = useState(false)
+  const [detailId, setDetailId] = useState<string | null>(null)
+  const [detailType, setDetailType] = useState<'work_order' | 'inspection' | null>(null)
   const canEdit = canPerform('entries', 'UPDATE')
   const canDelete = canPerform('entries', 'DELETE')
 
@@ -164,6 +166,17 @@ export default function Entries() {
   const openWO = (id?: string) => {
     setEditingWO(id || null)
     setWoOpen(true)
+  }
+  // Detail view (read-only) handlers
+  const openDetail = (id: string, type: 'work_order' | 'inspection') => {
+    setDetailId(id)
+    setDetailType(type)
+    setDetailOpen(true)
+  }
+  const closeDetail = () => {
+    setDetailOpen(false)
+    setDetailId(null)
+    setDetailType(null)
   }
 
   if (loading) return <div className="p-6 text-muted-foreground">Carregando...</div>
@@ -377,8 +390,22 @@ export default function Entries() {
                       <TableCell>R$ {o.total_cost.toFixed(2)}</TableCell>
                       <TableCell className="text-right whitespace-nowrap">
                         {canEdit && (
-                          <Button variant="ghost" size="icon" onClick={() => openWO(o.id)}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() =>
+                              openDetail(
+                                o.id,
+                                o.source === 'inspection' ? 'inspection' : 'work_order',
+                              )
+                            }
+                          >
                             <FileText className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {canEdit && (
+                          <Button variant="ghost" size="icon" onClick={() => openWO(o.id)}>
+                            <Pencil className="h-4 w-4" />
                           </Button>
                         )}
                         {canDelete && (
@@ -423,6 +450,16 @@ export default function Entries() {
         onOpenChange={setWoOpen}
         onSaved={fetchData}
         editingId={editingWO}
+      />
+      <WorkOrderDetailDialog
+        open={detailOpen && detailType === 'work_order'}
+        onOpenChange={closeDetail}
+        workOrderId={detailId}
+      />
+      <InspectionDetailDialog
+        open={detailOpen && detailType === 'inspection'}
+        onOpenChange={closeDetail}
+        inspectionId={detailId}
       />
     </div>
   )
