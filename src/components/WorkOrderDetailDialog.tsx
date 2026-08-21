@@ -30,6 +30,7 @@ interface OSData {
   total_cost: number | null
   parts_cost: number | null
   external_cost: number | null
+  freight_cost: number | null
   other_cost: number | null
   labor_cost: number | null
   diagnosis: string | null
@@ -135,108 +136,108 @@ export function WorkOrderDetailDialog({ open, onOpenChange, workOrderId }: Props
                   <span>Total</span>
                   <span>{formatCurrency(totalCost)}</span>
                 </div>
-              </Section>
-
-              {/* Materiais lançados */}
-              <Section title="Itens Lançados (Materiais)">
-                {materials.length === 0 ? (
-                  <Empty />
-                ) : (
-                  <div className="rounded-md border overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Produto</TableHead>
-                          <TableHead>Qtd</TableHead>
-                          <TableHead>Un.</TableHead>
-                          <TableHead>Custo Unit.</TableHead>
-                          <TableHead>Custo Total</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {materials.map((m) => (
-                          <TableRow key={m.id}>
-                            <TableCell className="font-medium">{m.product_name}</TableCell>
-                            <TableCell>{m.quantity}</TableCell>
-                            <TableCell>{m.unit || '-'}</TableCell>
-                            <TableCell>{formatCurrency(m.unit_cost)}</TableCell>
-                            <TableCell>{formatCurrency(m.total_cost)}</TableCell>
-                          </TableRow>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </Section>
-
-              {/* Mão de obra (detalhada) */}
-              {labor.length > 0 && (
-                <Section title="Mão de Obra">
-                  <div className="rounded-md border overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Mecânico</TableHead>
-                          <TableHead>Função</TableHead>
-                          <TableHead>Horas</TableHead>
-                          <TableHead>Custo/Hora</TableHead>
-                          <TableHead>Total</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {labor.map((l) => (
-                          <TableRow key={l.id}>
-                            <TableCell className="font-medium">{l.mechanic_name}</TableCell>
-                            <TableCell>{l.role || '-'}</TableCell>
-                            <TableCell>{l.hours}</TableCell>
-                            <TableCell>{formatCurrency(l.hourly_rate)}</TableCell>
-                            <TableCell>{formatCurrency(l.cost)}</TableCell>
-                          </TableRow>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-                  </div>
-                </Section>
-              )}
-
-              {/* Serviços */}
-              {services.length > 0 && (
-                <Section title="Serviços">
-                  <div className="rounded-md border overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Serviço</TableHead>
-                          <TableHead>Duração</TableHead>
-                          <TableHead>Equipamento</TableHead>
-                          <TableHead>Custo</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {services.map((s) => (
-                          <TableRow key={s.id}>
-                            <TableCell className="font-medium">{s.service_name}</TableCell>
-                            <TableCell>{s.duration}</TableCell>
-                            <TableCell>{s.equipment_used || '-'}</TableCell>
-                            <TableCell>{formatCurrency(s.cost)}</TableCell>
-                          </TableRow>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-                  </div>
-                </Section>
-              )}
-
-              <div className="flex justify-end pt-2">
-                <Button onClick={() => onOpenChange(false)}>Fechar</Button>
               </div>
-            ) : (
-              <p className="text-muted-foreground py-6 text-center">O.S. não encontrada.</p>
+            </Section>
+
+            {/* Materiais lançados */}
+            <Section title="Itens Lançados (Materiais)">
+              {materials.length === 0 ? (
+                <Empty />
+              ) : (
+                <div className="rounded-md border overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Produto</TableHead>
+                        <TableHead>Qtd</TableHead>
+                        <TableHead>Un.</TableHead>
+                        <TableHead>Custo Unit.</TableHead>
+                        <TableHead>Custo Total</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {materials.map((m) => (
+                        <TableRow key={m.id}>
+                          <TableCell className="font-medium">{m.product_name}</TableCell>
+                          <TableCell>{m.quantity}</TableCell>
+                          <TableCell>{m.unit || '-'}</TableCell>
+                          <TableCell>{formatCurrency(m.unit_cost)}</TableCell>
+                          <TableCell>{formatCurrency(m.total_cost)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </Section>
+
+            {/* Mão de obra (detalhada) */}
+            {labor.length > 0 && (
+              <Section title="Mão de Obra">
+                <div className="rounded-md border overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Mecânico</TableHead>
+                        <TableHead>Função</TableHead>
+                        <TableHead>Horas</TableHead>
+                        <TableHead>Custo/Hora</TableHead>
+                        <TableHead>Total</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {labor.map((l) => (
+                        <TableRow key={l.id}>
+                          <TableCell className="font-medium">{l.mechanic_name}</TableCell>
+                          <TableCell>{l.role || '-'}</TableCell>
+                          <TableCell>{l.hours}</TableCell>
+                          <TableCell>{formatCurrency(l.hourly_rate)}</TableCell>
+                          <TableCell>{formatCurrency(l.cost)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </Section>
             )}
-          </DialogContent>
-        </Dialog>
-      )
-    )
+
+            {/* Serviços */}
+            {services.length > 0 && (
+              <Section title="Serviços">
+                <div className="rounded-md border overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Serviço</TableHead>
+                        <TableHead>Duração</TableHead>
+                        <TableHead>Equipamento</TableHead>
+                        <TableHead>Custo</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {services.map((s) => (
+                        <TableRow key={s.id}>
+                          <TableCell className="font-medium">{s.service_name}</TableCell>
+                          <TableCell>{s.duration}</TableCell>
+                          <TableCell>{s.equipment_used || '-'}</TableCell>
+                          <TableCell>{formatCurrency(s.cost)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </Section>
+            )}
+
+            <div className="flex justify-end pt-2">
+              <Button onClick={() => onOpenChange(false)}>Fechar</Button>
+            </div>
+          </div>
+        ) : (
+          <p className="text-muted-foreground py-6 text-center">O.S. não encontrada.</p>
+        )}
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -247,6 +248,7 @@ function Info({ label, value }: { label: string; value: string }) {
       <p className="text-sm font-medium">{value}</p>
     </div>
   )
+}
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -255,6 +257,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       {children}
     </div>
   )
+}
 
 function Empty() {
   return <p className="text-sm text-muted-foreground">Nenhum registro.</p>
