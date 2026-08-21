@@ -44,6 +44,23 @@ import {
 } from '@/components/ui/select'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
+interface UnifiedOrder {
+  id: string
+  date: string
+  plate: string
+  type: string
+  status: string
+  origin: string
+  total_cost: number
+  diagnosis?: string
+  hours?: number
+  parts_cost?: number
+  external_cost?: number
+  labor_cost?: number
+  source: 'work_order' | 'inspection'
+  driver_name?: string
+}
+
 export default function Entries() {
   const { canPerform } = useAuth()
   const [inspections, setInspections] = useState<any[]>([])
