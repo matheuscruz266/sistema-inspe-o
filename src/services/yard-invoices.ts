@@ -9,6 +9,8 @@ export interface YardInvoiceItem {
   weight_ton?: number | null
   wood_value?: number | null
   freight_value?: number | null
+  valor_ton_madeira?: number | null
+  valor_ton_frete?: number | null
   total?: number | null
   is_manual?: boolean
   description?: string | null
@@ -58,7 +60,7 @@ export async function createInvoiceWithItems(
     return sum + num(it.total)
   }, 0)
 
-  const { data: inv, error } = await db
+  const { data: inv, error } = await supabase
     .from('yard_invoices')
     .insert({ ...invoice, total })
     .select()
@@ -101,7 +103,7 @@ export async function updateInvoiceWithItems(
     return sum + num(it.total)
   }, 0)
 
-  const { data: inv, error } = await db
+  const { data: inv, error } = await supabase
     .from('yard_invoices')
     .update({ ...invoice, total })
     .eq('id', id)
