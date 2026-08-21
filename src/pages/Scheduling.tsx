@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { SchedulingCalendar, type CalendarEvent } from '@/components/SchedulingCalendar'
 import { WorkOrderDetailDialog } from '@/components/WorkOrderDetailDialog'
-import { InspectionDetailDialog } from '@/components/InspectionDetailDialog'
+import { InspectionDetailDialog } from '../components/InspectionDetailDialog'
 import { X } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 
