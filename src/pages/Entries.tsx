@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -20,10 +20,6 @@ import {
   ArrowRight,
   Pencil,
   Trash2,
-  ChevronRight,
-  CheckCircle,
-  AlertCircle,
-  XCircle,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatDate, formatCurrency } from '@/lib/utils'
@@ -32,17 +28,23 @@ import { InspectionDialog } from '@/components/InspectionDialog'
 import { NonConformityDialog } from '@/components/NonConformityDialog'
 import { generateOSFromNonConformity } from '@/services/cmms'
 import { useAuth } from '@/hooks/use-auth'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-  SelectValue,
-} from '@/components/ui/select'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+
+interface UnifiedOrder {
+  id: string
+  date: string
+  plate: string
+  type: string
+  status: string
+  origin: string
+  total_cost: number
+  diagnosis?: string
+  hours?: number
+  parts_cost?: number
+  external_cost?: number
+  labor_cost?: number
+  source: 'work_order' | 'inspection'
+  driver_name?: string
+}
 
 export default function Entries() {
   const { canPerform } = useAuth()
@@ -82,6 +84,48 @@ export default function Entries() {
     setOrders(wo.data || [])
     setLoading(false)
   }, [])
+
+  // Combine work_orders with completed inspections for the OS tab
+  const unifiedOrders = useMemo((): UnifiedOrder[] => {
+    const workOrders: UnifiedOrder[] = (orders || []).map((o) => ({
+      id: o.id,
+      date: o.date,
+      plate: o.plate,
+      type: o.type,
+      status: o.status,
+      origin: o.origin || 'OS',
+      total_cost: parseFloat(o.total_cost || 0),
+      diagnosis: o.diagnosis,
+      hours: o.hours,
+      parts_cost: parseFloat(o.parts_cost || 0),
+      external_cost: parseFloat(o.external_cost || 0),
+      labor_cost: parseFloat(o.labor_cost || 0),
+      source: 'work_order',
+    }))
+
+    const completedInspections: UnifiedOrder[] = (inspections || [])
+      .filter((i) => i.status === 'OK' || i.status === 'Atenção' || i.status === 'NOK')
+      .map((i) => ({
+        id: i.id,
+        date: i.date,
+        plate: i.plate,
+        type: i.type,
+        status: i.status,
+        origin: 'Inspeção',
+        total_cost: 0,
+        diagnosis: i.notes,
+        hours: 0,
+        parts_cost: 0,
+        external_cost: 0,
+        labor_cost: 0,
+        source: 'inspection',
+        driver_name: i.driver_name,
+      }))
+
+    return [...workOrders, ...completedInspections].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+    )
+  }, [orders, inspections])
 
   useEffect(() => {
     fetchData()
@@ -298,25 +342,39 @@ export default function Entries() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {orders.length === 0 ? (
+                {unifiedOrders.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       Nenhum registro
                     </TableCell>
                   </TableRow>
                 ) : (
-                  orders.map((o) => (
+                  unifiedOrders.map((o) => (
                     <TableRow key={o.id}>
                       <TableCell>{formatDate(o.date)}</TableCell>
                       <TableCell className="font-medium">{o.plate}</TableCell>
-                      <TableCell>{o.origin || '-'}</TableCell>
+                      <TableCell>
+                        <Badge variant={o.source === 'inspection' ? 'secondary' : 'outline'}>
+                          {o.origin}
+                        </Badge>
+                      </TableCell>
                       <TableCell>
                         <Badge variant="secondary">{o.type}</Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline">{o.status}</Badge>
+                        <Badge
+                          variant={
+                            o.status === 'OK'
+                              ? 'default'
+                              : o.status === 'Atenção'
+                                ? 'destructive'
+                                : 'outline'
+                          }
+                        >
+                          {o.status}
+                        </Badge>
                       </TableCell>
-                      <TableCell>R$ {parseFloat(o.total_cost || 0).toFixed(2)}</TableCell>
+                      <TableCell>R$ {o.total_cost.toFixed(2)}</TableCell>
                       <TableCell className="text-right whitespace-nowrap">
                         {canEdit && (
                           <Button variant="ghost" size="icon" onClick={() => openWO(o.id)}>
@@ -327,7 +385,13 @@ export default function Entries() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleDelete('work_orders', o.id, 'Ordem de serviço')}
+                            onClick={() =>
+                              handleDelete(
+                                o.source === 'inspection' ? 'inspections' : 'work_orders',
+                                o.id,
+                                o.source === 'inspection' ? 'Inspeção' : 'Ordem de serviço',
+                              )
+                            }
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
