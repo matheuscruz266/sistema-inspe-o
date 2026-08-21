@@ -102,19 +102,14 @@ export function WorkOrderDetailDialog({ open, onOpenChange, workOrderId }: Props
               </div>
               <Info label="Criado por" value={wo.user_name || '-'} />
               <Info label="Odômetro" value={wo.odometer ? `${wo.odometer} km` : '-'} />
-              <Info
-                label="Horas (mão de obra)"
-                value={`${parseFloat(String(wo.hours || 0)) || 0} h`}
-              />
+              <Info label="Horas (mão de obra)" value={`${parseFloat(String(wo.hours || 0)) || 0} h`} />
               <Info label="Custo total" value={formatCurrency(totalCost)} />
             </div>
 
             <Section title="Diagnóstico / Descrição">
               {diag?.symptom || wo.diagnosis ? (
                 <p className="text-sm whitespace-pre-wrap">{diag?.symptom || wo.diagnosis}</p>
-              ) : (
-                <Empty />
-              )}
+              ) : <Empty />}
               {diag?.action && (
                 <div className="mt-2">
                   <p className="text-xs text-muted-foreground">Serviço realizado</p>
@@ -138,9 +133,7 @@ export function WorkOrderDetailDialog({ open, onOpenChange, workOrderId }: Props
             </Section>
 
             <Section title="Itens Lançados (Materiais)">
-              {materials.length === 0 ? (
-                <Empty />
-              ) : (
+              {materials.length === 0 ? <Empty /> : (
                 <div className="rounded-md border overflow-x-auto">
                   <Table>
                     <TableHeader>
@@ -272,11 +265,7 @@ interface InspectionResult {
   } | null
 }
 
-export function InspectionDetailDialog({
-  open,
-  onOpenChange,
-  inspectionId,
-}: InspectionDetailDialogProps) {
+export function InspectionDetailDialog({ open, onOpenChange, inspectionId }: InspectionDetailDialogProps) {
   const [inspection, setInspection] = useState<InspectionData | null>(null)
   const [results, setResults] = useState<InspectionResult[]>([])
   const [loading, setLoading] = useState(false)
@@ -301,40 +290,28 @@ export function InspectionDetailDialog({
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'OK':
-        return <CheckCircle className="h-4 w-4 text-green-600" />
-      case 'NOK':
-        return <XCircle className="h-4 w-4 text-red-600" />
-      case 'N/A':
-        return <AlertCircle className="h-4 w-4 text-gray-400" />
-      default:
-        return <AlertCircle className="h-4 w-4 text-gray-400" />
+      case 'OK': return <CheckCircle className="h-4 w-4 text-green-600" />
+      case 'NOK': return <XCircle className="h-4 w-4 text-red-600" />
+      case 'N/A': return <AlertCircle className="h-4 w-4 text-gray-400" />
+      default: return <AlertCircle className="h-4 w-4 text-gray-400" />
     }
   }
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'OK':
-        return <Badge variant="default">{status}</Badge>
-      case 'NOK':
-        return <Badge variant="destructive">{status}</Badge>
-      case 'N/A':
-        return <Badge variant="secondary">{status}</Badge>
-      default:
-        return <Badge variant="outline">{status}</Badge>
+      case 'OK': return <Badge variant="default">{status}</Badge>
+      case 'NOK': return <Badge variant="destructive">{status}</Badge>
+      case 'N/A': return <Badge variant="secondary">{status}</Badge>
+      default: return <Badge variant="outline">{status}</Badge>
     }
   }
 
   const getInspectionStatusBadge = (status: string) => {
     switch (status) {
-      case 'OK':
-        return <Badge variant="default">{status}</Badge>
-      case 'Atenção':
-        return <Badge variant="destructive">{status}</Badge>
-      case 'NOK':
-        return <Badge variant="destructive">{status}</Badge>
-      default:
-        return <Badge variant="outline">{status}</Badge>
+      case 'OK': return <Badge variant="default">{status}</Badge>
+      case 'Atenção': return <Badge variant="destructive">{status}</Badge>
+      case 'NOK': return <Badge variant="destructive">{status}</Badge>
+      default: return <Badge variant="outline">{status}</Badge>
     }
   }
 
@@ -346,9 +323,7 @@ export function InspectionDetailDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             Detalhes da Inspeção
-            {inspection?.plate && (
-              <span className="text-muted-foreground font-normal">— {inspection.plate}</span>
-            )}
+            {inspection?.plate && <span className="text-muted-foreground font-normal">— {inspection.plate}</span>}
           </DialogTitle>
         </DialogHeader>
         {loading ? (
@@ -356,33 +331,15 @@ export function InspectionDetailDialog({
         ) : inspection ? (
           <div className="space-y-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div>
-                <p className="text-xs text-muted-foreground">Data</p>
-                <p className="text-sm font-medium">{formatDate(inspection.date)}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Placa</p>
-                <p className="text-sm font-medium">{inspection.plate || '-'}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Tipo / Periodicidade</p>
-                <p className="text-sm font-medium">{inspection.type || '-'}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Status</p>
-                {getInspectionStatusBadge(inspection.status || '-')}
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Motorista / Responsável</p>
-                <p className="text-sm font-medium">{inspection.driver_name || '-'}</p>
-              </div>
+              <div><p className="text-xs text-muted-foreground">Data</p><p className="text-sm font-medium">{formatDate(inspection.date)}</p></div>
+              <div><p className="text-xs text-muted-foreground">Placa</p><p className="text-sm font-medium">{inspection.plate || '-'}</p></div>
+              <div><p className="text-xs text-muted-foreground">Tipo / Periodicidade</p><p className="text-sm font-medium">{inspection.type || '-'}</p></div>
+              <div><p className="text-xs text-muted-foreground">Status</p>{getInspectionStatusBadge(inspection.status || '-')}</div>
+              <div><p className="text-xs text-muted-foreground">Motorista / Responsável</p><p className="text-sm font-medium">{inspection.driver_name || '-'}</p></div>
             </div>
 
             {inspection.notes && (
-              <div className="space-y-2">
-                <h3 className="text-sm font-semibold">Observações Gerais</h3>
-                <p className="text-sm whitespace-pre-wrap">{inspection.notes}</p>
-              </div>
+              <div className="space-y-2"><h3 className="text-sm font-semibold">Observações Gerais</h3><p className="text-sm whitespace-pre-wrap">{inspection.notes}</p></div>
             )}
 
             <div className="space-y-2">
@@ -395,35 +352,20 @@ export function InspectionDetailDialog({
                     const item = r.inspection_plan_items
                     const isNOK = r.status === 'NOK' || r.result_value === 'NOK'
                     return (
-                      <div
-                        key={r.id}
-                        className={`rounded-md border p-3 ${isNOK ? 'border-destructive/50 bg-destructive/5' : ''}`}
-                      >
+                      <div key={r.id} className={`rounded-md border p-3 ${isNOK ? 'border-destructive/50 bg-destructive/5' : ''}`}>
                         <div className="flex items-start gap-3">
-                          <div className="flex-shrink-0 w-8 text-center text-sm font-medium text-muted-foreground">
-                            {item?.sequence || '-'}
-                          </div>
+                          <div className="flex-shrink-0 w-8 text-center text-sm font-medium text-muted-foreground">{item?.sequence || '-'}</div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <span className="font-medium">{item?.item || 'Item'}</span>
                               {getStatusIcon(r.status || r.result_value || 'OK')}
                               {getStatusBadge(r.status || r.result_value || 'OK')}
                               {item?.expected_value && (
-                                <span className="text-xs text-muted-foreground px-2 py-0.5 rounded bg-muted">
-                                  Esperado: {item.expected_value}
-                                </span>
+                                <span className="text-xs text-muted-foreground px-2 py-0.5 rounded bg-muted">Esperado: {item.expected_value}</span>
                               )}
                             </div>
-                            {item?.verification && (
-                              <p className="text-sm text-muted-foreground mt-1">
-                                {item.verification}
-                              </p>
-                            )}
-                            {r.notes && (
-                              <p className={`text-sm mt-1 ${isNOK ? 'text-destructive' : ''}`}>
-                                {r.notes}
-                              </p>
-                            )}
+                            {item?.verification && <p className="text-sm text-muted-foreground mt-1">{item.verification}</p>}
+                            {r.notes && <p className={`text-sm mt-1 ${isNOK ? 'text-destructive' : ''}`}>{r.notes}</p>}
                           </div>
                         </div>
                       </div>
@@ -435,20 +377,12 @@ export function InspectionDetailDialog({
 
             {inspection.failed_items && inspection.failed_items.length > 0 && (
               <div className="space-y-2 p-3 rounded-md bg-destructive/10 border border-destructive/20">
-                <h3 className="text-sm font-semibold text-destructive flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4" /> Itens com Falha (NOK)
-                </h3>
-                <ul className="list-disc list-inside text-sm text-destructive">
-                  {inspection.failed_items.map((item, idx) => (
-                    <li key={idx}>{item}</li>
-                  ))}
-                </ul>
+                <h3 className="text-sm font-semibold text-destructive flex items-center gap-2"><AlertTriangle className="h-4 w-4" /> Itens com Falha (NOK)</h3>
+                <ul className="list-disc list-inside text-sm text-destructive">{inspection.failed_items.map((item, idx) => <li key={idx}>{item}</li>)}</ul>
               </div>
             )}
 
-            <div className="flex justify-end pt-2">
-              <Button onClick={() => onOpenChange(false)}>Fechar</Button>
-            </div>
+            <div className="flex justify-end pt-2"><Button onClick={() => onOpenChange(false)}>Fechar</Button></div>
           </div>
         ) : (
           <p className="text-muted-foreground py-6 text-center">Inspeção não encontrada.</p>
@@ -484,7 +418,4 @@ function CostRow({ label, value }: { label: string; value: number | string | nul
   return (
     <div className="flex justify-between border-b pb-1">
       <span className="text-muted-foreground">{label}</span>
-      <span>{formatCurrency(value)}</span>
-    </div>
-  )
-}
+      <span>{formatCurrency(value
