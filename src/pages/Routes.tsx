@@ -26,6 +26,7 @@ import { formatDate, formatCurrency } from '@/lib/utils'
 const PRICE_UNITS = [
   { label: 'TON', value: 'TON' },
   { label: 'M³', value: 'M3' },
+  { label: 'Frete Cheio', value: 'FULL_LOAD' },
 ]
 
 const TRANSPORT_TYPES = [
@@ -37,6 +38,7 @@ export default function Routes() {
   const [items, setItems] = useState<any[]>([])
   const [locations, setLocations] = useState<any[]>([])
   const [clients, setClients] = useState<any[]>([])
+  const [tollPlazas, setTollPlazas] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [open, setOpen] = useState(false)
   const [vigOpen, setVigOpen] = useState(false)
@@ -45,14 +47,15 @@ export default function Routes() {
   const [form, setForm] = useState<Record<string, any>>({})
   const [vigForm, setVigForm] = useState<Record<string, any>>({})
   const [search, setSearch] = useState('')
+  const [saving, setSaving] = useState(false)
 
   const fetchData = useCallback(async () => {
-    const { data } = await supabase
+    const { data: routesData } = await supabase
       .from('routes')
       .select('*')
       .eq('is_deleted', false)
       .order('created_at', { ascending: false })
-    setItems(data || [])
+    setItems(routesData || [])
     const { data: locs } = await supabase
       .from('locations')
       .select('id, name, city')
@@ -63,6 +66,8 @@ export default function Routes() {
       .select('id, trade_name')
       .eq('is_deleted', false)
     setClients(cls || [])
+    const { data: tpData } = await supabase.from('toll_plazas').select('*').eq('is_deleted', false)
+    setTollPlazas(tpData || [])
     setLoading(false)
   }, [])
 
@@ -106,6 +111,7 @@ export default function Routes() {
   }
 
   const handleSave = async () => {
+    if (saving) return
     if (!form.origin_location_id) {
       toast.error('Local de origem é obrigatório')
       return
@@ -118,16 +124,14 @@ export default function Routes() {
       toast.error('Data de início (valid_from) é obrigatória')
       return
     }
+    setSaving(true)
     const payload = {
       origin_location_id: form.origin_location_id,
       destination_client_id: form.destination_client_id,
       km_one_way: form.km_one_way ? parseFloat(form.km_one_way) : null,
       km_round_trip: form.km_round_trip ? parseFloat(form.km_round_trip) : null,
       km_range: form.km_range || null,
-      unit_price: form.unit_price ? parseFloat(form.unit_price) : null,
-      price_unit: form.price_unit || 'TON',
-      toll_light: form.toll_light ? parseFloat(form.toll_light) : null,
-      toll_heavy: form.toll_heavy ? parseFloat(form.toll_heavy) : null,
+      toll_plaza_id: form.toll_plaza_id || null,
       valid_from: form.valid_from,
       valid_to: form.valid_to || null,
       transport_type: form.transport_type || 'own_fleet',
@@ -135,6 +139,7 @@ export default function Routes() {
     const { error } = editing
       ? await supabase.from('routes').update(payload).eq('id', editing.id)
       : await supabase.from('routes').insert(payload)
+    setSaving(false)
     if (error) toast.error('Erro ao salvar')
     else {
       toast.success('Salvo com sucesso')
@@ -165,10 +170,12 @@ export default function Routes() {
   }
 
   const handleVigSave = async () => {
+    if (saving) return
     if (!vigForm.valid_from) {
       toast.error('Data de início é obrigatória')
       return
     }
+    setSaving(true)
     const today = vigForm.valid_from
     const { error: closeErr } = await supabase
       .from('routes')
@@ -176,6 +183,7 @@ export default function Routes() {
       .eq('id', vigOrigin.id)
     if (closeErr) {
       toast.error('Erro ao fechar vigência anterior')
+      setSaving(false)
       return
     }
     const payload = {
@@ -184,15 +192,13 @@ export default function Routes() {
       km_one_way: vigForm.km_one_way ? parseFloat(vigForm.km_one_way) : null,
       km_round_trip: vigForm.km_round_trip ? parseFloat(vigForm.km_round_trip) : null,
       km_range: vigForm.km_range || null,
-      unit_price: vigForm.unit_price ? parseFloat(vigForm.unit_price) : null,
-      price_unit: vigForm.price_unit || 'TON',
-      toll_light: vigForm.toll_light ? parseFloat(vigForm.toll_light) : null,
-      toll_heavy: vigForm.toll_heavy ? parseFloat(vigForm.toll_heavy) : null,
+      toll_plaza_id: vigForm.toll_plaza_id || null,
       valid_from: vigForm.valid_from,
       valid_to: vigForm.valid_to || null,
       transport_type: vigForm.transport_type || 'own_fleet',
     }
     const { error } = await supabase.from('routes').insert(payload)
+    setSaving(false)
     if (error) toast.error('Erro ao criar nova vigência')
     else {
       toast.success('Nova vigência criada')
@@ -228,8 +234,6 @@ export default function Routes() {
               <TableHead>Km Ida</TableHead>
               <TableHead>Km Volta</TableHead>
               <TableHead>Faixa Km</TableHead>
-              <TableHead>Preço Unit.</TableHead>
-              <TableHead>Un.</TableHead>
               <TableHead>Pedágio Leve</TableHead>
               <TableHead>Pedágio Pesado</TableHead>
               <TableHead>Vigência</TableHead>
@@ -240,13 +244,13 @@ export default function Routes() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={12} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                   Carregando...
                 </TableCell>
               </TableRow>
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={12} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                   Nenhum registro
                 </TableCell>
               </TableRow>
@@ -258,8 +262,6 @@ export default function Routes() {
                   <TableCell>{i.km_one_way || '-'}</TableCell>
                   <TableCell>{i.km_round_trip || '-'}</TableCell>
                   <TableCell>{i.km_range || '-'}</TableCell>
-                  <TableCell>{formatCurrency(i.unit_price)}</TableCell>
-                  <TableCell>{unitLabel(i.price_unit)}</TableCell>
                   <TableCell>{formatCurrency(i.toll_light)}</TableCell>
                   <TableCell>{formatCurrency(i.toll_heavy)}</TableCell>
                   <TableCell className="whitespace-nowrap text-xs">
@@ -370,33 +372,7 @@ export default function Routes() {
                   onChange={(e) => setForm({ ...form, km_range: e.target.value })}
                 />
               </div>
-              <div className="space-y-2">
-                <Label>Preço Unitário</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={form.unit_price || ''}
-                  onChange={(e) => setForm({ ...form, unit_price: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Unidade</Label>
-                <Select
-                  value={form.price_unit || 'TON'}
-                  onValueChange={(v) => setForm({ ...form, price_unit: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PRICE_UNITS.map((u) => (
-                      <SelectItem key={u.value} value={u.value}>
-                        {u.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+
               <div className="space-y-2">
                 <Label>Tipo Transporte</Label>
                 <Select
@@ -416,23 +392,27 @@ export default function Routes() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Pedágio Leve</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={form.toll_light || ''}
-                  onChange={(e) => setForm({ ...form, toll_light: e.target.value })}
-                />
+                <Label>Praça de Pedágio</Label>
+                <Select
+                  value={form.toll_plaza_id || '__none__'}
+                  onValueChange={(v) =>
+                    setForm({ ...form, toll_plaza_id: v === '__none__' ? null : v })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">—</SelectItem>
+                    {tollPlazas.map((tp) => (
+                      <SelectItem key={tp.id} value={tp.id}>
+                        {tp.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="space-y-2">
-                <Label>Pedágio Pesado</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={form.toll_heavy || ''}
-                  onChange={(e) => setForm({ ...form, toll_heavy: e.target.value })}
-                />
-              </div>
+
               <div className="space-y-2">
                 <Label>Válido de *</Label>
                 <Input
@@ -455,8 +435,8 @@ export default function Routes() {
                 Para alterar o preço, use "Nova Vigência" na listagem para preservar o histórico.
               </p>
             )}
-            <Button onClick={handleSave} className="w-full">
-              Salvar
+            <Button onClick={handleSave} className="w-full" disabled={saving}>
+              {saving ? 'Salvando...' : 'Salvar'}
             </Button>
           </div>
         </DialogContent>
@@ -473,51 +453,6 @@ export default function Routes() {
             </p>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label>Preço Unitário</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={vigForm.unit_price || ''}
-                  onChange={(e) => setVigForm({ ...vigForm, unit_price: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Unidade</Label>
-                <Select
-                  value={vigForm.price_unit || 'TON'}
-                  onValueChange={(v) => setVigForm({ ...vigForm, price_unit: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PRICE_UNITS.map((u) => (
-                      <SelectItem key={u.value} value={u.value}>
-                        {u.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Pedágio Leve</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={vigForm.toll_light || ''}
-                  onChange={(e) => setVigForm({ ...vigForm, toll_light: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Pedágio Pesado</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={vigForm.toll_heavy || ''}
-                  onChange={(e) => setVigForm({ ...vigForm, toll_heavy: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
                 <Label>Válido de *</Label>
                 <Input
                   type="date"
@@ -533,9 +468,117 @@ export default function Routes() {
                   onChange={(e) => setVigForm({ ...vigForm, valid_to: e.target.value })}
                 />
               </div>
+              <div className="space-y-2">
+                <Label>Origem *</Label>
+                <Select
+                  value={vigForm.origin_location_id || '__none__'}
+                  onValueChange={(v) =>
+                    setVigForm({ ...vigForm, origin_location_id: v === '__none__' ? null : v })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">—</SelectItem>
+                    {locations.map((l) => (
+                      <SelectItem key={l.id} value={l.id}>
+                        {l.name}
+                        {l.city ? ' - ' + l.city : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Destino (Cliente) *</Label>
+                <Select
+                  value={vigForm.destination_client_id || '__none__'}
+                  onValueChange={(v) =>
+                    setVigForm({ ...vigForm, destination_client_id: v === '__none__' ? null : v })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">—</SelectItem>
+                    {clients.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.trade_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Km Ida</Label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={vigForm.km_one_way || ''}
+                  onChange={(e) => setVigForm({ ...vigForm, km_one_way: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Km Volta</Label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={vigForm.km_round_trip || ''}
+                  onChange={(e) => setVigForm({ ...vigForm, km_round_trip: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Faixa Km</Label>
+                <Input
+                  value={vigForm.km_range || ''}
+                  placeholder="ex: 341-360"
+                  onChange={(e) => setVigForm({ ...vigForm, km_range: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Tipo Transporte</Label>
+                <Select
+                  value={vigForm.transport_type || 'own_fleet'}
+                  onValueChange={(v) => setVigForm({ ...vigForm, transport_type: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TRANSPORT_TYPES.map((t) => (
+                      <SelectItem key={t.value} value={t.value}>
+                        {t.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Praça de Pedágio</Label>
+                <Select
+                  value={vigForm.toll_plaza_id || '__none__'}
+                  onValueChange={(v) =>
+                    setVigForm({ ...vigForm, toll_plaza_id: v === '__none__' ? null : v })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">—</SelectItem>
+                    {tollPlazas.map((tp) => (
+                      <SelectItem key={tp.id} value={tp.id}>
+                        {tp.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <Button onClick={handleVigSave} className="w-full">
-              Criar Nova Vigência
+            <Button onClick={handleVigSave} className="w-full" disabled={saving}>
+              {saving ? 'Salvando...' : 'Criar Nova Vigência'}
             </Button>
           </div>
         </DialogContent>
