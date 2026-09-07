@@ -50,6 +50,8 @@ import YardPayments from '@/pages/YardPayments'
 import DashYards from '@/pages/DashYards'
 import FinancialDashboard from '@/pages/FinancialDashboard'
 import Purchasing from '@/pages/Purchasing'
+import AuditLogs from '@/pages/AuditLogs'
+import Notifications from '@/pages/Notifications'
 
 const App = () => (
   <AuthProvider>
@@ -109,6 +111,8 @@ const App = () => (
             <Route path="/dash-patios" element={<DashYards />} />
             <Route path="/dashboard-financeiro" element={<FinancialDashboard />} />
             <Route path="/compras" element={<Purchasing />} />
+            <Route path="/auditoria" element={<AuditLogs />} />
+            <Route path="/notificacoes" element={<Notifications />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -49,20 +49,21 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 interface UnifiedOrder {
   id: string
   date: string
+  work_order_number?: number | null
+  inspection_number?: number | null
   plate: string
   type: string
   status: string
   origin: string
   total_cost: number
-  diagnosis?: string
-  hours?: number
-  parts_cost?: number
-  external_cost?: number
-  labor_cost?: number
+  diagnosis: string | null
+  hours: number | null
+  parts_cost: number
+  external_cost: number
+  labor_cost: number
   source: 'work_order' | 'inspection'
-  driver_name?: string
+  driver_name?: string | null
 }
-
 export default function Entries() {
   const { canPerform } = useAuth()
   const [inspections, setInspections] = useState<any[]>([])
@@ -86,7 +87,7 @@ export default function Entries() {
     const [insp, nc, wo] = await Promise.all([
       supabase
         .from('inspections')
-        .select('*')
+        .select('*, inspection_plans(id, code, vehicle_type, periodicity)')
         .eq('is_deleted', false)
         .order('created_at', { ascending: false }),
       supabase
@@ -111,6 +112,7 @@ export default function Entries() {
     const workOrders: UnifiedOrder[] = (orders || []).map((o) => ({
       id: o.id,
       date: o.date,
+      work_order_number: o.work_order_number,
       plate: o.plate,
       type: o.type,
       status: o.status,
@@ -129,6 +131,7 @@ export default function Entries() {
       .map((i) => ({
         id: i.id,
         date: i.date,
+        inspection_number: i.inspection_number,
         plate: i.plate,
         type: i.type,
         status: i.status,
@@ -230,9 +233,11 @@ export default function Entries() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Nº</TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead>Placa</TableHead>
                   <TableHead>Tipo</TableHead>
+                  <TableHead>Plano de Origem</TableHead>
                   <TableHead>Motorista</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
@@ -241,15 +246,71 @@ export default function Entries() {
               <TableBody>
                 {inspections.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       Nenhum registro
                     </TableCell>
                   </TableRow>
                 ) : (
                   inspections.map((i) => (
                     <TableRow key={i.id}>
+                      <TableCell className="font-mono text-xs">
+                        {i.inspection_number ? (
+                          <Badge variant="outline" className="font-mono text-[11px]">
+                            #INSP-{String(i.inspection_number).padStart(4, '0')}
+                          </Badge>
+                        ) : (
+                          '—'
+                        )}
+                      </TableCell>
                       <TableCell>{formatDate(i.date)}</TableCell>
                       <TableCell className="font-medium">{i.plate}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{i.type}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        {i.inspection_plans ? (
+                          <div className="text-xs">
+                            <span className="font-medium">{i.inspection_plans.code || i.inspection_plans.vehicle_type}</span>
+                            <span className="text-[10px] text-muted-foreground block">{i.inspection_plans.periodicity}</span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>{i.driver_name || '-'}</TableCell>
+                      <TableCell>
+                        <Badge variant={i.status === 'OK' ? 'default' : 'destructive'}>
+                          {i.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right whitespace-nowrap">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Visualizar detalhes"
+                          onClick={() => openDetail(i.id, 'inspection')}
+                        >
+                          <FileText className="h-4 w-4" />
+                        </Button>
+                        {canEdit && (
+                          <Button variant="ghost" size="icon" onClick={() => openInsp(i.id)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {canDelete && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete('inspections', i.id, 'Inspeção')}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
                       <TableCell>
                         <Badge variant="secondary">{i.type}</Badge>
                       </TableCell>
@@ -364,6 +425,7 @@ export default function Entries() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Nº</TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead>Placa</TableHead>
                   <TableHead>Origem</TableHead>
@@ -376,13 +438,26 @@ export default function Entries() {
               <TableBody>
                 {unifiedOrders.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       Nenhum registro
                     </TableCell>
                   </TableRow>
                 ) : (
                   unifiedOrders.map((o) => (
                     <TableRow key={o.id}>
+                      <TableCell className="font-mono text-xs">
+                        {o.source === 'work_order' && o.work_order_number ? (
+                          <Badge variant="outline" className="font-mono text-[11px]">
+                            #OS-{String(o.work_order_number).padStart(4, '0')}
+                          </Badge>
+                        ) : o.source === 'inspection' && o.inspection_number ? (
+                          <Badge variant="outline" className="font-mono text-[11px]">
+                            #INSP-{String(o.inspection_number).padStart(4, '0')}
+                          </Badge>
+                        ) : (
+                          '—'
+                        )}
+                      </TableCell>
                       <TableCell>{formatDate(o.date)}</TableCell>
                       <TableCell className="font-medium">{o.plate}</TableCell>
                       <TableCell>

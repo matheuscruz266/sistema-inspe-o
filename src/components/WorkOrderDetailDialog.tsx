@@ -22,6 +22,7 @@ interface Props {
 interface OSData {
   id: string
   date: string | null
+  work_order_number?: number | null
   plate: string | null
   type: string | null
   status: string | null
@@ -84,6 +85,11 @@ export function WorkOrderDetailDialog({ open, onOpenChange, workOrderId }: Props
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             Visão Geral da O.S.
+            {wo?.work_order_number && (
+              <Badge variant="outline" className="font-mono text-sm">
+                #OS-{String(wo.work_order_number).padStart(4, '0')}
+              </Badge>
+            )}
             {wo?.plate && <span className="text-muted-foreground font-normal">— {wo.plate}</span>}
           </DialogTitle>
         </DialogHeader>

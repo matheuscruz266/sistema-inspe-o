@@ -224,11 +224,23 @@ export default function History() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm">
-                        {e._type === 'OS'
-                          ? `OS: ${e.type} - ${e.status}`
-                          : `Inspeção: ${e.type} - ${e.status}`}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-sm">
+                          {e._type === 'OS'
+                            ? `OS: ${e.type} - ${e.status}`
+                            : `Inspeção: ${e.type} - ${e.status}`}
+                        </p>
+                        {e._type === 'OS' && e.work_order_number && (
+                          <Badge variant="outline" className="text-[10px] font-mono px-1 py-0">
+                            #OS-{String(e.work_order_number).padStart(4, '0')}
+                          </Badge>
+                        )}
+                        {e._type === 'Insp' && e.inspection_number && (
+                          <Badge variant="outline" className="text-[10px] font-mono px-1 py-0">
+                            #INSP-{String(e.inspection_number).padStart(4, '0')}
+                          </Badge>
+                        )}
+                      </div>
                       <p className="text-xs text-muted-foreground">{formatDate(e.date)}</p>
                     </div>
                     {e._type === 'OS' && e.total_cost > 0 && (
@@ -253,6 +265,7 @@ export default function History() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Nº OS</TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead>Placa</TableHead>
                   <TableHead>Serviço</TableHead>
@@ -265,13 +278,22 @@ export default function History() {
               <TableBody>
                 {closedOrders.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       Nenhuma O.S. encerrada
                     </TableCell>
                   </TableRow>
                 ) : (
                   closedOrders.map((o) => (
                     <TableRow key={o.id}>
+                      <TableCell className="font-mono text-xs">
+                        {o.work_order_number ? (
+                          <Badge variant="outline" className="font-mono text-[11px]">
+                            #OS-{String(o.work_order_number).padStart(4, '0')}
+                          </Badge>
+                        ) : (
+                          '—'
+                        )}
+                      </TableCell>
                       <TableCell>{formatDate(o.date)}</TableCell>
                       <TableCell className="font-medium">{o.plate}</TableCell>
                       <TableCell

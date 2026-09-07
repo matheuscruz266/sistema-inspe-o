@@ -30,6 +30,8 @@ import {
   Wallet,
   LineChart,
   ShoppingCart,
+  ShieldCheck,
+  Bell,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -179,6 +181,8 @@ export const menuGroups: MenuGroupType[] = [
         icon: Container,
       },
       { label: 'Pátios', path: '/patios', screen: 'patios', icon: MapPin },
+      { label: 'Auditoria', path: '/auditoria', screen: 'logs', icon: ShieldCheck },
+      { label: 'Notificações', path: '/notificacoes', screen: 'notifications', icon: Bell },
     ],
   },
   {

@@ -57,7 +57,14 @@ export function KanbanBoard({
                   className="cursor-move rounded-md border bg-background p-3 hover:shadow-md transition-shadow"
                 >
                   <div onClick={() => onCardClick(item)}>
-                    <p className="font-medium text-sm">{item.plate}</p>
+                    <div className="flex items-center justify-between gap-1 mb-1">
+                      <p className="font-medium text-sm">{item.plate}</p>
+                      {item.work_order_number ? (
+                        <Badge variant="secondary" className="text-[11px] font-mono px-1.5 py-0">
+                          #OS-{String(item.work_order_number).padStart(4, '0')}
+                        </Badge>
+                      ) : null}
+                    </div>
                     <p className="text-xs text-muted-foreground truncate">{item.type}</p>
                     <Badge variant="outline" className="mt-1 text-xs">
                       {item.status}
