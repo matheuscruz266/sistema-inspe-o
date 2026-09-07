@@ -270,8 +270,12 @@ export default function Entries() {
                       <TableCell>
                         {i.inspection_plans ? (
                           <div className="text-xs">
-                            <span className="font-medium">{i.inspection_plans.code || i.inspection_plans.vehicle_type}</span>
-                            <span className="text-[10px] text-muted-foreground block">{i.inspection_plans.periodicity}</span>
+                            <span className="font-medium">
+                              {i.inspection_plans.code || i.inspection_plans.vehicle_type}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground block">
+                              {i.inspection_plans.periodicity}
+                            </span>
                           </div>
                         ) : (
                           <span className="text-xs text-muted-foreground">—</span>
@@ -292,35 +296,6 @@ export default function Entries() {
                         >
                           <FileText className="h-4 w-4" />
                         </Button>
-                        {canEdit && (
-                          <Button variant="ghost" size="icon" onClick={() => openInsp(i.id)}>
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {canDelete && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete('inspections', i.id, 'Inspeção')}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-                      <TableCell>
-                        <Badge variant="secondary">{i.type}</Badge>
-                      </TableCell>
-                      <TableCell>{i.driver_name || '-'}</TableCell>
-                      <TableCell>
-                        <Badge variant={i.status === 'OK' ? 'default' : 'destructive'}>
-                          {i.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right whitespace-nowrap">
                         {canEdit && (
                           <Button variant="ghost" size="icon" onClick={() => openInsp(i.id)}>
                             <Pencil className="h-4 w-4" />
@@ -764,6 +739,7 @@ export function InspectionExecution() {
           driver_name: driverName,
           status: 'OK',
           notes,
+          plan_id: planId,
         } as any)
         .select()
         .single()

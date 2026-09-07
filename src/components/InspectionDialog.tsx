@@ -17,6 +17,7 @@ interface Props {
 interface InspectionForm {
   date: string
   plate: string
+  plan_id?: string | null
   type: string
   driver_name: string
   status: string
@@ -26,6 +27,7 @@ interface InspectionForm {
 const emptyForm: InspectionForm = {
   date: new Date().toISOString().split('T')[0],
   plate: '',
+  plan_id: null,
   type: 'Diária',
   driver_name: '',
   status: 'OK',
@@ -66,18 +68,22 @@ export function InspectionDialog({ open, onOpenChange, editingId, onSaved }: Pro
     }
 
     setLoading(true)
-    const payload = {
+    const payload: any = {
       date: form.date || new Date().toISOString().split('T')[0],
       plate: form.plate.trim(),
       type: form.type || 'Diária',
       driver_name: form.driver_name.trim(),
       status: form.status || 'OK',
       notes: form.notes.trim(),
+      ...(form.plan_id ? { plan_id: form.plan_id } : {}),
     }
 
     const result = editingId
-      ? await supabase.from('inspections').update(payload).eq('id', editingId)
-      : await supabase.from('inspections').insert(payload)
+      ? await supabase
+          .from('inspections')
+          .update(payload as any)
+          .eq('id', editingId)
+      : await supabase.from('inspections').insert(payload as any)
 
     setLoading(false)
     if (result.error) {

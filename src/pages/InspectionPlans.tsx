@@ -116,7 +116,18 @@ export default function InspectionPlans() {
               filtered.map((p) => (
                 <TableRow key={p.id}>
                   <TableCell>{p.code || '-'}</TableCell>
-                  <TableCell className="font-medium">{p.plate}</TableCell>
+                  <TableCell className="font-medium">
+                    {p.plate && p.plate.trim() ? (
+                      p.plate
+                    ) : (
+                      <Badge
+                        variant="outline"
+                        className="font-normal text-muted-foreground bg-muted/50"
+                      >
+                        {p.vehicle_type ? `Todos (${p.vehicle_type})` : 'Todos os veículos'}
+                      </Badge>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <Badge variant="secondary">{p.vehicle_type}</Badge>
                   </TableCell>

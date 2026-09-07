@@ -1,7 +1,7 @@
 {
   "_versions": {
-    "create-user": 67,
-    "reset-user-password": 31,
+    "create-user": 69,
+    "reset-user-password": 33,
     "import-imobilizado": 6
   }
 }
