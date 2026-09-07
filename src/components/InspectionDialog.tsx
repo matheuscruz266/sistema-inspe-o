@@ -44,12 +44,8 @@ export function InspectionDialog({ open, onOpenChange, editingId, onSaved }: Pro
     }
 
     setLoading(true)
-    supabase
-      .from('inspections')
-      .select('date, plate, type, driver_name, status, notes')
-      .eq('id', editingId)
-      .single()
-      .then(({ data, error }) => {
+    Promise.resolve(supabase.from('inspections').select('*').eq('id', editingId).single())
+      .then(({ data, error }: any) => {
         if (error || !data) {
           toast.error('Erro ao carregar inspeção')
           return

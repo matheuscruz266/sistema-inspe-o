@@ -1,10 +1,11 @@
+// AVOID UPDATING THIS FILE DIRECTLY. It is automatically generated.
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: '14.15'
+    PostgrestVersion: '14.5'
   }
   public: {
     Tables: {
@@ -100,6 +101,39 @@ export type Database = {
           name?: string
           notes?: string | null
           owner_type?: Database['public']['Enums']['logistics_owner_type'] | null
+        }
+        Relationships: []
+      }
+      audit_log: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          id: string
+          new_data: Json | null
+          old_data: Json | null
+          operation: string
+          record_id: string | null
+          table_name: string
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          operation: string
+          record_id?: string | null
+          table_name: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          operation?: string
+          record_id?: string | null
+          table_name?: string
         }
         Relationships: []
       }
@@ -526,6 +560,8 @@ export type Database = {
           plate: string
           responsible: string
           status: string
+          updated_at: string | null
+          updated_by: string | null
           vehicle_type: string
         }
         Insert: {
@@ -541,6 +577,8 @@ export type Database = {
           plate: string
           responsible?: string
           status?: string
+          updated_at?: string | null
+          updated_by?: string | null
           vehicle_type: string
         }
         Update: {
@@ -556,6 +594,8 @@ export type Database = {
           plate?: string
           responsible?: string
           status?: string
+          updated_at?: string | null
+          updated_by?: string | null
           vehicle_type?: string
         }
         Relationships: []
@@ -569,6 +609,8 @@ export type Database = {
           item_id: string | null
           result_value: string | null
           status: string | null
+          updated_at: string | null
+          updated_by: string | null
         }
         Insert: {
           created_at?: string
@@ -578,6 +620,8 @@ export type Database = {
           item_id?: string | null
           result_value?: string | null
           status?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
         }
         Update: {
           created_at?: string
@@ -587,6 +631,8 @@ export type Database = {
           item_id?: string | null
           result_value?: string | null
           status?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
         }
         Relationships: [
           {
@@ -612,11 +658,15 @@ export type Database = {
           driver_name: string | null
           failed_items: Json | null
           id: string
+          inspection_number: number
           is_deleted: boolean | null
           notes: string | null
+          plan_id: string | null
           plate: string
           status: string
           type: string
+          updated_at: string | null
+          updated_by: string | null
         }
         Insert: {
           created_at?: string
@@ -624,11 +674,15 @@ export type Database = {
           driver_name?: string | null
           failed_items?: Json | null
           id?: string
+          inspection_number?: number
           is_deleted?: boolean | null
           notes?: string | null
+          plan_id?: string | null
           plate: string
           status?: string
           type?: string
+          updated_at?: string | null
+          updated_by?: string | null
         }
         Update: {
           created_at?: string
@@ -636,13 +690,25 @@ export type Database = {
           driver_name?: string | null
           failed_items?: Json | null
           id?: string
+          inspection_number?: number
           is_deleted?: boolean | null
           notes?: string | null
+          plan_id?: string | null
           plate?: string
           status?: string
           type?: string
+          updated_at?: string | null
+          updated_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'inspections_plan_id_fkey'
+            columns: ['plan_id']
+            isOneToOne: false
+            referencedRelation: 'inspection_plans'
+            referencedColumns: ['id']
+          },
+        ]
       }
       locations: {
         Row: {
@@ -1066,6 +1132,8 @@ export type Database = {
           target_plate: string | null
           target_vehicle_type: string | null
           type: string
+          updated_at: string | null
+          updated_by: string | null
         }
         Insert: {
           application_target?: string | null
@@ -1086,6 +1154,8 @@ export type Database = {
           target_plate?: string | null
           target_vehicle_type?: string | null
           type?: string
+          updated_at?: string | null
+          updated_by?: string | null
         }
         Update: {
           application_target?: string | null
@@ -1106,6 +1176,8 @@ export type Database = {
           target_plate?: string | null
           target_vehicle_type?: string | null
           type?: string
+          updated_at?: string | null
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -1160,6 +1232,8 @@ export type Database = {
           item_id: string | null
           result_value: string | null
           status: string | null
+          updated_at: string | null
+          updated_by: string | null
           work_order_id: string | null
         }
         Insert: {
@@ -1173,6 +1247,8 @@ export type Database = {
           item_id?: string | null
           result_value?: string | null
           status?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
           work_order_id?: string | null
         }
         Update: {
@@ -1186,6 +1262,8 @@ export type Database = {
           item_id?: string | null
           result_value?: string | null
           status?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
           work_order_id?: string | null
         }
         Relationships: [
@@ -1211,6 +1289,86 @@ export type Database = {
             referencedColumns: ['id']
           },
         ]
+      }
+      notification_log: {
+        Row: {
+          body: string
+          channel: string
+          created_at: string
+          id: string
+          notification_type: string
+          recipient_id: string | null
+          sent_at: string | null
+          status: string
+          title: string
+        }
+        Insert: {
+          body: string
+          channel: string
+          created_at?: string
+          id?: string
+          notification_type: string
+          recipient_id?: string | null
+          sent_at?: string | null
+          status?: string
+          title: string
+        }
+        Update: {
+          body?: string
+          channel?: string
+          created_at?: string
+          id?: string
+          notification_type?: string
+          recipient_id?: string | null
+          sent_at?: string | null
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'notification_log_recipient_id_fkey'
+            columns: ['recipient_id']
+            isOneToOne: false
+            referencedRelation: 'notification_recipients'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      notification_recipients: {
+        Row: {
+          created_at: string
+          email: string | null
+          email_enabled: boolean
+          id: string
+          in_app_enabled: boolean
+          is_deleted: boolean
+          name: string
+          phone: string | null
+          whatsapp_enabled: boolean
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          email_enabled?: boolean
+          id?: string
+          in_app_enabled?: boolean
+          is_deleted?: boolean
+          name: string
+          phone?: string | null
+          whatsapp_enabled?: boolean
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          email_enabled?: boolean
+          id?: string
+          in_app_enabled?: boolean
+          is_deleted?: boolean
+          name?: string
+          phone?: string | null
+          whatsapp_enabled?: boolean
+        }
+        Relationships: []
       }
       os_diagnosis: {
         Row: {
@@ -1958,6 +2116,299 @@ export type Database = {
           },
         ]
       }
+      purchase_orders: {
+        Row: {
+          created_at: string
+          expected_date: string | null
+          id: string
+          is_deleted: boolean
+          order_number: number
+          payment_terms: string | null
+          quote_id: string | null
+          request_id: string
+          status: string
+          supplier_id: string | null
+          total_cost: number
+        }
+        Insert: {
+          created_at?: string
+          expected_date?: string | null
+          id?: string
+          is_deleted?: boolean
+          order_number?: number
+          payment_terms?: string | null
+          quote_id?: string | null
+          request_id: string
+          status?: string
+          supplier_id?: string | null
+          total_cost?: number
+        }
+        Update: {
+          created_at?: string
+          expected_date?: string | null
+          id?: string
+          is_deleted?: boolean
+          order_number?: number
+          payment_terms?: string | null
+          quote_id?: string | null
+          request_id?: string
+          status?: string
+          supplier_id?: string | null
+          total_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'purchase_orders_quote_id_fkey'
+            columns: ['quote_id']
+            isOneToOne: false
+            referencedRelation: 'purchase_quotes'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'purchase_orders_request_id_fkey'
+            columns: ['request_id']
+            isOneToOne: false
+            referencedRelation: 'purchase_requests'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'purchase_orders_supplier_id_fkey'
+            columns: ['supplier_id']
+            isOneToOne: false
+            referencedRelation: 'suppliers'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      purchase_quotes: {
+        Row: {
+          attachment_url: string | null
+          created_at: string
+          delivery_days: number | null
+          id: string
+          is_deleted: boolean
+          payment_terms: string | null
+          quote_number: string | null
+          request_id: string
+          status: string
+          supplier_id: string | null
+          total_cost: number
+        }
+        Insert: {
+          attachment_url?: string | null
+          created_at?: string
+          delivery_days?: number | null
+          id?: string
+          is_deleted?: boolean
+          payment_terms?: string | null
+          quote_number?: string | null
+          request_id: string
+          status?: string
+          supplier_id?: string | null
+          total_cost?: number
+        }
+        Update: {
+          attachment_url?: string | null
+          created_at?: string
+          delivery_days?: number | null
+          id?: string
+          is_deleted?: boolean
+          payment_terms?: string | null
+          quote_number?: string | null
+          request_id?: string
+          status?: string
+          supplier_id?: string | null
+          total_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'purchase_quotes_request_id_fkey'
+            columns: ['request_id']
+            isOneToOne: false
+            referencedRelation: 'purchase_requests'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'purchase_quotes_supplier_id_fkey'
+            columns: ['supplier_id']
+            isOneToOne: false
+            referencedRelation: 'suppliers'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      purchase_receipts: {
+        Row: {
+          created_at: string
+          id: string
+          invoice_number: string | null
+          notes: string | null
+          order_id: string
+          received_date: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invoice_number?: string | null
+          notes?: string | null
+          order_id: string
+          received_date?: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invoice_number?: string | null
+          notes?: string | null
+          order_id?: string
+          received_date?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'purchase_receipts_order_id_fkey'
+            columns: ['order_id']
+            isOneToOne: false
+            referencedRelation: 'purchase_orders'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      purchase_request_items: {
+        Row: {
+          created_at: string
+          description: string
+          estimated_unit_cost: number
+          id: string
+          is_deleted: boolean
+          product_id: string | null
+          quantity: number
+          request_id: string
+          unit: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          estimated_unit_cost?: number
+          id?: string
+          is_deleted?: boolean
+          product_id?: string | null
+          quantity: number
+          request_id: string
+          unit?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          estimated_unit_cost?: number
+          id?: string
+          is_deleted?: boolean
+          product_id?: string | null
+          quantity?: number
+          request_id?: string
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'purchase_request_items_product_id_fkey'
+            columns: ['product_id']
+            isOneToOne: false
+            referencedRelation: 'current_stock'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'purchase_request_items_product_id_fkey'
+            columns: ['product_id']
+            isOneToOne: false
+            referencedRelation: 'products'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'purchase_request_items_request_id_fkey'
+            columns: ['request_id']
+            isOneToOne: false
+            referencedRelation: 'purchase_requests'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      purchase_requests: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          department: string
+          id: string
+          is_deleted: boolean
+          priority: string
+          reason: string
+          request_number: number
+          requested_at: string
+          requester_name: string
+          status: string
+          supplier_id: string | null
+          vehicle_id: string | null
+          work_order_id: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          department?: string
+          id?: string
+          is_deleted?: boolean
+          priority?: string
+          reason: string
+          request_number?: number
+          requested_at?: string
+          requester_name: string
+          status?: string
+          supplier_id?: string | null
+          vehicle_id?: string | null
+          work_order_id?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          department?: string
+          id?: string
+          is_deleted?: boolean
+          priority?: string
+          reason?: string
+          request_number?: number
+          requested_at?: string
+          requester_name?: string
+          status?: string
+          supplier_id?: string | null
+          vehicle_id?: string | null
+          work_order_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'purchase_requests_supplier_id_fkey'
+            columns: ['supplier_id']
+            isOneToOne: false
+            referencedRelation: 'suppliers'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'purchase_requests_vehicle_id_fkey'
+            columns: ['vehicle_id']
+            isOneToOne: false
+            referencedRelation: 'vehicles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'purchase_requests_work_order_id_fkey'
+            columns: ['work_order_id']
+            isOneToOne: false
+            referencedRelation: 'work_orders'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       routes: {
         Row: {
           created_at: string
@@ -2129,6 +2580,8 @@ export type Database = {
           plan_id: string | null
           scheduled_date: string
           status: string
+          updated_at: string | null
+          updated_by: string | null
           vehicle_id: string | null
           work_order_id: string | null
         }
@@ -2140,6 +2593,8 @@ export type Database = {
           plan_id?: string | null
           scheduled_date: string
           status?: string
+          updated_at?: string | null
+          updated_by?: string | null
           vehicle_id?: string | null
           work_order_id?: string | null
         }
@@ -2151,6 +2606,8 @@ export type Database = {
           plan_id?: string | null
           scheduled_date?: string
           status?: string
+          updated_at?: string | null
+          updated_by?: string | null
           vehicle_id?: string | null
           work_order_id?: string | null
         }
@@ -2982,6 +3439,8 @@ export type Database = {
           purchase_cost: number | null
           renavam: string | null
           status: string | null
+          updated_at: string | null
+          updated_by: string | null
           vehicle_type: string
           year: number | null
         }
@@ -3001,6 +3460,8 @@ export type Database = {
           purchase_cost?: number | null
           renavam?: string | null
           status?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
           vehicle_type: string
           year?: number | null
         }
@@ -3020,6 +3481,8 @@ export type Database = {
           purchase_cost?: number | null
           renavam?: string | null
           status?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
           vehicle_type?: string
           year?: number | null
         }
@@ -3061,8 +3524,11 @@ export type Database = {
           total_cost: number | null
           type: string
           unit: string | null
+          updated_at: string | null
+          updated_by: string | null
           user_name: string | null
           vehicle_id: string | null
+          work_order_number: number
         }
         Insert: {
           code?: string | null
@@ -3091,8 +3557,11 @@ export type Database = {
           total_cost?: number | null
           type?: string
           unit?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
           user_name?: string | null
           vehicle_id?: string | null
+          work_order_number?: number
         }
         Update: {
           code?: string | null
@@ -3121,8 +3590,11 @@ export type Database = {
           total_cost?: number | null
           type?: string
           unit?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
           user_name?: string | null
           vehicle_id?: string | null
+          work_order_number?: number
         }
         Relationships: [
           {

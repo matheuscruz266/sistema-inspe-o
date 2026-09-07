@@ -100,7 +100,7 @@ export function exportYardInvoicePdf(inv: InvoicePdfData) {
     ['Modalidade', modalityLabel(inv.modality)],
   ]
 
-  doc.autoTable({
+  ;(doc as any).autoTable({
     startY: y,
     body: headerRows,
     theme: 'plain',
@@ -110,8 +110,7 @@ export function exportYardInvoicePdf(inv: InvoicePdfData) {
     },
     margin: { left: marginX, right: marginX },
   })
-  // @ts-expect-error lastAutoTable is injected by the plugin
-  y = doc.lastAutoTable.finalY + 24
+  y = (doc as any).lastAutoTable.finalY + 24
 
   // ---------- Tabela de entregas ----------
   doc.setFont('helvetica', 'bold')
@@ -128,7 +127,7 @@ export function exportYardInvoicePdf(inv: InvoicePdfData) {
     fmtMoney(d.total),
   ])
 
-  doc.autoTable({
+  ;(doc as any).autoTable({
     startY: y,
     head: [
       ['Data Entrega', 'NF', 'Peso (ton)', 'Valor Madeira (R$)', 'Valor Frete (R$)', 'Total (R$)'],
@@ -145,8 +144,7 @@ export function exportYardInvoicePdf(inv: InvoicePdfData) {
     },
     margin: { left: marginX, right: marginX },
   })
-  // @ts-expect-error lastAutoTable is injected by the plugin
-  y = doc.lastAutoTable.finalY + 20
+  y = (doc as any).lastAutoTable.finalY + 20
 
   // ---------- Itens adicionais / manuais ----------
   if (inv.manualItems.length > 0) {
@@ -156,7 +154,7 @@ export function exportYardInvoicePdf(inv: InvoicePdfData) {
     y += 8
 
     const manualRows = inv.manualItems.map((m) => [m.description || '-', fmtMoney(m.amount)])
-    doc.autoTable({
+    ;(doc as any).autoTable({
       startY: y,
       head: [['Descrição', 'Valor (R$)']],
       body: manualRows,
@@ -166,8 +164,7 @@ export function exportYardInvoicePdf(inv: InvoicePdfData) {
       columnStyles: { 1: { halign: 'right' } },
       margin: { left: marginX, right: marginX },
     })
-    // @ts-expect-error lastAutoTable is injected by the plugin
-    y = doc.lastAutoTable.finalY + 20
+    y = (doc as any).lastAutoTable.finalY + 20
   }
 
   // ---------- Total geral em destaque ----------

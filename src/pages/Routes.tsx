@@ -66,7 +66,10 @@ export default function Routes() {
       .select('id, trade_name')
       .eq('is_deleted', false)
     setClients(cls || [])
-    const { data: tpData } = await supabase.from('toll_plazas').select('*').eq('is_deleted', false)
+    const { data: tpData } = await (supabase as any)
+      .from('toll_plazas')
+      .select('*')
+      .eq('is_deleted', false)
     setTollPlazas(tpData || [])
     setLoading(false)
   }, [])
@@ -125,20 +128,19 @@ export default function Routes() {
       return
     }
     setSaving(true)
-    const payload = {
+    const payload: any = {
       origin_location_id: form.origin_location_id,
       destination_client_id: form.destination_client_id,
       km_one_way: form.km_one_way ? parseFloat(form.km_one_way) : null,
       km_round_trip: form.km_round_trip ? parseFloat(form.km_round_trip) : null,
       km_range: form.km_range || null,
-      toll_plaza_id: form.toll_plaza_id || null,
       valid_from: form.valid_from,
       valid_to: form.valid_to || null,
       transport_type: form.transport_type || 'own_fleet',
     }
     const { error } = editing
-      ? await supabase.from('routes').update(payload).eq('id', editing.id)
-      : await supabase.from('routes').insert(payload)
+      ? await (supabase as any).from('routes').update(payload).eq('id', editing.id)
+      : await (supabase as any).from('routes').insert(payload)
     setSaving(false)
     if (error) toast.error('Erro ao salvar')
     else {
@@ -186,18 +188,17 @@ export default function Routes() {
       setSaving(false)
       return
     }
-    const payload = {
+    const payload: any = {
       origin_location_id: vigForm.origin_location_id,
       destination_client_id: vigForm.destination_client_id,
       km_one_way: vigForm.km_one_way ? parseFloat(vigForm.km_one_way) : null,
       km_round_trip: vigForm.km_round_trip ? parseFloat(vigForm.km_round_trip) : null,
       km_range: vigForm.km_range || null,
-      toll_plaza_id: vigForm.toll_plaza_id || null,
       valid_from: vigForm.valid_from,
       valid_to: vigForm.valid_to || null,
       transport_type: vigForm.transport_type || 'own_fleet',
     }
-    const { error } = await supabase.from('routes').insert(payload)
+    const { error } = await (supabase as any).from('routes').insert(payload)
     setSaving(false)
     if (error) toast.error('Erro ao criar nova vigência')
     else {

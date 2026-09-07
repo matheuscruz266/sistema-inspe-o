@@ -20,14 +20,16 @@ import {
   ArrowRight,
   Pencil,
   Trash2,
+  CheckCircle,
+  ChevronRight,
+  XCircle,
+  AlertCircle,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatDate, formatCurrency } from '@/lib/utils'
-import {
-  WorkOrderDialog,
-  WorkOrderDetailDialog,
-  InspectionDetailDialog,
-} from '@/components/WorkOrderDetailDialog'
+import { WorkOrderDialog } from '@/components/WorkOrderDialog'
+import { WorkOrderDetailDialog } from '@/components/WorkOrderDetailDialog'
+import { InspectionDetailDialog } from '@/components/InspectionDetailDialog'
 import { InspectionDialog } from '@/components/InspectionDialog'
 import { NonConformityDialog } from '@/components/NonConformityDialog'
 import { generateOSFromNonConformity } from '@/services/cmms'
@@ -696,12 +698,12 @@ export function InspectionExecution() {
       const resultsToInsert = items.map((item) => ({
         inspection_id: inspection.id,
         item_id: item.id,
-        result_value: responses[item.id]?.value || '',
+        result_value:
+          responses[item.id]?.value || (responses[item.id]?.notes ? responses[item.id]?.notes : ''),
         status: responses[item.id]?.value === 'NOK' ? 'NOK' : 'OK',
-        notes: responses[item.id]?.notes || '',
       }))
 
-      const { error: resultsError } = await supabase
+      const { error: resultsError } = await (supabase as any)
         .from('inspection_results')
         .insert(resultsToInsert)
       if (resultsError) throw resultsError
@@ -851,12 +853,7 @@ export function InspectionExecution() {
                             Esperado: {item.expected_value}
                           </span>
                         )}
-                        {isCritical && (
-                          <AlertTriangle
-                            className="h-4 w-4 text-destructive"
-                            title="Item crítico"
-                          />
-                        )}
+                        {isCritical && <AlertTriangle className="h-4 w-4 text-destructive" />}
                       </div>
                       {item.verification && (
                         <p className="text-sm text-muted-foreground mt-1">{item.verification}</p>
@@ -868,9 +865,8 @@ export function InspectionExecution() {
                     <Select
                       value={response}
                       onValueChange={(v) => handleResponseChange(item.id, v)}
-                      className={isCritical ? 'border-destructive' : ''}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className={isCritical ? 'border-destructive' : ''}>
                         <SelectValue placeholder="Selecione..." />
                       </SelectTrigger>
                       <SelectContent>

@@ -52,6 +52,7 @@ export const AVAILABLE_SCREENS: TreeScreen[] = [
   { key: 'trailer_cargo_profiles', label: '10º Perfis de Carga' },
   { key: 'stock', label: '1º Estoque' },
   { key: 'stock_report', label: '2º Resumo de Estoque' },
+  { key: 'purchasing', label: '1º Módulo de Compras' },
 ]
 
 export const PERMISSION_TREE: TreeNode[] = [
@@ -109,6 +110,11 @@ export const PERMISSION_TREE: TreeNode[] = [
     key: 'margins',
     label: 'Margens',
     screens: [{ key: 'trip_margin_report', label: '1º Margem por Viagem' }],
+  },
+  {
+    key: 'purchasing_module',
+    label: 'Compras',
+    screens: [{ key: 'purchasing', label: '1º Módulo de Compras' }],
   },
   {
     key: 'registrations',

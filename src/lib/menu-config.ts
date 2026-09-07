@@ -29,6 +29,7 @@ import {
   Boxes,
   Wallet,
   LineChart,
+  ShoppingCart,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -141,6 +142,18 @@ export const menuGroups: MenuGroupType[] = [
         path: '/relatorios/margem',
         screen: 'trip_margin_report',
         icon: TrendingUp,
+      },
+    ],
+  },
+  {
+    key: 'purchasing_module',
+    label: 'Compras',
+    items: [
+      {
+        label: 'Módulo de Compras',
+        path: '/compras',
+        screen: 'purchasing',
+        icon: ShoppingCart,
       },
     ],
   },

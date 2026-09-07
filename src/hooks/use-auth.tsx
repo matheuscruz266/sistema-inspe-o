@@ -98,12 +98,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           // Tentativa 2: se falhar, tenta com RPC (bypassa RLS se necessário)
           if (alError || !alData) {
             console.warn('[Auth] Direct query failed, trying RPC:', alError)
-            const { data: rpcData, error: rpcError } = await supabase.rpc(
+            const { data: rpcData, error: rpcError } = await (supabase as any).rpc(
               'get_access_level_permissions',
               { level_id: userData.access_level_id },
             )
             if (!rpcError && rpcData) {
-              alData = rpcData
+              alData = rpcData as any
               alError = null
             }
           }
