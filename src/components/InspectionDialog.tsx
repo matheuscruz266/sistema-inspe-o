@@ -1,10 +1,25 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { useNavigate } from 'react-router-dom'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Search } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Search, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 
@@ -54,11 +69,13 @@ function PlateAutocomplete({
   selectedId,
   plate,
   onSelect,
+  onClear,
 }: {
   vehicles: VehicleOption[]
   selectedId: string | null
   plate: string
   onSelect: (v: VehicleOption) => void
+  onClear: () => void
 }) {
   const [query, setQuery] = useState(plate || '')
   const [open, setOpen] = useState(false)
@@ -86,11 +103,18 @@ function PlateAutocomplete({
     const handler = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false)
+        // Se fechou sem selecionar um veículo válido, restaura ou limpa
+        if (selectedVehicle) {
+          setQuery(vehicleLabel(selectedVehicle))
+        } else {
+          setQuery('')
+          onClear()
+        }
       }
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
-  }, [])
+  }, [selectedVehicle, onClear])
 
   const suggestions = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -111,11 +135,16 @@ function PlateAutocomplete({
         <Input
           value={query}
           onChange={(e) => {
-            setQuery(e.target.value)
+            const val = e.target.value
+            setQuery(val)
             setOpen(true)
+            // Se o texto não bate mais com o veículo selecionado, invalida a seleção
+            if (selectedVehicle && val !== vehicleLabel(selectedVehicle)) {
+              onClear()
+            }
           }}
           onFocus={() => setOpen(true)}
-          placeholder="Digite a placa..."
+          placeholder="Busque pela placa ou modelo..."
           className="pl-8"
         />
       </div>
@@ -134,7 +163,7 @@ function PlateAutocomplete({
                   setOpen(false)
                 }}
               >
-                <span className="font-medium whitespace-nowrap">{v.plate}</span>
+                <span className="font-semibold whitespace-nowrap">{v.plate}</span>
                 {desc && (
                   <span className="text-xs text-muted-foreground truncate text-right">{desc}</span>
                 )}
@@ -144,8 +173,8 @@ function PlateAutocomplete({
         </div>
       )}
       {open && suggestions.length === 0 && (
-        <div className="absolute z-50 mt-1 w-full rounded-md border bg-background shadow-md px-3 py-2 text-sm text-muted-foreground">
-          Nenhum veículo encontrado
+        <div className="absolute z-50 mt-1 w-full rounded-md border bg-background shadow-md px-3 py-2 text-sm text-destructive">
+          Nenhum veículo cadastrado com esta placa
         </div>
       )}
     </div>
@@ -180,6 +209,7 @@ const emptyForm: InspectionForm = {
 }
 
 export function InspectionDialog({ open, onOpenChange, editingId, onSaved }: Props) {
+  const navigate = useNavigate()
   const [form, setForm] = useState<InspectionForm>(emptyForm)
   const [loading, setLoading] = useState(false)
   const [vehicles, setVehicles] = useState<VehicleOption[]>([])
@@ -248,11 +278,9 @@ export function InspectionDialog({ open, onOpenChange, editingId, onSaved }: Pro
     // 1º: Plano específico com a mesma placa
     const matchesPlate = plans.find((p) => {
       const pPlate = (p.plate || '').trim().toUpperCase()
-      if (!pPlate || pPlate !== normPlate) return false
-      if (normPer && (p.periodicity || '').trim().toLowerCase() !== normPer) return false
-      return true
+      return pPlate && pPlate === normPlate
     })
-    if (matchesPlate) return matchesPlate.id
+    if (matchesPlate) return matchesPlate
 
     // 2º: Plano genérico por vehicle_type (sem placa específica ou placa em branco)
     if (normType) {
@@ -260,19 +288,9 @@ export function InspectionDialog({ open, onOpenChange, editingId, onSaved }: Pro
         const pPlate = (p.plate || '').trim()
         if (pPlate) return false // plano específico para outra placa
         const pType = (p.vehicle_type || '').trim().toLowerCase()
-        if (pType !== normType) return false
-        if (normPer && (p.periodicity || '').trim().toLowerCase() !== normPer) return false
-        return true
+        return pType === normType
       })
-      if (matchesType) return matchesType.id
-
-      // Se não encontrou pela periodicidade exata, pega qualquer um do tipo
-      const fallbackType = plans.find((p) => {
-        const pPlate = (p.plate || '').trim()
-        if (pPlate) return false
-        return (p.vehicle_type || '').trim().toLowerCase() === normType
-      })
-      if (fallbackType) return fallbackType.id
+      if (matchesType) return matchesType
     }
 
     return null
@@ -280,78 +298,146 @@ export function InspectionDialog({ open, onOpenChange, editingId, onSaved }: Pro
 
   const handleSelectVehicle = (v: VehicleOption) => {
     setSelectedVehicleId(v.id)
-    const newPlanId = recalculatePlan(v.plate, v.vehicle_type, form.type)
+    const matchedPlan = recalculatePlan(v.plate, v.vehicle_type, form.type)
     setForm((current) => ({
       ...current,
       plate: v.plate,
-      ...(newPlanId ? { plan_id: newPlanId } : {}),
+      plan_id: matchedPlan?.id || current.plan_id || null,
+      type: matchedPlan?.periodicity || current.type || 'Diária',
+    }))
+  }
+
+  const handleClearVehicle = () => {
+    setSelectedVehicleId(null)
+    setForm((current) => ({
+      ...current,
+      plate: '',
+      plan_id: null,
+    }))
+  }
+
+  // Planos aplicáveis ao veículo selecionado
+  const selectedVehicle = useMemo(() => {
+    if (!selectedVehicleId && !form.plate) return null
+    return (
+      vehicles.find(
+        (v) =>
+          (selectedVehicleId && v.id === selectedVehicleId) ||
+          v.plate.toUpperCase() === form.plate.toUpperCase(),
+      ) || null
+    )
+  }, [vehicles, selectedVehicleId, form.plate])
+
+  const applicablePlans = useMemo(() => {
+    if (!selectedVehicle) return plans
+    const normPlate = selectedVehicle.plate.toUpperCase()
+    const normType = (selectedVehicle.vehicle_type || '').toLowerCase()
+
+    return plans.filter((p) => {
+      const pPlate = (p.plate || '').trim().toUpperCase()
+      if (pPlate) return pPlate === normPlate
+      const pType = (p.vehicle_type || '').trim().toLowerCase()
+      if (!pType) return true
+      return pType === normType
+    })
+  }, [plans, selectedVehicle])
+
+  const handleSelectPlan = (planId: string) => {
+    const chosen = plans.find((p) => p.id === planId)
+    setForm((current) => ({
+      ...current,
+      plan_id: planId,
+      // Forçar tipo = periodicidade do plano
+      type: chosen?.periodicity || current.type,
     }))
   }
 
   const updateField = (field: keyof InspectionForm, value: string) => {
-    setForm((current) => {
-      const updated = { ...current, [field]: value }
-      if (field === 'type') {
-        const currentVehicle = vehicles.find(
-          (v) =>
-            v.id === selectedVehicleId || v.plate.toUpperCase() === current.plate.toUpperCase(),
-        )
-        const newPlanId = recalculatePlan(current.plate, currentVehicle?.vehicle_type, value)
-        if (newPlanId) updated.plan_id = newPlanId
-      }
-      return updated
-    })
+    setForm((current) => ({ ...current, [field]: value }))
   }
 
-  const handleSave = async () => {
-    if (!form.plate.trim()) {
-      toast.error('Placa é obrigatória')
+  // Redireciona para execução guiada (para nova inspeção)
+  const handleProceedToExecution = () => {
+    // Validação estrita: placa deve pertencer a um veículo cadastrado
+    if (!selectedVehicle) {
+      toast.error('Selecione um veículo cadastrado na lista')
+      return
+    }
+    if (!form.plan_id) {
+      toast.error('Selecione um plano de inspeção aplicável')
+      return
+    }
+
+    const params = new URLSearchParams({
+      plate: selectedVehicle.plate,
+      plan_id: form.plan_id,
+      date: form.date || new Date().toISOString().split('T')[0],
+      driver_name: form.driver_name || '',
+      notes: form.notes || '',
+    })
+
+    onOpenChange(false)
+    navigate(`/execucao-inspecao?${params.toString()}`)
+  }
+
+  // Para salvar na edição de inspeção existente
+  const handleSaveEdit = async () => {
+    if (!editingId) return
+
+    if (!selectedVehicle) {
+      toast.error('Selecione um veículo cadastrado na lista')
       return
     }
 
     setLoading(true)
+    const selectedPlan = plans.find((p) => p.id === form.plan_id)
     const payload: any = {
       date: form.date || new Date().toISOString().split('T')[0],
-      plate: form.plate.trim(),
-      type: form.type || 'Diária',
+      plate: selectedVehicle.plate,
+      // Forçar tipo = periodicidade do plano quando vinculado
+      type: selectedPlan?.periodicity || form.type || 'Diária',
       driver_name: form.driver_name.trim(),
-      status: form.status || 'OK',
       notes: form.notes.trim(),
-      ...(form.plan_id ? { plan_id: form.plan_id } : {}),
+      plan_id: form.plan_id || null,
     }
 
-    const result = editingId
-      ? await supabase
-          .from('inspections')
-          .update(payload as any)
-          .eq('id', editingId)
-      : await supabase.from('inspections').insert(payload as any)
+    const result = await supabase
+      .from('inspections')
+      .update(payload as any)
+      .eq('id', editingId)
 
     setLoading(false)
     if (result.error) {
-      toast.error('Erro ao salvar inspeção')
+      toast.error('Erro ao atualizar inspeção')
       return
     }
 
-    toast.success(editingId ? 'Inspeção atualizada' : 'Inspeção registrada')
+    toast.success('Inspeção atualizada com sucesso')
     onOpenChange(false)
     onSaved?.()
   }
+
+  const isNew = !editingId
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{editingId ? 'Editar inspeção' : 'Nova inspeção'}</DialogTitle>
+          <DialogTitle>{isNew ? 'Iniciar Nova Inspeção' : 'Editar Inspeção'}</DialogTitle>
+          <DialogDescription>
+            {isNew
+              ? 'Selecione o veículo e o plano de inspeção para abrir o checklist guiado com abas e validação de avarias.'
+              : 'Atualize os dados cadastrais da inspeção realizada.'}
+          </DialogDescription>
         </DialogHeader>
 
         {loading ? (
           <p className="py-6 text-center text-muted-foreground">Carregando...</p>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-4 pt-2">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="inspection-date">Data</Label>
+                <Label htmlFor="inspection-date">Data da Inspeção</Label>
                 <Input
                   id="inspection-date"
                   type="date"
@@ -359,57 +445,127 @@ export function InspectionDialog({ open, onOpenChange, editingId, onSaved }: Pro
                   onChange={(event) => updateField('date', event.target.value)}
                 />
               </div>
+
               <div className="space-y-2">
-                <Label htmlFor="inspection-plate">Placa</Label>
+                <Label htmlFor="inspection-plate">
+                  Veículo (Placa) <span className="text-destructive">*</span>
+                </Label>
                 <PlateAutocomplete
                   vehicles={vehicles}
                   selectedId={selectedVehicleId}
                   plate={form.plate}
                   onSelect={handleSelectVehicle}
+                  onClear={handleClearVehicle}
                 />
+                {!selectedVehicle && form.plate && (
+                  <p className="text-[11px] text-destructive">
+                    Placa inválida: escolha um veículo existente na lista.
+                  </p>
+                )}
               </div>
+
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="inspection-plan">
+                  Plano de Inspeção <span className="text-destructive">*</span>
+                </Label>
+                <Select value={form.plan_id || ''} onValueChange={handleSelectPlan}>
+                  <SelectTrigger id="inspection-plan">
+                    <SelectValue
+                      placeholder={
+                        selectedVehicle ? 'Selecione o plano...' : 'Selecione um veículo primeiro'
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {applicablePlans.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.code || 'Plano'} — {p.periodicity} ({p.vehicle_type || 'Todos'})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {applicablePlans.length === 0 && selectedVehicle && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Nenhum plano cadastrado especificamente para este tipo de veículo.
+                  </p>
+                )}
+              </div>
+
               <div className="space-y-2">
-                <Label htmlFor="inspection-type">Tipo</Label>
+                <Label htmlFor="inspection-type">Tipo (Periodicidade)</Label>
                 <Input
                   id="inspection-type"
                   value={form.type}
-                  onChange={(event) => updateField('type', event.target.value)}
+                  readOnly
+                  className="bg-muted text-muted-foreground cursor-not-allowed"
                 />
+                <span className="text-[10px] text-muted-foreground">
+                  Definido automaticamente pela periodicidade do plano.
+                </span>
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="inspection-driver">Motorista / Responsável</Label>
                 <Input
                   id="inspection-driver"
+                  placeholder="Nome do motorista ou inspetor"
                   value={form.driver_name}
                   onChange={(event) => updateField('driver_name', event.target.value)}
                 />
               </div>
-              <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="inspection-status">Status</Label>
-                <Input
-                  id="inspection-status"
-                  value={form.status}
-                  onChange={(event) => updateField('status', event.target.value)}
-                />
-              </div>
+
+              {!isNew && (
+                <div className="space-y-2 sm:col-span-2">
+                  <Label>Status da Inspeção</Label>
+                  <div className="flex items-center gap-2 p-2 rounded-md border bg-muted/40">
+                    <Badge
+                      variant={
+                        form.status === 'OK'
+                          ? 'default'
+                          : form.status === 'Atenção'
+                            ? 'secondary'
+                            : 'destructive'
+                      }
+                    >
+                      {form.status}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">
+                      (Status calculado pelo resultado do checklist)
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="inspection-notes">Observações</Label>
               <Textarea
                 id="inspection-notes"
+                placeholder="Observações adicionais sobre o veículo ou inspeção"
                 value={form.notes}
                 onChange={(event) => updateField('notes', event.target.value)}
+                rows={2}
               />
             </div>
 
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-2 pt-2 border-t">
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar
               </Button>
-              <Button onClick={handleSave} disabled={loading}>
-                Salvar
-              </Button>
+              {isNew ? (
+                <Button
+                  onClick={handleProceedToExecution}
+                  disabled={!selectedVehicle || !form.plan_id}
+                  className="gap-2"
+                >
+                  Ir para Execução Guiada
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              ) : (
+                <Button onClick={handleSaveEdit} disabled={loading || !selectedVehicle}>
+                  Salvar Alterações
+                </Button>
+              )}
             </div>
           </div>
         )}

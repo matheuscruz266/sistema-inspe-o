@@ -1,17 +1,11 @@
 // AVOID UPDATING THIS FILE DIRECTLY. It is automatically generated.
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: '14.5'
   }
   public: {
     Tables: {
@@ -72,11 +66,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "app_users_access_level_id_fkey"
-            columns: ["access_level_id"]
+            foreignKeyName: 'app_users_access_level_id_fkey'
+            columns: ['access_level_id']
             isOneToOne: false
-            referencedRelation: "access_levels"
-            referencedColumns: ["id"]
+            referencedRelation: 'access_levels'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -88,7 +82,7 @@ export type Database = {
           is_deleted: boolean | null
           name: string
           notes: string | null
-          owner_type: Database["public"]["Enums"]["logistics_owner_type"] | null
+          owner_type: Database['public']['Enums']['logistics_owner_type'] | null
         }
         Insert: {
           cnpj_cpf?: string | null
@@ -97,9 +91,7 @@ export type Database = {
           is_deleted?: boolean | null
           name: string
           notes?: string | null
-          owner_type?:
-            | Database["public"]["Enums"]["logistics_owner_type"]
-            | null
+          owner_type?: Database['public']['Enums']['logistics_owner_type'] | null
         }
         Update: {
           cnpj_cpf?: string | null
@@ -108,9 +100,7 @@ export type Database = {
           is_deleted?: boolean | null
           name?: string
           notes?: string | null
-          owner_type?:
-            | Database["public"]["Enums"]["logistics_owner_type"]
-            | null
+          owner_type?: Database['public']['Enums']['logistics_owner_type'] | null
         }
         Relationships: []
       }
@@ -183,18 +173,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "carrier_contracts_carrier_supplier_id_fkey"
-            columns: ["carrier_supplier_id"]
+            foreignKeyName: 'carrier_contracts_carrier_supplier_id_fkey'
+            columns: ['carrier_supplier_id']
             isOneToOne: false
-            referencedRelation: "suppliers"
-            referencedColumns: ["id"]
+            referencedRelation: 'suppliers'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "carrier_contracts_route_id_fkey"
-            columns: ["route_id"]
+            foreignKeyName: 'carrier_contracts_route_id_fkey'
+            columns: ['route_id']
             isOneToOne: false
-            referencedRelation: "routes"
-            referencedColumns: ["id"]
+            referencedRelation: 'routes'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -205,9 +195,7 @@ export type Database = {
           cnpj: string | null
           conversion_factor: number | null
           created_at: string
-          default_unit:
-            | Database["public"]["Enums"]["logistics_default_unit"]
-            | null
+          default_unit: Database['public']['Enums']['logistics_default_unit'] | null
           group_name: string | null
           id: string
           is_deleted: boolean | null
@@ -220,9 +208,7 @@ export type Database = {
           cnpj?: string | null
           conversion_factor?: number | null
           created_at?: string
-          default_unit?:
-            | Database["public"]["Enums"]["logistics_default_unit"]
-            | null
+          default_unit?: Database['public']['Enums']['logistics_default_unit'] | null
           group_name?: string | null
           id?: string
           is_deleted?: boolean | null
@@ -235,9 +221,7 @@ export type Database = {
           cnpj?: string | null
           conversion_factor?: number | null
           created_at?: string
-          default_unit?:
-            | Database["public"]["Enums"]["logistics_default_unit"]
-            | null
+          default_unit?: Database['public']['Enums']['logistics_default_unit'] | null
           group_name?: string | null
           id?: string
           is_deleted?: boolean | null
@@ -248,45 +232,39 @@ export type Database = {
       }
       driver_profiles: {
         Row: {
-          company:
-            | Database["public"]["Enums"]["logistics_driver_company"]
-            | null
+          company: Database['public']['Enums']['logistics_driver_company'] | null
           created_at: string
           home_city: string | null
           is_deleted: boolean | null
           participation_percentage: number | null
           person_id: string
-          status: Database["public"]["Enums"]["logistics_driver_status"] | null
+          status: Database['public']['Enums']['logistics_driver_status'] | null
         }
         Insert: {
-          company?:
-            | Database["public"]["Enums"]["logistics_driver_company"]
-            | null
+          company?: Database['public']['Enums']['logistics_driver_company'] | null
           created_at?: string
           home_city?: string | null
           is_deleted?: boolean | null
           participation_percentage?: number | null
           person_id: string
-          status?: Database["public"]["Enums"]["logistics_driver_status"] | null
+          status?: Database['public']['Enums']['logistics_driver_status'] | null
         }
         Update: {
-          company?:
-            | Database["public"]["Enums"]["logistics_driver_company"]
-            | null
+          company?: Database['public']['Enums']['logistics_driver_company'] | null
           created_at?: string
           home_city?: string | null
           is_deleted?: boolean | null
           participation_percentage?: number | null
           person_id?: string
-          status?: Database["public"]["Enums"]["logistics_driver_status"] | null
+          status?: Database['public']['Enums']['logistics_driver_status'] | null
         }
         Relationships: [
           {
-            foreignKeyName: "driver_profiles_person_id_fkey"
-            columns: ["person_id"]
+            foreignKeyName: 'driver_profiles_person_id_fkey'
+            columns: ['person_id']
             isOneToOne: true
-            referencedRelation: "people"
-            referencedColumns: ["id"]
+            referencedRelation: 'people'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -368,32 +346,32 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "freight_documents_carrier_supplier_id_fkey"
-            columns: ["carrier_supplier_id"]
+            foreignKeyName: 'freight_documents_carrier_supplier_id_fkey'
+            columns: ['carrier_supplier_id']
             isOneToOne: false
-            referencedRelation: "suppliers"
-            referencedColumns: ["id"]
+            referencedRelation: 'suppliers'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "freight_documents_route_id_fkey"
-            columns: ["route_id"]
+            foreignKeyName: 'freight_documents_route_id_fkey'
+            columns: ['route_id']
             isOneToOne: false
-            referencedRelation: "routes"
-            referencedColumns: ["id"]
+            referencedRelation: 'routes'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "freight_documents_trip_id_fkey"
-            columns: ["trip_id"]
+            foreignKeyName: 'freight_documents_trip_id_fkey'
+            columns: ['trip_id']
             isOneToOne: false
-            referencedRelation: "trip_margin_report"
-            referencedColumns: ["trip_id"]
+            referencedRelation: 'trip_margin_report'
+            referencedColumns: ['trip_id']
           },
           {
-            foreignKeyName: "freight_documents_trip_id_fkey"
-            columns: ["trip_id"]
+            foreignKeyName: 'freight_documents_trip_id_fkey'
+            columns: ['trip_id']
             isOneToOne: false
-            referencedRelation: "trips"
-            referencedColumns: ["id"]
+            referencedRelation: 'trips'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -451,32 +429,32 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fuel_records_driver_id_fkey"
-            columns: ["driver_id"]
+            foreignKeyName: 'fuel_records_driver_id_fkey'
+            columns: ['driver_id']
             isOneToOne: false
-            referencedRelation: "people"
-            referencedColumns: ["id"]
+            referencedRelation: 'people'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "fuel_records_location_id_fkey"
-            columns: ["location_id"]
+            foreignKeyName: 'fuel_records_location_id_fkey'
+            columns: ['location_id']
             isOneToOne: false
-            referencedRelation: "stock_locations"
-            referencedColumns: ["id"]
+            referencedRelation: 'stock_locations'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "fuel_records_supplier_id_fkey"
-            columns: ["supplier_id"]
+            foreignKeyName: 'fuel_records_supplier_id_fkey'
+            columns: ['supplier_id']
             isOneToOne: false
-            referencedRelation: "suppliers"
-            referencedColumns: ["id"]
+            referencedRelation: 'suppliers'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "fuel_records_vehicle_id_fkey"
-            columns: ["vehicle_id"]
+            foreignKeyName: 'fuel_records_vehicle_id_fkey'
+            columns: ['vehicle_id']
             isOneToOne: false
-            referencedRelation: "vehicles"
-            referencedColumns: ["id"]
+            referencedRelation: 'vehicles'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -516,11 +494,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "inspection_plan_consequences_plan_id_fkey"
-            columns: ["plan_id"]
+            foreignKeyName: 'inspection_plan_consequences_plan_id_fkey'
+            columns: ['plan_id']
             isOneToOne: false
-            referencedRelation: "inspection_plans"
-            referencedColumns: ["id"]
+            referencedRelation: 'inspection_plans'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -560,11 +538,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "inspection_plan_items_plan_id_fkey"
-            columns: ["plan_id"]
+            foreignKeyName: 'inspection_plan_items_plan_id_fkey'
+            columns: ['plan_id']
             isOneToOne: false
-            referencedRelation: "inspection_plans"
-            referencedColumns: ["id"]
+            referencedRelation: 'inspection_plans'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -658,18 +636,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "inspection_results_inspection_id_fkey"
-            columns: ["inspection_id"]
+            foreignKeyName: 'inspection_results_inspection_id_fkey'
+            columns: ['inspection_id']
             isOneToOne: false
-            referencedRelation: "inspections"
-            referencedColumns: ["id"]
+            referencedRelation: 'inspections'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "inspection_results_item_id_fkey"
-            columns: ["item_id"]
+            foreignKeyName: 'inspection_results_item_id_fkey'
+            columns: ['item_id']
             isOneToOne: false
-            referencedRelation: "inspection_plan_items"
-            referencedColumns: ["id"]
+            referencedRelation: 'inspection_plan_items'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -724,11 +702,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "inspections_plan_id_fkey"
-            columns: ["plan_id"]
+            foreignKeyName: 'inspections_plan_id_fkey'
+            columns: ['plan_id']
             isOneToOne: false
-            referencedRelation: "inspection_plans"
-            referencedColumns: ["id"]
+            referencedRelation: 'inspection_plans'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -744,7 +722,7 @@ export type Database = {
           name: string
           state: string | null
           stock_location_id: string | null
-          type: Database["public"]["Enums"]["logistics_location_type"] | null
+          type: Database['public']['Enums']['logistics_location_type'] | null
         }
         Insert: {
           city?: string | null
@@ -757,7 +735,7 @@ export type Database = {
           name: string
           state?: string | null
           stock_location_id?: string | null
-          type?: Database["public"]["Enums"]["logistics_location_type"] | null
+          type?: Database['public']['Enums']['logistics_location_type'] | null
         }
         Update: {
           city?: string | null
@@ -770,22 +748,22 @@ export type Database = {
           name?: string
           state?: string | null
           stock_location_id?: string | null
-          type?: Database["public"]["Enums"]["logistics_location_type"] | null
+          type?: Database['public']['Enums']['logistics_location_type'] | null
         }
         Relationships: [
           {
-            foreignKeyName: "locations_client_id_fkey"
-            columns: ["client_id"]
+            foreignKeyName: 'locations_client_id_fkey'
+            columns: ['client_id']
             isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
+            referencedRelation: 'clients'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "locations_stock_location_id_fkey"
-            columns: ["stock_location_id"]
+            foreignKeyName: 'locations_stock_location_id_fkey'
+            columns: ['stock_location_id']
             isOneToOne: false
-            referencedRelation: "stock_locations"
-            referencedColumns: ["id"]
+            referencedRelation: 'stock_locations'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -815,7 +793,7 @@ export type Database = {
           tractor_vehicle_id: string | null
           trailer_vehicle_id: string | null
           trip_id: string | null
-          unit: Database["public"]["Enums"]["logistics_default_unit"] | null
+          unit: Database['public']['Enums']['logistics_default_unit'] | null
           valor_ton_frete: number | null
           valor_ton_madeira: number | null
           valor_total_carga: number | null
@@ -845,7 +823,7 @@ export type Database = {
           tractor_vehicle_id?: string | null
           trailer_vehicle_id?: string | null
           trip_id?: string | null
-          unit?: Database["public"]["Enums"]["logistics_default_unit"] | null
+          unit?: Database['public']['Enums']['logistics_default_unit'] | null
           valor_ton_frete?: number | null
           valor_ton_madeira?: number | null
           valor_total_carga?: number | null
@@ -875,81 +853,81 @@ export type Database = {
           tractor_vehicle_id?: string | null
           trailer_vehicle_id?: string | null
           trip_id?: string | null
-          unit?: Database["public"]["Enums"]["logistics_default_unit"] | null
+          unit?: Database['public']['Enums']['logistics_default_unit'] | null
           valor_ton_frete?: number | null
           valor_ton_madeira?: number | null
           valor_total_carga?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "log_receipts_driver_id_fkey"
-            columns: ["driver_id"]
+            foreignKeyName: 'log_receipts_driver_id_fkey'
+            columns: ['driver_id']
             isOneToOne: false
-            referencedRelation: "people"
-            referencedColumns: ["id"]
+            referencedRelation: 'people'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "log_receipts_location_id_fkey"
-            columns: ["location_id"]
+            foreignKeyName: 'log_receipts_location_id_fkey'
+            columns: ['location_id']
             isOneToOne: false
-            referencedRelation: "stock_locations"
-            referencedColumns: ["id"]
+            referencedRelation: 'stock_locations'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "log_receipts_patio_id_fkey"
-            columns: ["patio_id"]
+            foreignKeyName: 'log_receipts_patio_id_fkey'
+            columns: ['patio_id']
             isOneToOne: false
-            referencedRelation: "patios"
-            referencedColumns: ["id"]
+            referencedRelation: 'patios'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "log_receipts_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: 'log_receipts_product_id_fkey'
+            columns: ['product_id']
             isOneToOne: false
-            referencedRelation: "current_stock"
-            referencedColumns: ["id"]
+            referencedRelation: 'current_stock'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "log_receipts_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: 'log_receipts_product_id_fkey'
+            columns: ['product_id']
             isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
+            referencedRelation: 'products'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "log_receipts_supplier_id_fkey"
-            columns: ["supplier_id"]
+            foreignKeyName: 'log_receipts_supplier_id_fkey'
+            columns: ['supplier_id']
             isOneToOne: false
-            referencedRelation: "suppliers"
-            referencedColumns: ["id"]
+            referencedRelation: 'suppliers'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "log_receipts_tractor_vehicle_id_fkey"
-            columns: ["tractor_vehicle_id"]
+            foreignKeyName: 'log_receipts_tractor_vehicle_id_fkey'
+            columns: ['tractor_vehicle_id']
             isOneToOne: false
-            referencedRelation: "vehicles"
-            referencedColumns: ["id"]
+            referencedRelation: 'vehicles'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "log_receipts_trailer_vehicle_id_fkey"
-            columns: ["trailer_vehicle_id"]
+            foreignKeyName: 'log_receipts_trailer_vehicle_id_fkey'
+            columns: ['trailer_vehicle_id']
             isOneToOne: false
-            referencedRelation: "vehicles"
-            referencedColumns: ["id"]
+            referencedRelation: 'vehicles'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "log_receipts_trip_id_fkey"
-            columns: ["trip_id"]
+            foreignKeyName: 'log_receipts_trip_id_fkey'
+            columns: ['trip_id']
             isOneToOne: false
-            referencedRelation: "trip_margin_report"
-            referencedColumns: ["trip_id"]
+            referencedRelation: 'trip_margin_report'
+            referencedColumns: ['trip_id']
           },
           {
-            foreignKeyName: "log_receipts_trip_id_fkey"
-            columns: ["trip_id"]
+            foreignKeyName: 'log_receipts_trip_id_fkey'
+            columns: ['trip_id']
             isOneToOne: false
-            referencedRelation: "trips"
-            referencedColumns: ["id"]
+            referencedRelation: 'trips'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -983,11 +961,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "maintenance_plan_labor_plan_id_fkey"
-            columns: ["plan_id"]
+            foreignKeyName: 'maintenance_plan_labor_plan_id_fkey'
+            columns: ['plan_id']
             isOneToOne: false
-            referencedRelation: "maintenance_plans"
-            referencedColumns: ["id"]
+            referencedRelation: 'maintenance_plans'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1024,25 +1002,25 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "maintenance_plan_materials_plan_id_fkey"
-            columns: ["plan_id"]
+            foreignKeyName: 'maintenance_plan_materials_plan_id_fkey'
+            columns: ['plan_id']
             isOneToOne: false
-            referencedRelation: "maintenance_plans"
-            referencedColumns: ["id"]
+            referencedRelation: 'maintenance_plans'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "maintenance_plan_materials_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: 'maintenance_plan_materials_product_id_fkey'
+            columns: ['product_id']
             isOneToOne: false
-            referencedRelation: "current_stock"
-            referencedColumns: ["id"]
+            referencedRelation: 'current_stock'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "maintenance_plan_materials_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: 'maintenance_plan_materials_product_id_fkey'
+            columns: ['product_id']
             isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
+            referencedRelation: 'products'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1076,11 +1054,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "maintenance_plan_tasks_plan_id_fkey"
-            columns: ["plan_id"]
+            foreignKeyName: 'maintenance_plan_tasks_plan_id_fkey'
+            columns: ['plan_id']
             isOneToOne: false
-            referencedRelation: "maintenance_plans"
-            referencedColumns: ["id"]
+            referencedRelation: 'maintenance_plans'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1126,11 +1104,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "maintenance_plan_triggers_plan_id_fkey"
-            columns: ["plan_id"]
+            foreignKeyName: 'maintenance_plan_triggers_plan_id_fkey'
+            columns: ['plan_id']
             isOneToOne: false
-            referencedRelation: "maintenance_plans"
-            referencedColumns: ["id"]
+            referencedRelation: 'maintenance_plans'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1290,25 +1268,25 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "non_conformities_inspection_id_fkey"
-            columns: ["inspection_id"]
+            foreignKeyName: 'non_conformities_inspection_id_fkey'
+            columns: ['inspection_id']
             isOneToOne: false
-            referencedRelation: "inspections"
-            referencedColumns: ["id"]
+            referencedRelation: 'inspections'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "non_conformities_item_id_fkey"
-            columns: ["item_id"]
+            foreignKeyName: 'non_conformities_item_id_fkey'
+            columns: ['item_id']
             isOneToOne: false
-            referencedRelation: "inspection_plan_items"
-            referencedColumns: ["id"]
+            referencedRelation: 'inspection_plan_items'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "non_conformities_work_order_id_fkey"
-            columns: ["work_order_id"]
+            foreignKeyName: 'non_conformities_work_order_id_fkey'
+            columns: ['work_order_id']
             isOneToOne: false
-            referencedRelation: "work_orders"
-            referencedColumns: ["id"]
+            referencedRelation: 'work_orders'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1348,11 +1326,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "notification_log_recipient_id_fkey"
-            columns: ["recipient_id"]
+            foreignKeyName: 'notification_log_recipient_id_fkey'
+            columns: ['recipient_id']
             isOneToOne: false
-            referencedRelation: "notification_recipients"
-            referencedColumns: ["id"]
+            referencedRelation: 'notification_recipients'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1431,11 +1409,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "os_diagnosis_work_order_id_fkey"
-            columns: ["work_order_id"]
+            foreignKeyName: 'os_diagnosis_work_order_id_fkey'
+            columns: ['work_order_id']
             isOneToOne: false
-            referencedRelation: "work_orders"
-            referencedColumns: ["id"]
+            referencedRelation: 'work_orders'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1490,18 +1468,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "os_external_supplier_id_fkey"
-            columns: ["supplier_id"]
+            foreignKeyName: 'os_external_supplier_id_fkey'
+            columns: ['supplier_id']
             isOneToOne: false
-            referencedRelation: "suppliers"
-            referencedColumns: ["id"]
+            referencedRelation: 'suppliers'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "os_external_work_order_id_fkey"
-            columns: ["work_order_id"]
+            foreignKeyName: 'os_external_work_order_id_fkey'
+            columns: ['work_order_id']
             isOneToOne: false
-            referencedRelation: "work_orders"
-            referencedColumns: ["id"]
+            referencedRelation: 'work_orders'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1547,11 +1525,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "os_labor_work_order_id_fkey"
-            columns: ["work_order_id"]
+            foreignKeyName: 'os_labor_work_order_id_fkey'
+            columns: ['work_order_id']
             isOneToOne: false
-            referencedRelation: "work_orders"
-            referencedColumns: ["id"]
+            referencedRelation: 'work_orders'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1597,25 +1575,25 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "os_materials_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: 'os_materials_product_id_fkey'
+            columns: ['product_id']
             isOneToOne: false
-            referencedRelation: "current_stock"
-            referencedColumns: ["id"]
+            referencedRelation: 'current_stock'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "os_materials_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: 'os_materials_product_id_fkey'
+            columns: ['product_id']
             isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
+            referencedRelation: 'products'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "os_materials_work_order_id_fkey"
-            columns: ["work_order_id"]
+            foreignKeyName: 'os_materials_work_order_id_fkey'
+            columns: ['work_order_id']
             isOneToOne: false
-            referencedRelation: "work_orders"
-            referencedColumns: ["id"]
+            referencedRelation: 'work_orders'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1652,11 +1630,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "os_services_work_order_id_fkey"
-            columns: ["work_order_id"]
+            foreignKeyName: 'os_services_work_order_id_fkey'
+            columns: ['work_order_id']
             isOneToOne: false
-            referencedRelation: "work_orders"
-            referencedColumns: ["id"]
+            referencedRelation: 'work_orders'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1708,11 +1686,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "patios_stock_location_id_fkey"
-            columns: ["stock_location_id"]
+            foreignKeyName: 'patios_stock_location_id_fkey'
+            columns: ['stock_location_id']
             isOneToOne: false
-            referencedRelation: "stock_locations"
-            referencedColumns: ["id"]
+            referencedRelation: 'stock_locations'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1806,18 +1784,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "product_applications_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: 'product_applications_product_id_fkey'
+            columns: ['product_id']
             isOneToOne: false
-            referencedRelation: "current_stock"
-            referencedColumns: ["id"]
+            referencedRelation: 'current_stock'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "product_applications_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: 'product_applications_product_id_fkey'
+            columns: ['product_id']
             isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
+            referencedRelation: 'products'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1863,18 +1841,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "product_classifications_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: 'product_classifications_product_id_fkey'
+            columns: ['product_id']
             isOneToOne: false
-            referencedRelation: "current_stock"
-            referencedColumns: ["id"]
+            referencedRelation: 'current_stock'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "product_classifications_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: 'product_classifications_product_id_fkey'
+            columns: ['product_id']
             isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
+            referencedRelation: 'products'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1908,32 +1886,32 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "product_equivalents_equivalent_product_id_fkey"
-            columns: ["equivalent_product_id"]
+            foreignKeyName: 'product_equivalents_equivalent_product_id_fkey'
+            columns: ['equivalent_product_id']
             isOneToOne: false
-            referencedRelation: "current_stock"
-            referencedColumns: ["id"]
+            referencedRelation: 'current_stock'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "product_equivalents_equivalent_product_id_fkey"
-            columns: ["equivalent_product_id"]
+            foreignKeyName: 'product_equivalents_equivalent_product_id_fkey'
+            columns: ['equivalent_product_id']
             isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
+            referencedRelation: 'products'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "product_equivalents_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: 'product_equivalents_product_id_fkey'
+            columns: ['product_id']
             isOneToOne: false
-            referencedRelation: "current_stock"
-            referencedColumns: ["id"]
+            referencedRelation: 'current_stock'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "product_equivalents_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: 'product_equivalents_product_id_fkey'
+            columns: ['product_id']
             isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
+            referencedRelation: 'products'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1964,25 +1942,25 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "product_suppliers_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: 'product_suppliers_product_id_fkey'
+            columns: ['product_id']
             isOneToOne: false
-            referencedRelation: "current_stock"
-            referencedColumns: ["id"]
+            referencedRelation: 'current_stock'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "product_suppliers_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: 'product_suppliers_product_id_fkey'
+            columns: ['product_id']
             isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
+            referencedRelation: 'products'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "product_suppliers_supplier_id_fkey"
-            columns: ["supplier_id"]
+            foreignKeyName: 'product_suppliers_supplier_id_fkey'
+            columns: ['supplier_id']
             isOneToOne: false
-            referencedRelation: "suppliers"
-            referencedColumns: ["id"]
+            referencedRelation: 'suppliers'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -2016,18 +1994,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "product_units_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: 'product_units_product_id_fkey'
+            columns: ['product_id']
             isOneToOne: false
-            referencedRelation: "current_stock"
-            referencedColumns: ["id"]
+            referencedRelation: 'current_stock'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "product_units_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: 'product_units_product_id_fkey'
+            columns: ['product_id']
             isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
+            referencedRelation: 'products'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -2130,11 +2108,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "products_main_supplier_id_fkey"
-            columns: ["main_supplier_id"]
+            foreignKeyName: 'products_main_supplier_id_fkey'
+            columns: ['main_supplier_id']
             isOneToOne: false
-            referencedRelation: "suppliers"
-            referencedColumns: ["id"]
+            referencedRelation: 'suppliers'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -2180,25 +2158,25 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "purchase_orders_quote_id_fkey"
-            columns: ["quote_id"]
+            foreignKeyName: 'purchase_orders_quote_id_fkey'
+            columns: ['quote_id']
             isOneToOne: false
-            referencedRelation: "purchase_quotes"
-            referencedColumns: ["id"]
+            referencedRelation: 'purchase_quotes'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "purchase_orders_request_id_fkey"
-            columns: ["request_id"]
+            foreignKeyName: 'purchase_orders_request_id_fkey'
+            columns: ['request_id']
             isOneToOne: false
-            referencedRelation: "purchase_requests"
-            referencedColumns: ["id"]
+            referencedRelation: 'purchase_requests'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "purchase_orders_supplier_id_fkey"
-            columns: ["supplier_id"]
+            foreignKeyName: 'purchase_orders_supplier_id_fkey'
+            columns: ['supplier_id']
             isOneToOne: false
-            referencedRelation: "suppliers"
-            referencedColumns: ["id"]
+            referencedRelation: 'suppliers'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -2244,18 +2222,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "purchase_quotes_request_id_fkey"
-            columns: ["request_id"]
+            foreignKeyName: 'purchase_quotes_request_id_fkey'
+            columns: ['request_id']
             isOneToOne: false
-            referencedRelation: "purchase_requests"
-            referencedColumns: ["id"]
+            referencedRelation: 'purchase_requests'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "purchase_quotes_supplier_id_fkey"
-            columns: ["supplier_id"]
+            foreignKeyName: 'purchase_quotes_supplier_id_fkey'
+            columns: ['supplier_id']
             isOneToOne: false
-            referencedRelation: "suppliers"
-            referencedColumns: ["id"]
+            referencedRelation: 'suppliers'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -2289,11 +2267,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "purchase_receipts_order_id_fkey"
-            columns: ["order_id"]
+            foreignKeyName: 'purchase_receipts_order_id_fkey'
+            columns: ['order_id']
             isOneToOne: false
-            referencedRelation: "purchase_orders"
-            referencedColumns: ["id"]
+            referencedRelation: 'purchase_orders'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -2333,25 +2311,25 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "purchase_request_items_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: 'purchase_request_items_product_id_fkey'
+            columns: ['product_id']
             isOneToOne: false
-            referencedRelation: "current_stock"
-            referencedColumns: ["id"]
+            referencedRelation: 'current_stock'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "purchase_request_items_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: 'purchase_request_items_product_id_fkey'
+            columns: ['product_id']
             isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
+            referencedRelation: 'products'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "purchase_request_items_request_id_fkey"
-            columns: ["request_id"]
+            foreignKeyName: 'purchase_request_items_request_id_fkey'
+            columns: ['request_id']
             isOneToOne: false
-            referencedRelation: "purchase_requests"
-            referencedColumns: ["id"]
+            referencedRelation: 'purchase_requests'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -2409,25 +2387,25 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "purchase_requests_supplier_id_fkey"
-            columns: ["supplier_id"]
+            foreignKeyName: 'purchase_requests_supplier_id_fkey'
+            columns: ['supplier_id']
             isOneToOne: false
-            referencedRelation: "suppliers"
-            referencedColumns: ["id"]
+            referencedRelation: 'suppliers'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "purchase_requests_vehicle_id_fkey"
-            columns: ["vehicle_id"]
+            foreignKeyName: 'purchase_requests_vehicle_id_fkey'
+            columns: ['vehicle_id']
             isOneToOne: false
-            referencedRelation: "vehicles"
-            referencedColumns: ["id"]
+            referencedRelation: 'vehicles'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "purchase_requests_work_order_id_fkey"
-            columns: ["work_order_id"]
+            foreignKeyName: 'purchase_requests_work_order_id_fkey'
+            columns: ['work_order_id']
             isOneToOne: false
-            referencedRelation: "work_orders"
-            referencedColumns: ["id"]
+            referencedRelation: 'work_orders'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -2441,14 +2419,10 @@ export type Database = {
           km_range: string | null
           km_round_trip: number | null
           origin_location_id: string | null
-          price_unit:
-            | Database["public"]["Enums"]["logistics_default_unit"]
-            | null
+          price_unit: Database['public']['Enums']['logistics_default_unit'] | null
           toll_heavy: number | null
           toll_light: number | null
-          transport_type:
-            | Database["public"]["Enums"]["logistics_transport_type"]
-            | null
+          transport_type: Database['public']['Enums']['logistics_transport_type'] | null
           unit_price: number | null
           valid_from: string
           valid_to: string | null
@@ -2462,14 +2436,10 @@ export type Database = {
           km_range?: string | null
           km_round_trip?: number | null
           origin_location_id?: string | null
-          price_unit?:
-            | Database["public"]["Enums"]["logistics_default_unit"]
-            | null
+          price_unit?: Database['public']['Enums']['logistics_default_unit'] | null
           toll_heavy?: number | null
           toll_light?: number | null
-          transport_type?:
-            | Database["public"]["Enums"]["logistics_transport_type"]
-            | null
+          transport_type?: Database['public']['Enums']['logistics_transport_type'] | null
           unit_price?: number | null
           valid_from: string
           valid_to?: string | null
@@ -2483,32 +2453,28 @@ export type Database = {
           km_range?: string | null
           km_round_trip?: number | null
           origin_location_id?: string | null
-          price_unit?:
-            | Database["public"]["Enums"]["logistics_default_unit"]
-            | null
+          price_unit?: Database['public']['Enums']['logistics_default_unit'] | null
           toll_heavy?: number | null
           toll_light?: number | null
-          transport_type?:
-            | Database["public"]["Enums"]["logistics_transport_type"]
-            | null
+          transport_type?: Database['public']['Enums']['logistics_transport_type'] | null
           unit_price?: number | null
           valid_from?: string
           valid_to?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "routes_destination_client_id_fkey"
-            columns: ["destination_client_id"]
+            foreignKeyName: 'routes_destination_client_id_fkey'
+            columns: ['destination_client_id']
             isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
+            referencedRelation: 'clients'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "routes_origin_location_id_fkey"
-            columns: ["origin_location_id"]
+            foreignKeyName: 'routes_origin_location_id_fkey'
+            columns: ['origin_location_id']
             isOneToOne: false
-            referencedRelation: "locations"
-            referencedColumns: ["id"]
+            referencedRelation: 'locations'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -2569,39 +2535,39 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "sales_invoices_client_id_fkey"
-            columns: ["client_id"]
+            foreignKeyName: 'sales_invoices_client_id_fkey'
+            columns: ['client_id']
             isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
+            referencedRelation: 'clients'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "sales_invoices_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: 'sales_invoices_product_id_fkey'
+            columns: ['product_id']
             isOneToOne: false
-            referencedRelation: "current_stock"
-            referencedColumns: ["id"]
+            referencedRelation: 'current_stock'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "sales_invoices_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: 'sales_invoices_product_id_fkey'
+            columns: ['product_id']
             isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
+            referencedRelation: 'products'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "sales_invoices_trip_id_fkey"
-            columns: ["trip_id"]
+            foreignKeyName: 'sales_invoices_trip_id_fkey'
+            columns: ['trip_id']
             isOneToOne: false
-            referencedRelation: "trip_margin_report"
-            referencedColumns: ["trip_id"]
+            referencedRelation: 'trip_margin_report'
+            referencedColumns: ['trip_id']
           },
           {
-            foreignKeyName: "sales_invoices_trip_id_fkey"
-            columns: ["trip_id"]
+            foreignKeyName: 'sales_invoices_trip_id_fkey'
+            columns: ['trip_id']
             isOneToOne: false
-            referencedRelation: "trips"
-            referencedColumns: ["id"]
+            referencedRelation: 'trips'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -2647,25 +2613,25 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "schedule_records_plan_id_fkey"
-            columns: ["plan_id"]
+            foreignKeyName: 'schedule_records_plan_id_fkey'
+            columns: ['plan_id']
             isOneToOne: false
-            referencedRelation: "maintenance_plans"
-            referencedColumns: ["id"]
+            referencedRelation: 'maintenance_plans'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "schedule_records_vehicle_id_fkey"
-            columns: ["vehicle_id"]
+            foreignKeyName: 'schedule_records_vehicle_id_fkey'
+            columns: ['vehicle_id']
             isOneToOne: false
-            referencedRelation: "vehicles"
-            referencedColumns: ["id"]
+            referencedRelation: 'vehicles'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "schedule_records_work_order_id_fkey"
-            columns: ["work_order_id"]
+            foreignKeyName: 'schedule_records_work_order_id_fkey'
+            columns: ['work_order_id']
             isOneToOne: false
-            referencedRelation: "work_orders"
-            referencedColumns: ["id"]
+            referencedRelation: 'work_orders'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -2735,25 +2701,25 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "stock_batches_location_id_fkey"
-            columns: ["location_id"]
+            foreignKeyName: 'stock_batches_location_id_fkey'
+            columns: ['location_id']
             isOneToOne: false
-            referencedRelation: "stock_locations"
-            referencedColumns: ["id"]
+            referencedRelation: 'stock_locations'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "stock_batches_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: 'stock_batches_product_id_fkey'
+            columns: ['product_id']
             isOneToOne: false
-            referencedRelation: "current_stock"
-            referencedColumns: ["id"]
+            referencedRelation: 'current_stock'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "stock_batches_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: 'stock_batches_product_id_fkey'
+            columns: ['product_id']
             isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
+            referencedRelation: 'products'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -2802,25 +2768,25 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "stock_inventory_location_id_fkey"
-            columns: ["location_id"]
+            foreignKeyName: 'stock_inventory_location_id_fkey'
+            columns: ['location_id']
             isOneToOne: false
-            referencedRelation: "stock_locations"
-            referencedColumns: ["id"]
+            referencedRelation: 'stock_locations'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "stock_inventory_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: 'stock_inventory_product_id_fkey'
+            columns: ['product_id']
             isOneToOne: false
-            referencedRelation: "current_stock"
-            referencedColumns: ["id"]
+            referencedRelation: 'current_stock'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "stock_inventory_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: 'stock_inventory_product_id_fkey'
+            columns: ['product_id']
             isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
+            referencedRelation: 'products'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -2893,32 +2859,32 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "stock_movements_batch_id_fkey"
-            columns: ["batch_id"]
+            foreignKeyName: 'stock_movements_batch_id_fkey'
+            columns: ['batch_id']
             isOneToOne: false
-            referencedRelation: "stock_batches"
-            referencedColumns: ["id"]
+            referencedRelation: 'stock_batches'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "stock_movements_location_id_fkey"
-            columns: ["location_id"]
+            foreignKeyName: 'stock_movements_location_id_fkey'
+            columns: ['location_id']
             isOneToOne: false
-            referencedRelation: "stock_locations"
-            referencedColumns: ["id"]
+            referencedRelation: 'stock_locations'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "stock_movements_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: 'stock_movements_product_id_fkey'
+            columns: ['product_id']
             isOneToOne: false
-            referencedRelation: "current_stock"
-            referencedColumns: ["id"]
+            referencedRelation: 'current_stock'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "stock_movements_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: 'stock_movements_product_id_fkey'
+            columns: ['product_id']
             isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
+            referencedRelation: 'products'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -2961,18 +2927,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "supplier_payment_info_linked_yard_location_id_fkey"
-            columns: ["linked_yard_location_id"]
+            foreignKeyName: 'supplier_payment_info_linked_yard_location_id_fkey'
+            columns: ['linked_yard_location_id']
             isOneToOne: false
-            referencedRelation: "stock_locations"
-            referencedColumns: ["id"]
+            referencedRelation: 'stock_locations'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "supplier_payment_info_supplier_id_fkey"
-            columns: ["supplier_id"]
+            foreignKeyName: 'supplier_payment_info_supplier_id_fkey'
+            columns: ['supplier_id']
             isOneToOne: true
-            referencedRelation: "suppliers"
-            referencedColumns: ["id"]
+            referencedRelation: 'suppliers'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -2988,9 +2954,7 @@ export type Database = {
           is_deleted: boolean | null
           name: string
           phone: string | null
-          supplier_type:
-            | Database["public"]["Enums"]["logistics_supplier_type"]
-            | null
+          supplier_type: Database['public']['Enums']['logistics_supplier_type'] | null
         }
         Insert: {
           address?: string | null
@@ -3003,9 +2967,7 @@ export type Database = {
           is_deleted?: boolean | null
           name: string
           phone?: string | null
-          supplier_type?:
-            | Database["public"]["Enums"]["logistics_supplier_type"]
-            | null
+          supplier_type?: Database['public']['Enums']['logistics_supplier_type'] | null
         }
         Update: {
           address?: string | null
@@ -3018,15 +2980,13 @@ export type Database = {
           is_deleted?: boolean | null
           name?: string
           phone?: string | null
-          supplier_type?:
-            | Database["public"]["Enums"]["logistics_supplier_type"]
-            | null
+          supplier_type?: Database['public']['Enums']['logistics_supplier_type'] | null
         }
         Relationships: []
       }
       trailer_cargo_profiles: {
         Row: {
-          cargo_type: Database["public"]["Enums"]["logistics_cargo_type"] | null
+          cargo_type: Database['public']['Enums']['logistics_cargo_type'] | null
           created_at: string
           id: string
           is_deleted: boolean | null
@@ -3038,9 +2998,7 @@ export type Database = {
           valid_to: string | null
         }
         Insert: {
-          cargo_type?:
-            | Database["public"]["Enums"]["logistics_cargo_type"]
-            | null
+          cargo_type?: Database['public']['Enums']['logistics_cargo_type'] | null
           created_at?: string
           id?: string
           is_deleted?: boolean | null
@@ -3052,9 +3010,7 @@ export type Database = {
           valid_to?: string | null
         }
         Update: {
-          cargo_type?:
-            | Database["public"]["Enums"]["logistics_cargo_type"]
-            | null
+          cargo_type?: Database['public']['Enums']['logistics_cargo_type'] | null
           created_at?: string
           id?: string
           is_deleted?: boolean | null
@@ -3067,11 +3023,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "trailer_cargo_profiles_trailer_vehicle_id_fkey"
-            columns: ["trailer_vehicle_id"]
+            foreignKeyName: 'trailer_cargo_profiles_trailer_vehicle_id_fkey'
+            columns: ['trailer_vehicle_id']
             isOneToOne: false
-            referencedRelation: "vehicles"
-            referencedColumns: ["id"]
+            referencedRelation: 'vehicles'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -3117,11 +3073,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "trip_demands_client_id_fkey"
-            columns: ["client_id"]
+            foreignKeyName: 'trip_demands_client_id_fkey'
+            columns: ['client_id']
             isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
+            referencedRelation: 'clients'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -3146,7 +3102,7 @@ export type Database = {
           route_id: string | null
           sale_volume_m3: number | null
           start_time: string | null
-          status: Database["public"]["Enums"]["logistics_trip_status"]
+          status: Database['public']['Enums']['logistics_trip_status']
           tare_weight: number | null
           tractor_vehicle_id: string
           trailer_vehicle_id: string | null
@@ -3172,7 +3128,7 @@ export type Database = {
           route_id?: string | null
           sale_volume_m3?: number | null
           start_time?: string | null
-          status?: Database["public"]["Enums"]["logistics_trip_status"]
+          status?: Database['public']['Enums']['logistics_trip_status']
           tare_weight?: number | null
           tractor_vehicle_id: string
           trailer_vehicle_id?: string | null
@@ -3198,7 +3154,7 @@ export type Database = {
           route_id?: string | null
           sale_volume_m3?: number | null
           start_time?: string | null
-          status?: Database["public"]["Enums"]["logistics_trip_status"]
+          status?: Database['public']['Enums']['logistics_trip_status']
           tare_weight?: number | null
           tractor_vehicle_id?: string
           trailer_vehicle_id?: string | null
@@ -3206,67 +3162,67 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "trips_demand_id_fkey"
-            columns: ["demand_id"]
+            foreignKeyName: 'trips_demand_id_fkey'
+            columns: ['demand_id']
             isOneToOne: false
-            referencedRelation: "trip_demands"
-            referencedColumns: ["id"]
+            referencedRelation: 'trip_demands'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "trips_destination_client_id_fkey"
-            columns: ["destination_client_id"]
+            foreignKeyName: 'trips_destination_client_id_fkey'
+            columns: ['destination_client_id']
             isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
+            referencedRelation: 'clients'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "trips_driver_id_fkey"
-            columns: ["driver_id"]
+            foreignKeyName: 'trips_driver_id_fkey'
+            columns: ['driver_id']
             isOneToOne: false
-            referencedRelation: "people"
-            referencedColumns: ["id"]
+            referencedRelation: 'people'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "trips_origin_location_id_fkey"
-            columns: ["origin_location_id"]
+            foreignKeyName: 'trips_origin_location_id_fkey'
+            columns: ['origin_location_id']
             isOneToOne: false
-            referencedRelation: "locations"
-            referencedColumns: ["id"]
+            referencedRelation: 'locations'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "trips_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: 'trips_product_id_fkey'
+            columns: ['product_id']
             isOneToOne: false
-            referencedRelation: "current_stock"
-            referencedColumns: ["id"]
+            referencedRelation: 'current_stock'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "trips_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: 'trips_product_id_fkey'
+            columns: ['product_id']
             isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
+            referencedRelation: 'products'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "trips_route_id_fkey"
-            columns: ["route_id"]
+            foreignKeyName: 'trips_route_id_fkey'
+            columns: ['route_id']
             isOneToOne: false
-            referencedRelation: "routes"
-            referencedColumns: ["id"]
+            referencedRelation: 'routes'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "trips_tractor_vehicle_id_fkey"
-            columns: ["tractor_vehicle_id"]
+            foreignKeyName: 'trips_tractor_vehicle_id_fkey'
+            columns: ['tractor_vehicle_id']
             isOneToOne: false
-            referencedRelation: "vehicles"
-            referencedColumns: ["id"]
+            referencedRelation: 'vehicles'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "trips_trailer_vehicle_id_fkey"
-            columns: ["trailer_vehicle_id"]
+            foreignKeyName: 'trips_trailer_vehicle_id_fkey'
+            columns: ['trailer_vehicle_id']
             isOneToOne: false
-            referencedRelation: "vehicles"
-            referencedColumns: ["id"]
+            referencedRelation: 'vehicles'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -3309,32 +3265,32 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "vehicle_set_assignments_driver_id_fkey"
-            columns: ["driver_id"]
+            foreignKeyName: 'vehicle_set_assignments_driver_id_fkey'
+            columns: ['driver_id']
             isOneToOne: false
-            referencedRelation: "people"
-            referencedColumns: ["id"]
+            referencedRelation: 'people'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "vehicle_set_assignments_tractor_vehicle_id_fkey"
-            columns: ["tractor_vehicle_id"]
+            foreignKeyName: 'vehicle_set_assignments_tractor_vehicle_id_fkey'
+            columns: ['tractor_vehicle_id']
             isOneToOne: false
-            referencedRelation: "vehicles"
-            referencedColumns: ["id"]
+            referencedRelation: 'vehicles'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "vehicle_set_assignments_trailer_vehicle_id_fkey"
-            columns: ["trailer_vehicle_id"]
+            foreignKeyName: 'vehicle_set_assignments_trailer_vehicle_id_fkey'
+            columns: ['trailer_vehicle_id']
             isOneToOne: false
-            referencedRelation: "vehicles"
-            referencedColumns: ["id"]
+            referencedRelation: 'vehicles'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "vehicle_set_assignments_vehicle_set_id_fkey"
-            columns: ["vehicle_set_id"]
+            foreignKeyName: 'vehicle_set_assignments_vehicle_set_id_fkey'
+            columns: ['vehicle_set_id']
             isOneToOne: false
-            referencedRelation: "vehicle_sets"
-            referencedColumns: ["id"]
+            referencedRelation: 'vehicle_sets'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -3344,21 +3300,21 @@ export type Database = {
           id: string
           is_deleted: boolean | null
           set_code: string | null
-          status: Database["public"]["Enums"]["logistics_set_status"] | null
+          status: Database['public']['Enums']['logistics_set_status'] | null
         }
         Insert: {
           created_at?: string
           id?: string
           is_deleted?: boolean | null
           set_code?: string | null
-          status?: Database["public"]["Enums"]["logistics_set_status"] | null
+          status?: Database['public']['Enums']['logistics_set_status'] | null
         }
         Update: {
           created_at?: string
           id?: string
           is_deleted?: boolean | null
           set_code?: string | null
-          status?: Database["public"]["Enums"]["logistics_set_status"] | null
+          status?: Database['public']['Enums']['logistics_set_status'] | null
         }
         Relationships: []
       }
@@ -3392,18 +3348,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "vehicle_systems_parent_id_fkey"
-            columns: ["parent_id"]
+            foreignKeyName: 'vehicle_systems_parent_id_fkey'
+            columns: ['parent_id']
             isOneToOne: false
-            referencedRelation: "vehicle_systems"
-            referencedColumns: ["id"]
+            referencedRelation: 'vehicle_systems'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "vehicle_systems_vehicle_id_fkey"
-            columns: ["vehicle_id"]
+            foreignKeyName: 'vehicle_systems_vehicle_id_fkey'
+            columns: ['vehicle_id']
             isOneToOne: false
-            referencedRelation: "vehicles"
-            referencedColumns: ["id"]
+            referencedRelation: 'vehicles'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -3458,11 +3414,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "vehicle_telemetry_vehicle_id_fkey"
-            columns: ["vehicle_id"]
+            foreignKeyName: 'vehicle_telemetry_vehicle_id_fkey'
+            columns: ['vehicle_id']
             isOneToOne: false
-            referencedRelation: "vehicles"
-            referencedColumns: ["id"]
+            referencedRelation: 'vehicles'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -3532,11 +3488,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "vehicles_owner_id_fkey"
-            columns: ["owner_id"]
+            foreignKeyName: 'vehicles_owner_id_fkey'
+            columns: ['owner_id']
             isOneToOne: false
-            referencedRelation: "asset_owners"
-            referencedColumns: ["id"]
+            referencedRelation: 'asset_owners'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -3642,18 +3598,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "work_orders_maintenance_plan_id_fkey"
-            columns: ["maintenance_plan_id"]
+            foreignKeyName: 'work_orders_maintenance_plan_id_fkey'
+            columns: ['maintenance_plan_id']
             isOneToOne: false
-            referencedRelation: "maintenance_plans"
-            referencedColumns: ["id"]
+            referencedRelation: 'maintenance_plans'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "work_orders_vehicle_id_fkey"
-            columns: ["vehicle_id"]
+            foreignKeyName: 'work_orders_vehicle_id_fkey'
+            columns: ['vehicle_id']
             isOneToOne: false
-            referencedRelation: "vehicles"
-            referencedColumns: ["id"]
+            referencedRelation: 'vehicles'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -3708,18 +3664,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "yard_invoice_items_invoice_id_fkey"
-            columns: ["invoice_id"]
+            foreignKeyName: 'yard_invoice_items_invoice_id_fkey'
+            columns: ['invoice_id']
             isOneToOne: false
-            referencedRelation: "yard_invoices"
-            referencedColumns: ["id"]
+            referencedRelation: 'yard_invoices'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "yard_invoice_items_receipt_id_fkey"
-            columns: ["receipt_id"]
+            foreignKeyName: 'yard_invoice_items_receipt_id_fkey'
+            columns: ['receipt_id']
             isOneToOne: false
-            referencedRelation: "log_receipts"
-            referencedColumns: ["id"]
+            referencedRelation: 'log_receipts'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -3771,18 +3727,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "yard_invoices_patio_id_fkey"
-            columns: ["patio_id"]
+            foreignKeyName: 'yard_invoices_patio_id_fkey'
+            columns: ['patio_id']
             isOneToOne: false
-            referencedRelation: "patios"
-            referencedColumns: ["id"]
+            referencedRelation: 'patios'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "yard_invoices_supplier_id_fkey"
-            columns: ["supplier_id"]
+            foreignKeyName: 'yard_invoices_supplier_id_fkey'
+            columns: ['supplier_id']
             isOneToOne: false
-            referencedRelation: "suppliers"
-            referencedColumns: ["id"]
+            referencedRelation: 'suppliers'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -3818,25 +3774,25 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "stock_movements_location_id_fkey"
-            columns: ["location_id"]
+            foreignKeyName: 'stock_movements_location_id_fkey'
+            columns: ['location_id']
             isOneToOne: false
-            referencedRelation: "stock_locations"
-            referencedColumns: ["id"]
+            referencedRelation: 'stock_locations'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "stock_movements_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: 'stock_movements_product_id_fkey'
+            columns: ['product_id']
             isOneToOne: false
-            referencedRelation: "current_stock"
-            referencedColumns: ["id"]
+            referencedRelation: 'current_stock'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "stock_movements_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: 'stock_movements_product_id_fkey'
+            columns: ['product_id']
             isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
+            referencedRelation: 'products'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -3861,39 +3817,39 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "trips_destination_client_id_fkey"
-            columns: ["destination_client_id"]
+            foreignKeyName: 'trips_destination_client_id_fkey'
+            columns: ['destination_client_id']
             isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
+            referencedRelation: 'clients'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "trips_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: 'trips_product_id_fkey'
+            columns: ['product_id']
             isOneToOne: false
-            referencedRelation: "current_stock"
-            referencedColumns: ["id"]
+            referencedRelation: 'current_stock'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "trips_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: 'trips_product_id_fkey'
+            columns: ['product_id']
             isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
+            referencedRelation: 'products'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "trips_route_id_fkey"
-            columns: ["route_id"]
+            foreignKeyName: 'trips_route_id_fkey'
+            columns: ['route_id']
             isOneToOne: false
-            referencedRelation: "routes"
-            referencedColumns: ["id"]
+            referencedRelation: 'routes'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "trips_tractor_vehicle_id_fkey"
-            columns: ["tractor_vehicle_id"]
+            foreignKeyName: 'trips_tractor_vehicle_id_fkey'
+            columns: ['tractor_vehicle_id']
             isOneToOne: false
-            referencedRelation: "vehicles"
-            referencedColumns: ["id"]
+            referencedRelation: 'vehicles'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -3915,25 +3871,16 @@ export type Database = {
       table_screen: { Args: { p_table: string }; Returns: string }
     }
     Enums: {
-      logistics_cargo_type: "cavaco" | "toras" | "prancha"
-      logistics_default_unit: "TON" | "M3"
-      logistics_driver_company: "own_fleet" | "third_party"
-      logistics_driver_status: "active" | "inactive"
-      logistics_location_type: "farm" | "yard" | "client_unit" | "other"
-      logistics_owner_type: "julitago" | "affiliated_company" | "third_party"
-      logistics_set_status: "active" | "inactive"
-      logistics_supplier_type:
-        | "parts"
-        | "raw_material"
-        | "third_party_freight"
-        | "services"
-      logistics_transport_type: "own_fleet" | "third_party"
-      logistics_trip_status:
-        | "requested"
-        | "scheduled"
-        | "in_transit"
-        | "completed"
-        | "cancelled"
+      logistics_cargo_type: 'cavaco' | 'toras' | 'prancha'
+      logistics_default_unit: 'TON' | 'M3'
+      logistics_driver_company: 'own_fleet' | 'third_party'
+      logistics_driver_status: 'active' | 'inactive'
+      logistics_location_type: 'farm' | 'yard' | 'client_unit' | 'other'
+      logistics_owner_type: 'julitago' | 'affiliated_company' | 'third_party'
+      logistics_set_status: 'active' | 'inactive'
+      logistics_supplier_type: 'parts' | 'raw_material' | 'third_party_freight' | 'services'
+      logistics_transport_type: 'own_fleet' | 'third_party'
+      logistics_trip_status: 'requested' | 'scheduled' | 'in_transit' | 'completed' | 'cancelled'
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3941,33 +3888,31 @@ export type Database = {
   }
 }
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+type DatabaseWithoutInternals = Omit<Database, '__InternalSupabase'>
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, 'public'>]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never) = never,
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
+    ? (DefaultSchema['Tables'] & DefaultSchema['Views'])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -3976,23 +3921,23 @@ export type Tables<
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
+    | keyof DefaultSchema['Tables']
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never) = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
+    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
         Insert: infer I
       }
       ? I
@@ -4001,23 +3946,23 @@ export type TablesInsert<
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
+    | keyof DefaultSchema['Tables']
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never) = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
+    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
         Update: infer U
       }
       ? U
@@ -4026,63 +3971,51 @@ export type TablesUpdate<
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
+    | keyof DefaultSchema['Enums']
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never) = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums']
+    : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums'][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema['Enums']
+    ? DefaultSchema['Enums'][DefaultSchemaEnumNameOrOptions]
     : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
+    | keyof DefaultSchema['CompositeTypes']
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never) = never,
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes']
+    : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes'][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema['CompositeTypes']
+    ? DefaultSchema['CompositeTypes'][PublicCompositeTypeNameOrOptions]
     : never
 
 export const Constants = {
   public: {
     Enums: {
-      logistics_cargo_type: ["cavaco", "toras", "prancha"],
-      logistics_default_unit: ["TON", "M3"],
-      logistics_driver_company: ["own_fleet", "third_party"],
-      logistics_driver_status: ["active", "inactive"],
-      logistics_location_type: ["farm", "yard", "client_unit", "other"],
-      logistics_owner_type: ["julitago", "affiliated_company", "third_party"],
-      logistics_set_status: ["active", "inactive"],
-      logistics_supplier_type: [
-        "parts",
-        "raw_material",
-        "third_party_freight",
-        "services",
-      ],
-      logistics_transport_type: ["own_fleet", "third_party"],
-      logistics_trip_status: [
-        "requested",
-        "scheduled",
-        "in_transit",
-        "completed",
-        "cancelled",
-      ],
+      logistics_cargo_type: ['cavaco', 'toras', 'prancha'],
+      logistics_default_unit: ['TON', 'M3'],
+      logistics_driver_company: ['own_fleet', 'third_party'],
+      logistics_driver_status: ['active', 'inactive'],
+      logistics_location_type: ['farm', 'yard', 'client_unit', 'other'],
+      logistics_owner_type: ['julitago', 'affiliated_company', 'third_party'],
+      logistics_set_status: ['active', 'inactive'],
+      logistics_supplier_type: ['parts', 'raw_material', 'third_party_freight', 'services'],
+      logistics_transport_type: ['own_fleet', 'third_party'],
+      logistics_trip_status: ['requested', 'scheduled', 'in_transit', 'completed', 'cancelled'],
     },
   },
 } as const
-

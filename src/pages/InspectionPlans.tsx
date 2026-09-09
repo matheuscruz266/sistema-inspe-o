@@ -11,7 +11,8 @@ import {
   TableRow,
   TableCell,
 } from '@/components/ui/table'
-import { Plus, Pencil, Search, Trash2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Plus, Pencil, Search, Trash2, PlayCircle } from 'lucide-react'
 import { InspectionPlanDialog } from '@/components/InspectionPlanDialog'
 import { formatDate } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -63,9 +64,18 @@ export default function InspectionPlans() {
       )
     : plans
 
+  const navigate = useNavigate()
   const handleOpen = (id?: string) => {
     setEditingId(id || null)
     setOpen(true)
+  }
+
+  const handleExecutePlan = (plan: any) => {
+    const params = new URLSearchParams({
+      plan_id: plan.id,
+      plate: plan.plate || '',
+    })
+    navigate(`/execucao-inspecao?${params.toString()}`)
   }
 
   return (
@@ -140,7 +150,20 @@ export default function InspectionPlans() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right whitespace-nowrap">
-                    <Button variant="ghost" size="icon" onClick={() => handleOpen(p.id)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      title="Executar plano"
+                      onClick={() => handleExecutePlan(p)}
+                    >
+                      <PlayCircle className="h-4 w-4 text-primary" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      title="Editar plano"
+                      onClick={() => handleOpen(p.id)}
+                    >
                       <Pencil className="h-4 w-4" />
                     </Button>
                     {canDelete && (

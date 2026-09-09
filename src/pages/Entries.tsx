@@ -24,6 +24,7 @@ import {
   ChevronRight,
   XCircle,
   AlertCircle,
+  PlayCircle,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatDate, formatCurrency } from '@/lib/utils'
@@ -177,6 +178,7 @@ export default function Entries() {
     }
   }
 
+  const navigate = useNavigate()
   const openInsp = (id?: string) => {
     setEditingInsp(id || null)
     setInspOpen(true)
@@ -223,7 +225,11 @@ export default function Entries() {
         </TabsList>
 
         <TabsContent value="insp" className="space-y-3">
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => navigate('/execucao-inspecao')}>
+              <PlayCircle className="mr-2 h-4 w-4" />
+              Executar Inspeção
+            </Button>
             <Button onClick={() => openInsp()}>
               <Plus className="mr-2 h-4 w-4" />
               Nova Inspeção
@@ -562,13 +568,20 @@ export function InspectionExecution() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
 
-  const [planId, setPlanId] = useState<string>(searchParams.get('plan_id') || '')
-  const [plate, setPlate] = useState<string>(searchParams.get('plate') || '')
-  const [date, setDate] = useState<string>(
-    searchParams.get('date') || new Date().toISOString().split('T')[0],
-  )
-  const [driverName, setDriverName] = useState<string>(searchParams.get('driver_name') || '')
-  const [notes, setNotes] = useState<string>(searchParams.get('notes') || '')
+  const paramPlanId = searchParams.get('plan_id') || ''
+  const paramPlate = searchParams.get('plate') || ''
+  const paramDate = searchParams.get('date') || new Date().toISOString().split('T')[0]
+  const paramDriver = searchParams.get('driver_name') || ''
+  const paramNotes = searchParams.get('notes') || ''
+
+  const [planId, setPlanId] = useState<string>(paramPlanId)
+  const [plate, setPlate] = useState<string>(paramPlate)
+  const [date, setDate] = useState<string>(paramDate)
+  const [driverName, setDriverName] = useState<string>(paramDriver)
+  const [notes, setNotes] = useState<string>(paramNotes)
+
+  const [availableVehicles, setAvailableVehicles] = useState<any[]>([])
+  const [availablePlans, setAvailablePlans] = useState<any[]>([])
 
   const [plan, setPlan] = useState<any>(null)
   const [items, setItems] = useState<InspectionPlanItem[]>([])
@@ -579,8 +592,52 @@ export function InspectionExecution() {
   const [responses, setResponses] = useState<Record<string, { value: string; notes: string }>>({})
   const [activeTabIndex, setActiveTabIndex] = useState(0)
 
+  // Carrega veículos e planos caso a tela tenha sido aberta sem parâmetros
+  useEffect(() => {
+    Promise.all([
+      supabase
+        .from('vehicles')
+        .select('id, plate, vehicle_type, brand, model, description')
+        .eq('is_deleted', false)
+        .order('plate'),
+      supabase
+        .from('inspection_plans')
+        .select('id, code, vehicle_type, periodicity, plate')
+        .eq('is_deleted', false)
+        .order('code'),
+    ]).then(([vRes, pRes]) => {
+      const vList = vRes.data || []
+      const pList = pRes.data || []
+      setAvailableVehicles(vList)
+      setAvailablePlans(pList)
+
+      // Se temos placa mas não planId, tenta vincular automaticamente o melhor plano
+      if (paramPlate && !paramPlanId && pList.length > 0) {
+        const matchingVehicle = vList.find(
+          (v) => v.plate.toUpperCase() === paramPlate.toUpperCase(),
+        )
+        const normType = (matchingVehicle?.vehicle_type || '').toLowerCase()
+        const normPlate = paramPlate.toUpperCase()
+
+        const bestPlan =
+          pList.find((p) => p.plate && p.plate.toUpperCase() === normPlate) ||
+          pList.find((p) => !p.plate && (p.vehicle_type || '').toLowerCase() === normType) ||
+          pList[0]
+
+        if (bestPlan) {
+          setPlanId(bestPlan.id)
+        }
+      }
+    })
+  }, [paramPlate, paramPlanId])
+
   const fetchPlanData = useCallback(async () => {
-    if (!planId) return
+    if (!planId) {
+      setLoading(false)
+      setPlan(null)
+      setItems([])
+      return
+    }
     setLoading(true)
     try {
       const [planRes, itemsRes, consRes] = await Promise.all([
@@ -730,16 +787,21 @@ export function InspectionExecution() {
 
     setSaving(true)
     try {
+      const nokItems = items.filter((item) => responses[item.id]?.value === 'NOK')
+      // Status calculado pelo checklist: se houver algum item NOK, status é 'Atenção'; senão 'OK'
+      const calculatedStatus = nokItems.length > 0 ? 'Atenção' : 'OK'
+
       const { data: inspection, error: inspError } = await supabase
         .from('inspections')
         .insert({
           date,
           plate,
           type: plan?.periodicity || 'Diária',
-          driver_name: driverName,
-          status: 'OK',
-          notes,
+          driver_name: driverName.trim(),
+          status: calculatedStatus,
+          notes: notes.trim(),
           plan_id: planId,
+          failed_items: nokItems.map((i) => i.item),
         } as any)
         .select()
         .single()
@@ -759,16 +821,36 @@ export function InspectionExecution() {
         .insert(resultsToInsert)
       if (resultsError) throw resultsError
 
-      const nokItems = items.filter((item) => responses[item.id]?.value === 'NOK')
       if (nokItems.length > 0) {
-        await supabase
-          .from('inspections')
-          .update({ status: 'Atenção', failed_items: nokItems.map((i) => i.item) })
-          .eq('id', inspection.id)
+        // Criar registros em public.non_conformities automaticamente para cada item NOK
+        const ncsToInsert = nokItems.map((item) => {
+          const cons = consequences.find(
+            (c) =>
+              c.result_classification === 'NOK crítico' || c.result_classification === 'NOK grave',
+          )
+          const notesText = responses[item.id]?.notes?.trim() || 'Avaria identificada'
+          return {
+            inspection_id: inspection.id,
+            item_id: item.id,
+            result_value: notesText,
+            classification: cons?.result_classification || 'NOK',
+            criticality: cons?.priority || 'Média',
+            generates_os: cons?.generates_os ?? true,
+            status: 'Aberta',
+          }
+        })
+
+        const { error: ncError } = await (supabase as any)
+          .from('non_conformities')
+          .insert(ncsToInsert)
+
+        if (ncError) {
+          console.error('Erro ao registrar não conformidades:', ncError)
+        }
       }
 
       toast.success('Inspeção finalizada com sucesso')
-      navigate('/lancamentos?tab=wo') // Retorna para Ordens de Serviço
+      navigate('/lancamentos')
     } catch (error: any) {
       toast.error(error.message || 'Erro ao salvar inspeção')
     } finally {
@@ -784,15 +866,75 @@ export function InspectionExecution() {
 
   if (!plan) {
     return (
-      <div className="p-6 text-center">
-        <AlertTriangle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-        <h2 className="text-xl font-semibold">Plano não encontrado</h2>
-        <p className="text-muted-foreground mt-2">
-          Selecione um plano válido para executar a inspeção.
+      <div className="p-6 max-w-lg mx-auto text-center space-y-4">
+        <AlertTriangle className="h-12 w-12 mx-auto text-amber-500" />
+        <h2 className="text-xl font-semibold">Iniciar Execução de Inspeção</h2>
+        <p className="text-muted-foreground text-sm">
+          Nenhum plano foi selecionado ainda. Escolha o veículo e o plano abaixo para iniciar a
+          execução guiada.
         </p>
-        <Button onClick={() => navigate('/lancamentos')} className="mt-4">
-          Voltar
-        </Button>
+
+        <div className="space-y-3 text-left border p-4 rounded-md bg-card shadow-sm">
+          <div>
+            <Label className="text-xs">Veículo</Label>
+            <Select
+              value={plate}
+              onValueChange={(val) => {
+                setPlate(val)
+                const v = availableVehicles.find((x) => x.plate === val)
+                if (v && availablePlans.length > 0) {
+                  const match = availablePlans.find(
+                    (p) =>
+                      (p.plate && p.plate === val) ||
+                      (!p.plate && p.vehicle_type?.toLowerCase() === v.vehicle_type?.toLowerCase()),
+                  )
+                  if (match) setPlanId(match.id)
+                }
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o veículo..." />
+              </SelectTrigger>
+              <SelectContent>
+                {availableVehicles.map((v) => (
+                  <SelectItem key={v.id} value={v.plate}>
+                    {v.plate} {v.model ? `- ${v.model}` : ''} ({v.vehicle_type || 'Geral'})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label className="text-xs">Plano de Inspeção</Label>
+            <Select value={planId} onValueChange={(val) => setPlanId(val)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o plano..." />
+              </SelectTrigger>
+              <SelectContent>
+                {availablePlans.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.code || 'Plano'} — {p.periodicity} ({p.vehicle_type || 'Todos'})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="flex justify-center gap-2">
+          <Button variant="outline" onClick={() => navigate('/lancamentos')}>
+            Voltar aos Lançamentos
+          </Button>
+          <Button
+            disabled={!planId || !plate}
+            onClick={() => {
+              if (planId) fetchPlanData()
+            }}
+          >
+            Começar Checklist
+          </Button>
+        </div>
       </div>
     )
   }
@@ -820,7 +962,7 @@ export function InspectionExecution() {
         </div>
         <div>
           <Label className="text-xs">Placa</Label>
-          <Input value={plate} onChange={(e) => setPlate(e.target.value)} readOnly />
+          <Input value={plate} readOnly className="bg-muted font-semibold" />
         </div>
         <div>
           <Label className="text-xs">Motorista / Responsável</Label>
