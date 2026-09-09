@@ -88,12 +88,16 @@ export default function Entries() {
     const [insp, nc, wo] = await Promise.all([
       supabase
         .from('inspections')
-        .select('*, inspection_plans(id, code, vehicle_type, periodicity)')
+        .select(
+          'id, inspection_number, date, plate, type, status, driver_name, notes, plan_id, failed_items, is_deleted, created_at, inspection_plans(id, code, vehicle_type, periodicity)',
+        )
         .eq('is_deleted', false)
         .order('created_at', { ascending: false }),
       supabase
         .from('non_conformities')
-        .select('*, inspections(plate, date)')
+        .select(
+          'id, inspection_id, item_id, result_value, classification, criticality, generates_os, blocks_vehicle, work_order_id, status, is_deleted, created_at, inspections(plate, date)',
+        )
         .eq('is_deleted', false)
         .order('created_at', { ascending: false }),
       supabase
@@ -332,6 +336,17 @@ export default function Entries() {
         </TabsContent>
 
         <TabsContent value="nc" className="space-y-3">
+          <div className="flex flex-col sm:flex-row sm:justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => navigate('/nao-conformidades')}
+              className="gap-2 text-xs sm:text-sm"
+            >
+              <AlertTriangle className="h-4 w-4 text-amber-500" />
+              Ver Relatório Completo de Não Conformidades
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
+          </div>
           <div className="rounded-md border overflow-x-auto">
             <Table>
               <TableHeader>
@@ -790,7 +805,8 @@ export function InspectionExecution() {
         ? `[Odômetro: ${odometer} km] ${notes.trim()}`.trim()
         : notes.trim()
 
-      const { data: inspection, error: inspError } = await supabase
+      const parsedOdometer = odometer ? parseFloat(odometer) : null
+      const { data: inspection, error: inspError } = await (supabase as any)
         .from('inspections')
         .insert({
           date,
@@ -800,8 +816,9 @@ export function InspectionExecution() {
           status: calculatedStatus,
           notes: combinedNotes,
           plan_id: planId,
+          odometer: parsedOdometer,
           failed_items: nokItems.map((i) => i.item),
-        } as any)
+        })
         .select()
         .single()
 
@@ -828,6 +845,11 @@ export function InspectionExecution() {
               c.result_classification === 'NOK crítico' || c.result_classification === 'NOK grave',
           )
           const notesText = responses[item.id]?.notes?.trim() || 'Avaria identificada'
+          const blocks =
+            cons?.blocks_vehicle ??
+            (cons?.result_classification?.toLowerCase().includes('crítico') ||
+              cons?.priority === 'Crítica' ||
+              false)
           return {
             inspection_id: inspection.id,
             item_id: item.id,
@@ -835,6 +857,7 @@ export function InspectionExecution() {
             classification: cons?.result_classification || 'NOK',
             criticality: cons?.priority || 'Média',
             generates_os: cons?.generates_os ?? true,
+            blocks_vehicle: blocks,
             status: 'Aberta',
           }
         })

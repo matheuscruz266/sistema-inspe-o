@@ -32,6 +32,8 @@ import {
   ShoppingCart,
   ShieldCheck,
   Bell,
+  AlertTriangle,
+  FileCheck2,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -75,7 +77,19 @@ export const menuGroups: MenuGroupType[] = [
         screen: 'dash_maintenance',
         icon: BarChart3,
       },
+      {
+        label: 'Dash Inspeções',
+        path: '/dashboard-inspecoes',
+        screen: 'dashboard_inspecoes',
+        icon: FileCheck2,
+      },
       { label: 'Lançamentos', path: '/lancamentos', screen: 'entries', icon: ClipboardList },
+      {
+        label: 'Não Conformidades',
+        path: '/nao-conformidades',
+        screen: 'non_conformities',
+        icon: AlertTriangle,
+      },
       {
         label: 'Plano de Inspeção',
         path: '/planos-inspecao',

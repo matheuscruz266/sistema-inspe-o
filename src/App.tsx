@@ -52,6 +52,8 @@ import FinancialDashboard from '@/pages/FinancialDashboard'
 import Purchasing from '@/pages/Purchasing'
 import AuditLogs from '@/pages/AuditLogs'
 import Notifications from '@/pages/Notifications'
+import OpenNonConformities from '@/pages/NonConformities'
+import InspectionsDashboard from '@/pages/InspectionsDashboard'
 
 const App = () => (
   <AuthProvider>
@@ -74,6 +76,8 @@ const App = () => (
             <Route path="/veiculos" element={<Vehicles />} />
             <Route path="/planos-manutencao" element={<MaintenancePlans />} />
             <Route path="/planos-inspecao" element={<InspectionPlans />} />
+            <Route path="/dashboard-inspecoes" element={<InspectionsDashboard />} />
+            <Route path="/nao-conformidades" element={<OpenNonConformities />} />
             <Route path="/lancamentos" element={<Entries />} />
             <Route path="/agendamento" element={<Scheduling />} />
             <Route path="/execucao-inspecao" element={<InspectionExecution />} />

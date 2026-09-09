@@ -16,12 +16,12 @@ export async function generateOSFromNonConformity(ncId: string) {
       type: 'Corretiva',
       origin: 'Inspeção',
       status: 'Aberta',
-      diagnosis: `NC: ${nc.result_value || ''} - ${nc.classification}`,
+      diagnosis: `NC: ${nc.result_value || ''} - ${nc.classification || ''}`,
     })
     .select()
     .single()
   if (error) return { error }
-  await supabase
+  await (supabase as any)
     .from('non_conformities')
     .update({ work_order_id: wo.id, status: 'OS Gerada' })
     .eq('id', ncId)

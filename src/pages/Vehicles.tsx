@@ -19,11 +19,21 @@ import {
   TableRow,
   TableCell,
 } from '@/components/ui/table'
-import { Plus, Pencil, Search, Upload, FileText, ArrowUp, ArrowDown } from 'lucide-react'
+import {
+  Plus,
+  Pencil,
+  Search,
+  Upload,
+  FileText,
+  ArrowUp,
+  ArrowDown,
+  ClipboardCheck,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { formatCurrency } from '@/lib/utils'
 import { uploadFile } from '@/lib/storage'
 import { Textarea } from '@/components/ui/textarea'
+import { VehicleInspectionHistoryDialog } from '@/components/VehicleInspectionHistoryDialog'
 
 function maskPlate(value: string): string {
   const cleaned = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase()
@@ -86,6 +96,8 @@ export default function Vehicles() {
   const [assetOwners, setAssetOwners] = useState<any[]>([])
   const [sortField, setSortField] = useState<SortField>('plate')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const [selectedVehicleForHistory, setSelectedVehicleForHistory] = useState<any>(null)
 
   const fetchData = useCallback(async () => {
     const { data } = await supabase
@@ -320,7 +332,19 @@ export default function Vehicles() {
                       '-'
                     )}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right whitespace-nowrap">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        setSelectedVehicleForHistory(v)
+                        setHistoryOpen(true)
+                      }}
+                      title="Histórico de Inspeções do Veículo"
+                      className="text-primary hover:text-primary hover:bg-primary/10"
+                    >
+                      <ClipboardCheck className="h-4 w-4" />
+                    </Button>
                     <Button variant="ghost" size="icon" onClick={() => handleOpen(v)}>
                       <Pencil className="h-4 w-4" />
                     </Button>
@@ -331,6 +355,12 @@ export default function Vehicles() {
           </TableBody>
         </Table>
       </div>
+      <VehicleInspectionHistoryDialog
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
+        vehicle={selectedVehicleForHistory}
+      />
+
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -662,6 +692,23 @@ export default function Vehicles() {
             <Button onClick={handleSave} className="w-full">
               Salvar
             </Button>
+
+            {editing && (
+              <div className="pt-2 border-t">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setSelectedVehicleForHistory(editing)
+                    setHistoryOpen(true)
+                  }}
+                  className="w-full gap-2 text-primary border-primary/30 hover:bg-primary/5"
+                >
+                  <ClipboardCheck className="h-4 w-4" />
+                  Ver Histórico de Inspeções deste Veículo
+                </Button>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
