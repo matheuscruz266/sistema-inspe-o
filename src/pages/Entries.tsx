@@ -871,8 +871,8 @@ export function InspectionExecution() {
         }
       }
 
-      toast.success('Inspeção finalizada com sucesso')
-      navigate('/lancamentos')
+      toast.success('Inspeção finalizada com sucesso! A agenda e histórico foram atualizados.')
+      navigate('/agenda-inspecoes')
     } catch (error: any) {
       toast.error(error.message || 'Erro ao salvar inspeção')
     } finally {

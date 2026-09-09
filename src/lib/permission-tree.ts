@@ -20,6 +20,7 @@ export const AVAILABLE_SCREENS: TreeScreen[] = [
   { key: 'indicators', label: 'Indicadores' },
   { key: 'kanban', label: '1º Ordens de Serviço' },
   { key: 'dash_maintenance', label: '2º Dash Manutenção' },
+  { key: 'inspection_agenda', label: 'Agenda de Inspeções' },
   { key: 'dashboard_inspecoes', label: 'Dash Inspeções' },
   { key: 'entries', label: '3º Lançamentos' },
   { key: 'non_conformities', label: 'Não Conformidades' },
@@ -74,6 +75,7 @@ export const PERMISSION_TREE: TreeNode[] = [
     screens: [
       { key: 'kanban', label: '1º Ordens de Serviço' },
       { key: 'dash_maintenance', label: '2º Dash Manutenção' },
+      { key: 'inspection_agenda', label: 'Agenda de Inspeções' },
       { key: 'dashboard_inspecoes', label: 'Dash Inspeções' },
       { key: 'entries', label: '3º Lançamentos' },
       { key: 'non_conformities', label: 'Não Conformidades' },

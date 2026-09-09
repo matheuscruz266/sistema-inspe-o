@@ -13,6 +13,8 @@ import {
   ChevronDown,
   ChevronUp,
   ShieldAlert,
+  CalendarClock,
+  ArrowRight,
 } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import { useNavigate } from 'react-router-dom'
@@ -22,6 +24,7 @@ interface OverdueInspectionsAlertProps {
   compact?: boolean
   title?: string
   description?: string
+  upcomingCount?: number
 }
 
 export function OverdueInspectionsAlert({
@@ -29,6 +32,7 @@ export function OverdueInspectionsAlert({
   compact = false,
   title = 'Inspeções Vencidas por Periodicidade',
   description = 'Veículos ativos que ultrapassaram a data limite da rotina de inspeção',
+  upcomingCount,
 }: OverdueInspectionsAlertProps) {
   const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState('')
@@ -78,6 +82,14 @@ export function OverdueInspectionsAlert({
                 <Badge variant="destructive" className="font-semibold text-xs animate-pulse">
                   {items.length} {items.length === 1 ? 'pendência' : 'pendências'}
                 </Badge>
+                {typeof upcomingCount === 'number' && upcomingCount > 0 && (
+                  <Badge
+                    variant="outline"
+                    className="font-medium text-xs bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-700"
+                  >
+                    +{upcomingCount} a vencer em 7 dias
+                  </Badge>
+                )}
               </div>
               <p className="text-xs sm:text-sm text-red-700 dark:text-red-300/90 mt-0.5">
                 {description}
@@ -85,17 +97,29 @@ export function OverdueInspectionsAlert({
             </div>
           </div>
 
-          {!compact && items.length > 3 && (
-            <div className="relative w-full sm:w-56">
-              <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
-              <Input
-                placeholder="Filtrar placa ou plano..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8 h-9 text-xs bg-background/80"
-              />
-            </div>
-          )}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            {!compact && items.length > 3 && (
+              <div className="relative w-full sm:w-52">
+                <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                <Input
+                  placeholder="Filtrar placa ou plano..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-8 h-9 text-xs bg-background/80"
+                />
+              </div>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/agenda-inspecoes')}
+              className="text-xs font-semibold gap-1.5 h-9 bg-background/90 hover:bg-background border-red-300 dark:border-red-800 text-red-900 dark:text-red-200 shrink-0"
+            >
+              <CalendarClock className="h-4 w-4" />
+              <span>Ver Agenda Completa</span>
+              <ArrowRight className="h-3 w-3" />
+            </Button>
+          </div>
         </div>
       </CardHeader>
 

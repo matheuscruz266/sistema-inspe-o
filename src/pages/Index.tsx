@@ -16,8 +16,16 @@ import {
 } from 'recharts'
 import { Truck, Wrench, ClipboardCheck, AlertTriangle, TrendingUp, DollarSign } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
-import { fetchOverdueInspections, OverdueInspection } from '@/services/inspections-overdue'
+import {
+  fetchOverdueInspections,
+  fetchInspectionSchedule,
+  calculateScheduleSummary,
+  OverdueInspection,
+} from '@/services/inspections-overdue'
 import { OverdueInspectionsAlert } from '@/components/OverdueInspectionsAlert'
+import { useNavigate } from 'react-router-dom'
+import { CalendarClock, ArrowRight } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 const COLORS = [
   'hsl(var(--chart-1))',
@@ -39,24 +47,41 @@ export default function Index() {
     typeData: [] as { name: string; value: number }[],
     topPlates: [] as { plate: string; cost: number }[],
   })
+  const navigate = useNavigate()
   const [overdueInspections, setOverdueInspections] = useState<OverdueInspection[]>([])
+  const [scheduleSummary, setScheduleSummary] = useState({
+    overdueCount: 0,
+    dueTodayCount: 0,
+    next7DaysCount: 0,
+    next30DaysCount: 0,
+    noRecordCount: 0,
+    totalItems: 0,
+  })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function loadDashboard() {
-      const [vehicles, orders, inspections, stock, plans, overdueList] = await Promise.all([
-        supabase.from('vehicles').select('*'),
-        supabase.from('work_orders').select('*').order('created_at', { ascending: false }),
-        supabase.from('inspection_plans').select('*'),
-        supabase.from('current_stock').select('*'),
-        supabase.from('maintenance_plans').select('*'),
-        fetchOverdueInspections().catch((err) => {
-          console.error('Erro ao buscar inspeções vencidas:', err)
-          return [] as OverdueInspection[]
-        }),
-      ])
+      const [vehicles, orders, inspections, stock, plans, overdueList, fullSchedule] =
+        await Promise.all([
+          supabase.from('vehicles').select('*'),
+          supabase.from('work_orders').select('*').order('created_at', { ascending: false }),
+          supabase.from('inspection_plans').select('*'),
+          supabase.from('current_stock').select('*'),
+          supabase.from('maintenance_plans').select('*'),
+          fetchOverdueInspections().catch((err) => {
+            console.error('Erro ao buscar inspeções vencidas:', err)
+            return [] as OverdueInspection[]
+          }),
+          fetchInspectionSchedule().catch((err) => {
+            console.error('Erro ao buscar agenda completa:', err)
+            return []
+          }),
+        ])
 
       setOverdueInspections(overdueList)
+      if (fullSchedule && fullSchedule.length > 0) {
+        setScheduleSummary(calculateScheduleSummary(fullSchedule))
+      }
 
       const vehicleCount = vehicles.data?.length || 0
       const openOrders = orders.data?.filter((o) => o.status !== 'Concluída').length || 0
@@ -188,13 +213,43 @@ export default function Index() {
       </div>
 
       {/* Banner / Card em Destaque de Inspeções Vencidas */}
-      {overdueInspections.length > 0 && (
+      {overdueInspections.length > 0 ? (
         <OverdueInspectionsAlert
           items={overdueInspections}
+          upcomingCount={scheduleSummary.next7DaysCount}
           title="Alerta: Inspeções de Frota Vencidas"
           description="Veículos ativos com periodicidade de checklist estourada — clique para executar a inspeção imediatamente."
         />
-      )}
+      ) : scheduleSummary.next7DaysCount > 0 ? (
+        <Card className="border-amber-200 bg-amber-50/40 dark:bg-amber-950/20 dark:border-amber-900/40 p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-amber-500 text-white shrink-0">
+                <CalendarClock className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+                  {scheduleSummary.next7DaysCount}{' '}
+                  {scheduleSummary.next7DaysCount === 1 ? 'inspeção vence' : 'inspeções vencem'} nos
+                  próximos 7 dias
+                </h3>
+                <p className="text-xs text-amber-700 dark:text-amber-300">
+                  Todas as inspeções de hoje estão em dia. Planeje a rota com base na agenda futura.
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/agenda-inspecoes')}
+              className="text-xs font-semibold gap-1.5 h-9 bg-background/90 hover:bg-background border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-200 shrink-0"
+            >
+              <span>Ver Agenda de Inspeções</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </Card>
+      ) : null}
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {kpis.map((kpi) => {

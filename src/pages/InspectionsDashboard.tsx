@@ -228,8 +228,8 @@ export default function InspectionsDashboard() {
       .filter((p) => p.total > 0)
       .map((p) => ({
         ...p,
-        okPct: Math.round((p.ok / p.total) * 100),
-        nokPct: Math.round((p.nok / p.total) * 100),
+        okPct: p.total > 0 ? Math.round((p.ok / p.total) * 100) : 0,
+        nokPct: p.total > 0 ? Math.round((p.nok / p.total) * 100) : 0,
       }))
       .sort((a, b) => b.total - a.total)
   }, [plans, filteredResults])

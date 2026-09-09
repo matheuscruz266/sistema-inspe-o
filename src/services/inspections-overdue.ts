@@ -15,6 +15,67 @@ export interface OverdueInspection {
   lastStatus?: string
 }
 
+export type InspectionScheduleStatus = 'overdue' | 'due_today' | 'upcoming' | 'no_record'
+
+export interface ScheduledInspectionItem {
+  id: string // unique composite key vehicleId_planId
+  vehicleId: string
+  plate: string
+  vehicleType: string
+  model?: string
+  planId: string
+  planCode: string
+  periodicity: string
+  periodicityDays: number
+  lastInspectionDate: string | null
+  lastStatus?: string
+  nextDueDate: string // YYYY-MM-DD
+  daysDifference: number // < 0 => overdue (atrasada em X dias), 0 => due today, > 0 => due in X days
+  status: InspectionScheduleStatus
+}
+
+export interface InspectionScheduleSummary {
+  overdueCount: number
+  dueTodayCount: number
+  next7DaysCount: number
+  next30DaysCount: number
+  noRecordCount: number
+  totalItems: number
+}
+
+/**
+ * Converte data local para formato YYYY-MM-DD sem distorção de UTC
+ */
+export function formatLocalDateToYMD(d: Date): string {
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+/**
+ * Cria uma data com horário zerado a partir de string YYYY-MM-DD no fuso local
+ */
+export function parseLocalYMD(ymdStr: string): Date {
+  const parts = ymdStr.split('-')
+  if (parts.length === 3) {
+    const y = parseInt(parts[0], 10)
+    const m = parseInt(parts[1], 10) - 1
+    const d = parseInt(parts[2], 10)
+    return new Date(y, m, d, 0, 0, 0, 0)
+  }
+  return new Date(ymdStr)
+}
+
+/**
+ * Adiciona dias a uma string YYYY-MM-DD retornando YYYY-MM-DD
+ */
+export function addDaysToYMD(ymdStr: string, days: number): string {
+  const base = parseLocalYMD(ymdStr)
+  base.setDate(base.getDate() + days)
+  return formatLocalDateToYMD(base)
+}
+
 /**
  * Converte periodicidade descritiva em dias
  */
@@ -83,10 +144,10 @@ export function isVehicleTypeMatching(
 }
 
 /**
- * Calcula todas as inspeções vencidas para veículos ativos
- * com base na periodicidade dos planos de inspeção aplicáveis.
+ * Calcula a agenda completa de todas as inspeções futuras, de hoje e vencidas
+ * para todos os veículos ativos × planos aplicáveis.
  */
-export async function fetchOverdueInspections(): Promise<OverdueInspection[]> {
+export async function fetchInspectionSchedule(): Promise<ScheduledInspectionItem[]> {
   const [vehiclesRes, plansRes, inspectionsRes] = await Promise.all([
     supabase
       .from('vehicles')
@@ -109,7 +170,7 @@ export async function fetchOverdueInspections(): Promise<OverdueInspection[]> {
   const plans = plansRes.data || []
   const inspections = inspectionsRes.data || []
 
-  // Agrupa as inspeções mais recentes por (placa normalizada + plan_id) ou (placa normalizada)
+  // Agrupa as inspeções mais recentes por (placa + plan_id) e fallback por placa
   const lastInspByPlateAndPlan = new Map<string, { date: string; status: string }>()
   const lastInspByPlate = new Map<string, { date: string; status: string }>()
 
@@ -117,12 +178,10 @@ export async function fetchOverdueInspections(): Promise<OverdueInspection[]> {
     if (!insp.plate || !insp.date) continue
     const normPlate = insp.plate.trim().toUpperCase()
 
-    // Registra a mais recente por placa
     if (!lastInspByPlate.has(normPlate)) {
       lastInspByPlate.set(normPlate, { date: insp.date, status: insp.status })
     }
 
-    // Registra por placa + plan_id se houver
     if (insp.plan_id) {
       const key = `${normPlate}__${insp.plan_id}`
       if (!lastInspByPlateAndPlan.has(key)) {
@@ -131,17 +190,14 @@ export async function fetchOverdueInspections(): Promise<OverdueInspection[]> {
     }
   }
 
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const overdueList: OverdueInspection[] = []
+  const todayStr = formatLocalDateToYMD(new Date())
+  const todayDate = parseLocalYMD(todayStr)
+  const scheduleItems: ScheduledInspectionItem[] = []
 
   for (const vehicle of vehicles) {
     if (!vehicle.plate) continue
     const normPlate = vehicle.plate.trim().toUpperCase()
 
-    // Encontrar planos aplicáveis a este veículo:
-    // 1) Planos com plate específica igual à deste veículo
-    // 2) Planos com plate vazia cujo vehicle_type seja compatível com vehicle.vehicle_type
     const applicablePlans = plans.filter((plan) => {
       const planPlate = plan.plate?.trim().toUpperCase()
       if (planPlate) {
@@ -152,51 +208,139 @@ export async function fetchOverdueInspections(): Promise<OverdueInspection[]> {
 
     for (const plan of applicablePlans) {
       const pDays = getPeriodicityDays(plan.periodicity)
-
-      // Busca a última inspeção deste veículo para este plano específico ou a última inspeção geral do veículo
       const specific = lastInspByPlateAndPlan.get(`${normPlate}__${plan.id}`)
       const fallback = lastInspByPlate.get(normPlate)
       const lastInsp = specific || fallback
 
-      let nextDueDate: Date
+      let nextDueDateStr: string
       let lastDateStr: string | null = null
       let lastStatus = 'Pendente'
+      let status: InspectionScheduleStatus
+      let daysDiff = 0 // dias até o vencimento (negativo = atrasado)
 
       if (lastInsp && lastInsp.date) {
         lastDateStr = lastInsp.date
         lastStatus = lastInsp.status
-        const baseDate = new Date(lastInsp.date + 'T00:00:00')
-        nextDueDate = new Date(baseDate.getTime() + pDays * 24 * 60 * 60 * 1000)
+        nextDueDateStr = addDaysToYMD(lastInsp.date, pDays)
+
+        const dueDate = parseLocalYMD(nextDueDateStr)
+        const diffMs = dueDate.getTime() - todayDate.getTime()
+        daysDiff = Math.round(diffMs / (24 * 60 * 60 * 1000))
+
+        if (daysDiff < 0) {
+          status = 'overdue'
+        } else if (daysDiff === 0) {
+          status = 'due_today'
+        } else {
+          status = 'upcoming'
+        }
       } else {
-        // Veículo nunca foi inspecionado para este plano:
-        // Considera vencido desde a data de criação ou ontem (já está em atraso)
+        // Sem histórico anterior para o veículo/plano:
+        // Marcado como 'no_record', data prevista para hoje (urgência para iniciar a rotina)
         lastDateStr = null
-        nextDueDate = new Date(today.getTime() - 24 * 60 * 60 * 1000)
+        nextDueDateStr = todayStr
+        daysDiff = -1 // tratado como pendente/atrasado imediato
+        status = 'no_record'
       }
 
-      // Calcula diferença em dias em relação a hoje
-      const diffTime = today.getTime() - nextDueDate.getTime()
-      const daysOverdue = Math.floor(diffTime / (24 * 60 * 60 * 1000))
-
-      if (daysOverdue > 0) {
-        overdueList.push({
-          vehicleId: vehicle.id,
-          plate: vehicle.plate,
-          vehicleType: vehicle.vehicle_type || 'Geral',
-          model: vehicle.model || undefined,
-          planId: plan.id,
-          planCode: plan.code || `Plano ${plan.periodicity}`,
-          periodicity: plan.periodicity,
-          periodicityDays: pDays,
-          lastInspectionDate: lastDateStr,
-          nextDueDate: nextDueDate.toISOString().split('T')[0],
-          daysOverdue,
-          lastStatus,
-        })
-      }
+      scheduleItems.push({
+        id: `${vehicle.id}__${plan.id}`,
+        vehicleId: vehicle.id,
+        plate: vehicle.plate,
+        vehicleType: vehicle.vehicle_type || 'Geral',
+        model: vehicle.model || undefined,
+        planId: plan.id,
+        planCode: plan.code || `Plano ${plan.periodicity}`,
+        periodicity: plan.periodicity,
+        periodicityDays: pDays,
+        lastInspectionDate: lastDateStr,
+        lastStatus,
+        nextDueDate: nextDueDateStr,
+        daysDifference: daysDiff,
+        status,
+      })
     }
   }
 
-  // Ordena pelos mais atrasados primeiro
-  return overdueList.sort((a, b) => b.daysOverdue - a.daysOverdue)
+  // Ordena prioritariamente:
+  // 1. Vencidos e Sem registro (dias de atraso decrescente / daysDifference crescente)
+  // 2. Vence hoje
+  // 3. Próximos dias em ordem cronológica crescente
+  return scheduleItems.sort((a, b) => {
+    // Colocar status críticos primeiro
+    const orderPriority: Record<InspectionScheduleStatus, number> = {
+      overdue: 1,
+      no_record: 2,
+      due_today: 3,
+      upcoming: 4,
+    }
+    const prioDiff = orderPriority[a.status] - orderPriority[b.status]
+    if (prioDiff !== 0) return prioDiff
+    return a.daysDifference - b.daysDifference
+  })
+}
+
+/**
+ * Calcula apenas as inspeções vencidas para manter compatibilidade total
+ * com os componentes existentes (OverdueInspectionsAlert, Dashboard Home, etc).
+ */
+export async function fetchOverdueInspections(): Promise<OverdueInspection[]> {
+  const schedule = await fetchInspectionSchedule()
+
+  return schedule
+    .filter((item) => item.status === 'overdue' || item.status === 'no_record')
+    .map((item) => ({
+      vehicleId: item.vehicleId,
+      plate: item.plate,
+      vehicleType: item.vehicleType,
+      model: item.model,
+      planId: item.planId,
+      planCode: item.planCode,
+      periodicity: item.periodicity,
+      periodicityDays: item.periodicityDays,
+      lastInspectionDate: item.lastInspectionDate,
+      nextDueDate: item.nextDueDate,
+      daysOverdue: Math.max(1, -item.daysDifference),
+      lastStatus: item.lastStatus,
+    }))
+    .sort((a, b) => b.daysOverdue - a.daysOverdue)
+}
+
+/**
+ * Calcula contagens consolidadas para badges de agenda
+ */
+export function calculateScheduleSummary(
+  items: ScheduledInspectionItem[],
+): InspectionScheduleSummary {
+  let overdueCount = 0
+  let dueTodayCount = 0
+  let next7DaysCount = 0
+  let next30DaysCount = 0
+  let noRecordCount = 0
+
+  for (const item of items) {
+    if (item.status === 'overdue') {
+      overdueCount++
+    } else if (item.status === 'no_record') {
+      noRecordCount++
+    } else if (item.status === 'due_today') {
+      dueTodayCount++
+    }
+
+    if (item.daysDifference >= 0 && item.daysDifference <= 7) {
+      next7DaysCount++
+    }
+    if (item.daysDifference >= 0 && item.daysDifference <= 30) {
+      next30DaysCount++
+    }
+  }
+
+  return {
+    overdueCount,
+    dueTodayCount,
+    next7DaysCount,
+    next30DaysCount,
+    noRecordCount,
+    totalItems: items.length,
+  }
 }

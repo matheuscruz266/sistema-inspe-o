@@ -34,6 +34,7 @@ import {
   Bell,
   AlertTriangle,
   FileCheck2,
+  CalendarClock,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -76,6 +77,12 @@ export const menuGroups: MenuGroupType[] = [
         path: '/dash-manutencao',
         screen: 'dash_maintenance',
         icon: BarChart3,
+      },
+      {
+        label: 'Agenda de Inspeções',
+        path: '/agenda-inspecoes',
+        screen: 'inspection_agenda',
+        icon: CalendarClock,
       },
       {
         label: 'Dash Inspeções',
