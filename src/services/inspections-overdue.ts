@@ -15,6 +15,51 @@ export interface OverdueInspection {
   lastStatus?: string
 }
 
+/**
+ * Valida placa nos padrões Mercosul (ABC1D23) ou antigo brasileiro (ABC-1234 / ABC1234).
+ * Rejeita vazios, placeholders de template ('TEMPLATE-SR-*') e textos livres ('aw', 'EQ-001', etc).
+ */
+export function isValidRoadFleetPlate(plate?: string | null): boolean {
+  if (!plate) return false
+  const clean = plate
+    .trim()
+    .toUpperCase()
+    .replace(/[-–—\s]/g, '')
+  // Padrão antigo: 3 letras + 4 números (ex: ATR4266)
+  // Padrão Mercosul: 3 letras + 1 número + 1 letra + 2 números (ex: AWC3B49)
+  const antigoRegex = /^[A-Z]{3}[0-9]{4}$/
+  const mercosulRegex = /^[A-Z]{3}[0-9][A-Z][0-9]{2}$/
+  return antigoRegex.test(clean) || mercosulRegex.test(clean)
+}
+
+/**
+ * Valida se o tipo do veículo pertence estritamente à frota rodoviária
+ * ("Cavalo Mecânico" ou "Carreta", aceitando variações como Cavalo 6x2, Cavalo 6x4, Carreta LS).
+ */
+export function isRoadFleetVehicleType(vehicleType?: string | null): boolean {
+  if (!vehicleType) return false
+  const norm = vehicleType
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+
+  // Deve conter 'cavalo' ou 'carreta'
+  // E NÃO deve ser equipamento, área de vivência, leve, picador, etc.
+  if (norm.includes('cavalo') || norm.includes('carreta')) {
+    return true
+  }
+  return false
+}
+
+/**
+ * Regra unificada de "Só frota rodoviária":
+ * Veículos do tipo Cavalo Mecânico ou Carreta COM PLACA VÁLIDA.
+ */
+export function isRodoviaria(plate?: string | null, vehicleType?: string | null): boolean {
+  return isValidRoadFleetPlate(plate) && isRoadFleetVehicleType(vehicleType)
+}
+
 export type InspectionScheduleStatus = 'overdue' | 'due_today' | 'upcoming' | 'no_record'
 
 export interface ScheduledInspectionItem {
@@ -196,6 +241,11 @@ export async function fetchInspectionSchedule(): Promise<ScheduledInspectionItem
 
   for (const vehicle of vehicles) {
     if (!vehicle.plate) continue
+    // Regra da Frente 1: Apenas veículos da frota rodoviária (Cavalo Mecânico / Carreta) com placa válida
+    if (!isRodoviaria(vehicle.plate, vehicle.vehicle_type)) {
+      continue
+    }
+
     const normPlate = vehicle.plate.trim().toUpperCase()
 
     const applicablePlans = plans.filter((plan) => {

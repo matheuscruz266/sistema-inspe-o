@@ -47,6 +47,7 @@ import {
   parseLocalYMD,
   addDaysToYMD,
   calculateScheduleSummary,
+  isRodoviaria,
 } from '@/services/inspections-overdue'
 import { toast } from 'sonner'
 
@@ -70,7 +71,8 @@ export default function InspectionAgenda() {
     setLoading(true)
     try {
       const schedule = await fetchInspectionSchedule()
-      setItems(schedule)
+      // Filtra estritamente frota rodoviária com placas válidas
+      setItems(schedule.filter((it) => isRodoviaria(it.plate, it.vehicleType)))
     } catch (err: any) {
       console.error('Erro ao carregar agenda de inspeções:', err)
       toast.error('Erro ao carregar a agenda de inspeções')

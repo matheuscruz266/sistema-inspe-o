@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { OverdueInspection } from '@/services/inspections-overdue'
+import { OverdueInspection, isRodoviaria } from '@/services/inspections-overdue'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -38,19 +38,24 @@ export function OverdueInspectionsAlert({
   const [searchTerm, setSearchTerm] = useState('')
   const [showAll, setShowAll] = useState(false)
 
+  // Garante que apenas veículos da frota rodoviária com placa válida sejam exibidos
+  const roadFleetItems = useMemo(() => {
+    return items.filter((item) => isRodoviaria(item.plate, item.vehicleType))
+  }, [items])
+
   const filtered = useMemo(() => {
-    if (!searchTerm.trim()) return items
+    if (!searchTerm.trim()) return roadFleetItems
     const term = searchTerm.toLowerCase()
-    return items.filter(
+    return roadFleetItems.filter(
       (item) =>
         item.plate.toLowerCase().includes(term) ||
         item.planCode.toLowerCase().includes(term) ||
         item.vehicleType.toLowerCase().includes(term) ||
         item.periodicity.toLowerCase().includes(term),
     )
-  }, [items, searchTerm])
+  }, [roadFleetItems, searchTerm])
 
-  if (items.length === 0) {
+  if (roadFleetItems.length === 0) {
     return null
   }
 
@@ -80,7 +85,7 @@ export function OverdueInspectionsAlert({
                   {title}
                 </CardTitle>
                 <Badge variant="destructive" className="font-semibold text-xs animate-pulse">
-                  {items.length} {items.length === 1 ? 'pendência' : 'pendências'}
+                  {roadFleetItems.length} {roadFleetItems.length === 1 ? 'pendência' : 'pendências'}
                 </Badge>
                 {typeof upcomingCount === 'number' && upcomingCount > 0 && (
                   <Badge
@@ -98,7 +103,7 @@ export function OverdueInspectionsAlert({
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-            {!compact && items.length > 3 && (
+            {!compact && roadFleetItems.length > 3 && (
               <div className="relative w-full sm:w-52">
                 <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
                 <Input
