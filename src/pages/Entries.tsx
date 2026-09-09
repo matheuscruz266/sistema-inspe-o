@@ -207,30 +207,36 @@ export default function Entries() {
 
   return (
     <div className="space-y-4 p-4 md:p-6">
-      <h1 className="text-2xl font-bold">Lançamentos Operacionais</h1>
-      <Tabs defaultValue="insp">
-        <TabsList>
-          <TabsTrigger value="insp">
-            <ClipboardCheck className="h-4 w-4 mr-1" />
-            Inspeções
-          </TabsTrigger>
-          <TabsTrigger value="nc">
-            <AlertTriangle className="h-4 w-4 mr-1" />
-            Não Conformidades
-          </TabsTrigger>
-          <TabsTrigger value="wo">
-            <Wrench className="h-4 w-4 mr-1" />
-            Ordens de Serviço
-          </TabsTrigger>
-        </TabsList>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div>
+          <h1 className="text-2xl font-bold">Lançamentos Operacionais</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">
+            Acompanhamento de inspeções de frota, avarias e ordens de serviço
+          </p>
+        </div>
+      </div>
+
+      <Tabs defaultValue="insp" className="space-y-4">
+        <div className="overflow-x-auto pb-1">
+          <TabsList className="w-full sm:w-auto grid grid-cols-3 sm:inline-flex h-auto p-1">
+            <TabsTrigger value="insp" className="py-2 text-xs sm:text-sm">
+              <ClipboardCheck className="h-4 w-4 mr-1.5 shrink-0" />
+              <span>Inspeções</span>
+            </TabsTrigger>
+            <TabsTrigger value="nc" className="py-2 text-xs sm:text-sm">
+              <AlertTriangle className="h-4 w-4 mr-1.5 shrink-0" />
+              <span>Não Conformidades</span>
+            </TabsTrigger>
+            <TabsTrigger value="wo" className="py-2 text-xs sm:text-sm">
+              <Wrench className="h-4 w-4 mr-1.5 shrink-0" />
+              <span>Ordens de Serviço</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="insp" className="space-y-3">
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => navigate('/execucao-inspecao')}>
-              <PlayCircle className="mr-2 h-4 w-4" />
-              Executar Inspeção
-            </Button>
-            <Button onClick={() => openInsp()}>
+          <div className="flex flex-col sm:flex-row sm:justify-end gap-2">
+            <Button onClick={() => openInsp()} className="w-full sm:w-auto min-h-[42px]">
               <Plus className="mr-2 h-4 w-4" />
               Nova Inspeção
             </Button>
@@ -396,8 +402,8 @@ export default function Entries() {
         </TabsContent>
 
         <TabsContent value="wo" className="space-y-3">
-          <div className="flex justify-end">
-            <Button onClick={() => openWO()}>
+          <div className="flex flex-col sm:flex-row sm:justify-end">
+            <Button onClick={() => openWO()} className="w-full sm:w-auto min-h-[42px]">
               <Plus className="mr-2 h-4 w-4" />
               Nova OS
             </Button>
@@ -578,6 +584,7 @@ export function InspectionExecution() {
   const [plate, setPlate] = useState<string>(paramPlate)
   const [date, setDate] = useState<string>(paramDate)
   const [driverName, setDriverName] = useState<string>(paramDriver)
+  const [odometer, setOdometer] = useState<string>('')
   const [notes, setNotes] = useState<string>(paramNotes)
 
   const [availableVehicles, setAvailableVehicles] = useState<any[]>([])
@@ -706,7 +713,7 @@ export function InspectionExecution() {
   // Agrupa itens por módulo (primeira parte antes de " — ")
   const groupedItems = items.reduce(
     (acc, item) => {
-      const module = item.item.split(' — ')[0] || 'Geral'
+      const module = item.item.includes(' — ') ? item.item.split(' — ')[0] : 'Geral'
       if (!acc[module]) acc[module] = []
       acc[module].push(item)
       return acc
@@ -715,18 +722,6 @@ export function InspectionExecution() {
   )
 
   const modules = Object.keys(groupedItems)
-
-  // Valida se o módulo atual está completo (todos os itens respondidos)
-  const isCurrentModuleComplete = () => {
-    const currentModule = modules[activeTabIndex]
-    if (!currentModule) return true
-    const moduleItems = groupedItems[currentModule]
-    return moduleItems.every((item) => {
-      const resp = responses[item.id]?.value
-      return resp && (resp !== 'NOK' || (resp === 'NOK' && responses[item.id]?.notes?.trim()))
-    })
-  }
-
   const validateCurrentModule = () => {
     const currentModule = modules[activeTabIndex]
     if (!currentModule) return []
@@ -791,6 +786,10 @@ export function InspectionExecution() {
       // Status calculado pelo checklist: se houver algum item NOK, status é 'Atenção'; senão 'OK'
       const calculatedStatus = nokItems.length > 0 ? 'Atenção' : 'OK'
 
+      const combinedNotes = odometer
+        ? `[Odômetro: ${odometer} km] ${notes.trim()}`.trim()
+        : notes.trim()
+
       const { data: inspection, error: inspError } = await supabase
         .from('inspections')
         .insert({
@@ -799,7 +798,7 @@ export function InspectionExecution() {
           type: plan?.periodicity || 'Diária',
           driver_name: driverName.trim(),
           status: calculatedStatus,
-          notes: notes.trim(),
+          notes: combinedNotes,
           plan_id: planId,
           failed_items: nokItems.map((i) => i.item),
         } as any)
@@ -955,7 +954,7 @@ export function InspectionExecution() {
         </Button>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-4 p-4 rounded-md border bg-muted/30">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 p-4 rounded-md border bg-muted/30">
         <div>
           <Label className="text-xs">Data</Label>
           <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} readOnly />
@@ -963,6 +962,17 @@ export function InspectionExecution() {
         <div>
           <Label className="text-xs">Placa</Label>
           <Input value={plate} readOnly className="bg-muted font-semibold" />
+        </div>
+        <div>
+          <Label className="text-xs">Odômetro Atual (km)</Label>
+          <Input
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            value={odometer}
+            onChange={(e) => setOdometer(e.target.value.replace(/\D/g, ''))}
+            placeholder="Ex: 145000"
+          />
         </div>
         <div>
           <Label className="text-xs">Motorista / Responsável</Label>
@@ -978,194 +988,356 @@ export function InspectionExecution() {
         </div>
       </div>
 
-      {/* Progresso dos módulos */}
-      <div className="mb-4">
-        <div className="flex items-center gap-2 overflow-x-auto pb-2">
-          {modules.map((module, idx) => (
-            <div key={module} className="flex items-center gap-1 shrink-0">
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-colors ${
-                  idx < activeTabIndex
-                    ? 'bg-green-500 text-white'
-                    : idx === activeTabIndex
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-muted-foreground'
+      {/* Progresso dos módulos com scroll horizontal e botões fáceis de tocar */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
+          {modules.map((module, idx) => {
+            const isCompleted = idx < activeTabIndex
+            const isCurrent = idx === activeTabIndex
+            return (
+              <button
+                type="button"
+                key={module}
+                onClick={() => setActiveTabIndex(idx)}
+                className={`flex items-center gap-2 shrink-0 px-3 py-2 rounded-lg text-left text-xs font-medium border transition-colors touch-manipulation min-h-[44px] ${
+                  isCurrent
+                    ? 'border-primary bg-primary/10 text-primary font-semibold ring-1 ring-primary'
+                    : isCompleted
+                      ? 'border-green-500/40 bg-green-500/10 text-green-700 dark:text-green-400'
+                      : 'border-border bg-card text-muted-foreground hover:bg-muted'
                 }`}
               >
-                {idx < activeTabIndex ? <CheckCircle className="h-4 w-4" /> : idx + 1}
-              </div>
-              <span
-                className={`text-xs font-medium hidden sm:inline ${idx === activeTabIndex ? 'text-primary' : ''}`}
-              >
-                {module}
-              </span>
-              {idx < modules.length - 1 && (
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              )}
-            </div>
-          ))}
+                <div
+                  className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                    isCompleted
+                      ? 'bg-green-600 text-white'
+                      : isCurrent
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-muted-foreground'
+                  }`}
+                >
+                  {isCompleted ? <CheckCircle className="h-4 w-4" /> : idx + 1}
+                </div>
+                <span className="whitespace-nowrap">{module}</span>
+              </button>
+            )
+          })}
         </div>
-        <div className="h-1 bg-muted rounded overflow-hidden">
+        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
           <div
             className="h-full bg-primary transition-all duration-300"
-            style={{ width: `${(activeTabIndex / Math.max(modules.length - 1, 1)) * 100}%` }}
+            style={{
+              width: `${((activeTabIndex + 1) / Math.max(modules.length, 1)) * 100}%`,
+            }}
           />
+        </div>
+        <div className="flex justify-between items-center text-xs text-muted-foreground px-1">
+          <span>
+            Módulo {activeTabIndex + 1} de {modules.length}:{' '}
+            <strong className="text-foreground">{modules[activeTabIndex]}</strong>
+          </span>
+          <span>{groupedItems[modules[activeTabIndex]]?.length || 0} itens</span>
         </div>
       </div>
 
-      {/* Tabs CONTROLADO pelo activeTabIndex */}
-      <Tabs
-        value={modules[activeTabIndex]}
-        onValueChange={(val) => setActiveTabIndex(modules.indexOf(val))}
-        className="space-y-4"
-      >
-        {modules.map((module) => (
-          <TabsContent key={module} value={module} className="space-y-3">
-            {groupedItems[module].map((item) => {
-              const response = responses[item.id]?.value || ''
-              const itemNotes = responses[item.id]?.notes || ''
-              const isCritical = isItemCritical(item.id)
-              const consequence = getConsequenceForItem(item.id, response)
+      {/* Conteúdo do módulo atual */}
+      <div className="space-y-4">
+        {(groupedItems[modules[activeTabIndex]] || []).map((item) => {
+          const response = responses[item.id]?.value || ''
+          const itemNotes = responses[item.id]?.notes || ''
+          const isCritical = isItemCritical(item.id)
+          const consequence = getConsequenceForItem(item.id, response)
 
-              return (
-                <div
-                  key={item.id}
-                  className={`rounded-md border p-4 transition-colors ${
-                    isCritical ? 'border-destructive/50 bg-destructive/5' : ''
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-8 text-center text-sm font-medium text-muted-foreground">
-                      {item.sequence}
+          return (
+            <div
+              key={item.id}
+              className={`rounded-lg border p-4 sm:p-5 transition-colors shadow-sm bg-card ${
+                isCritical
+                  ? 'border-destructive/60 bg-destructive/5'
+                  : response === 'NOK' || response === 'Não' || response === 'Não conforme'
+                    ? 'border-red-500/40 bg-red-500/5'
+                    : response === 'OK' || response === 'Sim' || response === 'Conforme'
+                      ? 'border-green-500/30'
+                      : 'border-border'
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground">
+                  {item.sequence}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-semibold text-base sm:text-base leading-snug">
+                      {item.item}
+                    </span>
+                    {item.expected_value && (
+                      <span className="text-xs text-muted-foreground px-2 py-0.5 rounded bg-muted">
+                        Esperado: {item.expected_value}
+                      </span>
+                    )}
+                    {isCritical && (
+                      <Badge variant="destructive" className="gap-1 text-xs">
+                        <AlertTriangle className="h-3 w-3" /> Crítico
+                      </Badge>
+                    )}
+                  </div>
+                  {item.verification && (
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-1.5 leading-relaxed">
+                      {item.verification}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Botões rápidos de resposta grandes para celular (min-height 48px) */}
+              <div className="mt-4 space-y-3">
+                {item.response_type === 'OK / NOK' && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground mb-1.5 block">
+                      Selecione a condição:
+                    </Label>
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleResponseChange(item.id, 'OK')}
+                        className={`min-h-[48px] rounded-lg font-semibold text-sm flex items-center justify-center gap-2 border transition-all active:scale-[0.98] touch-manipulation ${
+                          response === 'OK'
+                            ? 'bg-green-600 text-white border-green-700 shadow-sm ring-2 ring-green-600 ring-offset-1'
+                            : 'bg-background hover:bg-green-50 hover:text-green-700 hover:border-green-300 text-foreground border-border'
+                        }`}
+                      >
+                        <CheckCircle className="h-5 w-5" />
+                        <span>OK</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleResponseChange(item.id, 'NOK')}
+                        className={`min-h-[48px] rounded-lg font-semibold text-sm flex items-center justify-center gap-2 border transition-all active:scale-[0.98] touch-manipulation ${
+                          response === 'NOK'
+                            ? 'bg-red-600 text-white border-red-700 shadow-sm ring-2 ring-red-600 ring-offset-1'
+                            : 'bg-background hover:bg-red-50 hover:text-red-700 hover:border-red-300 text-foreground border-border'
+                        }`}
+                      >
+                        <XCircle className="h-5 w-5" />
+                        <span>NOK</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleResponseChange(item.id, 'N/A')}
+                        className={`min-h-[48px] rounded-lg font-medium text-sm flex items-center justify-center gap-2 border transition-all active:scale-[0.98] touch-manipulation ${
+                          response === 'N/A'
+                            ? 'bg-slate-700 text-white border-slate-800 shadow-sm ring-2 ring-slate-700 ring-offset-1'
+                            : 'bg-background hover:bg-muted text-muted-foreground border-border'
+                        }`}
+                      >
+                        <AlertCircle className="h-4 w-4" />
+                        <span>N/A</span>
+                      </button>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{item.item}</span>
-                        {item.expected_value && (
-                          <span className="text-xs text-muted-foreground px-2 py-0.5 rounded bg-muted">
-                            Esperado: {item.expected_value}
-                          </span>
-                        )}
-                        {isCritical && <AlertTriangle className="h-4 w-4 text-destructive" />}
-                      </div>
-                      {item.verification && (
-                        <p className="text-sm text-muted-foreground mt-1">{item.verification}</p>
+                  </div>
+                )}
+
+                {item.response_type === 'Sim / Não' && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground mb-1.5 block">
+                      Selecione a condição:
+                    </Label>
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleResponseChange(item.id, 'Sim')}
+                        className={`min-h-[48px] rounded-lg font-semibold text-sm flex items-center justify-center gap-2 border transition-all active:scale-[0.98] touch-manipulation ${
+                          response === 'Sim'
+                            ? 'bg-green-600 text-white border-green-700 shadow-sm ring-2 ring-green-600'
+                            : 'bg-background hover:bg-green-50 text-foreground border-border'
+                        }`}
+                      >
+                        <CheckCircle className="h-5 w-5" /> Sim
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleResponseChange(item.id, 'Não')}
+                        className={`min-h-[48px] rounded-lg font-semibold text-sm flex items-center justify-center gap-2 border transition-all active:scale-[0.98] touch-manipulation ${
+                          response === 'Não'
+                            ? 'bg-red-600 text-white border-red-700 shadow-sm ring-2 ring-red-600'
+                            : 'bg-background hover:bg-red-50 text-foreground border-border'
+                        }`}
+                      >
+                        <XCircle className="h-5 w-5" /> Não
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleResponseChange(item.id, 'N/A')}
+                        className={`min-h-[48px] rounded-lg font-medium text-sm flex items-center justify-center gap-2 border transition-all active:scale-[0.98] touch-manipulation ${
+                          response === 'N/A'
+                            ? 'bg-slate-700 text-white border-slate-800 ring-2 ring-slate-700'
+                            : 'bg-background hover:bg-muted text-muted-foreground border-border'
+                        }`}
+                      >
+                        <AlertCircle className="h-4 w-4" /> N/A
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {item.response_type === 'Conforme / Não conforme' && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground mb-1.5 block">
+                      Selecione a condição:
+                    </Label>
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleResponseChange(item.id, 'Conforme')}
+                        className={`min-h-[48px] rounded-lg font-semibold text-xs sm:text-sm flex items-center justify-center gap-1.5 border transition-all active:scale-[0.98] touch-manipulation ${
+                          response === 'Conforme'
+                            ? 'bg-green-600 text-white border-green-700 shadow-sm ring-2 ring-green-600'
+                            : 'bg-background hover:bg-green-50 text-foreground border-border'
+                        }`}
+                      >
+                        <CheckCircle className="h-4 w-4 shrink-0" /> Conforme
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleResponseChange(item.id, 'Não conforme')}
+                        className={`min-h-[48px] rounded-lg font-semibold text-xs sm:text-sm flex items-center justify-center gap-1.5 border transition-all active:scale-[0.98] touch-manipulation ${
+                          response === 'Não conforme'
+                            ? 'bg-red-600 text-white border-red-700 shadow-sm ring-2 ring-red-600'
+                            : 'bg-background hover:bg-red-50 text-foreground border-border'
+                        }`}
+                      >
+                        <XCircle className="h-4 w-4 shrink-0" /> Não conf.
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleResponseChange(item.id, 'N/A')}
+                        className={`min-h-[48px] rounded-lg font-medium text-xs sm:text-sm flex items-center justify-center gap-1.5 border transition-all active:scale-[0.98] touch-manipulation ${
+                          response === 'N/A'
+                            ? 'bg-slate-700 text-white border-slate-800 ring-2 ring-slate-700'
+                            : 'bg-background hover:bg-muted text-muted-foreground border-border'
+                        }`}
+                      >
+                        <AlertCircle className="h-4 w-4 shrink-0" /> N/A
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {item.response_type === 'Numérico' && (
+                  <div>
+                    <Label className="text-xs mb-1 block">Valor Numérico Medido</Label>
+                    <Input
+                      type="text"
+                      inputMode="decimal"
+                      value={response}
+                      onChange={(e) => handleResponseChange(item.id, e.target.value)}
+                      placeholder="Digite o valor medido..."
+                      className="min-h-[44px] text-base"
+                    />
+                  </div>
+                )}
+
+                {item.response_type === 'Texto' && (
+                  <div>
+                    <Label className="text-xs mb-1 block">Informação do Item</Label>
+                    <Input
+                      type="text"
+                      value={response}
+                      onChange={(e) => handleResponseChange(item.id, e.target.value)}
+                      placeholder="Digite a resposta..."
+                      className="min-h-[44px] text-base"
+                    />
+                  </div>
+                )}
+
+                {response === 'NOK' && (
+                  <div className="pt-2">
+                    <Label className="text-xs font-semibold text-destructive">
+                      Descrição da falha / avaria * (obrigatório para NOK)
+                    </Label>
+                    <Textarea
+                      value={itemNotes}
+                      onChange={(e) => handleNotesChange(item.id, e.target.value)}
+                      placeholder="Descreva o problema encontrado em detalhes..."
+                      rows={3}
+                      className="mt-1 border-destructive/50 text-sm focus-visible:ring-destructive"
+                    />
+                  </div>
+                )}
+
+                {response && response !== 'NOK' && (
+                  <div className="pt-1">
+                    <Label className="text-xs text-muted-foreground">Observações (opcional)</Label>
+                    <Textarea
+                      value={itemNotes}
+                      onChange={(e) => handleNotesChange(item.id, e.target.value)}
+                      placeholder="Observação adicional sobre o item (opcional)..."
+                      rows={2}
+                      className="mt-1 text-sm"
+                    />
+                  </div>
+                )}
+
+                {consequence && (
+                  <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive">
+                    <div className="flex flex-wrap items-center gap-2 text-sm font-medium">
+                      <AlertTriangle className="h-4 w-4 shrink-0" />
+                      <span>Consequência: {consequence.result_classification}</span>
+                      {consequence.blocks_vehicle && (
+                        <Badge variant="destructive" className="text-[10px]">
+                          Bloqueia Veículo
+                        </Badge>
+                      )}
+                      {consequence.generates_os && (
+                        <Badge variant="default" className="text-[10px]">
+                          Gera OS
+                        </Badge>
                       )}
                     </div>
-                  </div>
-
-                  <div className="mt-3 grid gap-2 md:grid-cols-3">
-                    <Select
-                      value={response}
-                      onValueChange={(v) => handleResponseChange(item.id, v)}
-                    >
-                      <SelectTrigger className={isCritical ? 'border-destructive' : ''}>
-                        <SelectValue placeholder="Selecione..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {item.response_type === 'OK / NOK' && (
-                          <>
-                            <SelectItem value="OK">
-                              <CheckCircle className="h-4 w-4 mr-2 text-green-600" /> OK
-                            </SelectItem>
-                            <SelectItem value="NOK">
-                              <XCircle className="h-4 w-4 mr-2 text-red-600" /> NOK
-                            </SelectItem>
-                            <SelectItem value="N/A">
-                              <AlertCircle className="h-4 w-4 mr-2 text-gray-400" /> N/A
-                            </SelectItem>
-                          </>
-                        )}
-                        {item.response_type === 'Sim / Não' && (
-                          <>
-                            <SelectItem value="Sim">Sim</SelectItem>
-                            <SelectItem value="Não">Não</SelectItem>
-                            <SelectItem value="N/A">N/A</SelectItem>
-                          </>
-                        )}
-                        {item.response_type === 'Conforme / Não conforme' && (
-                          <>
-                            <SelectItem value="Conforme">Conforme</SelectItem>
-                            <SelectItem value="Não conforme">Não conforme</SelectItem>
-                            <SelectItem value="N/A">N/A</SelectItem>
-                          </>
-                        )}
-                        {item.response_type === 'Numérico' && (
-                          <SelectItem value="Numérico">Informe valor numérico</SelectItem>
-                        )}
-                        {item.response_type === 'Texto' && (
-                          <SelectItem value="Texto">Informe texto</SelectItem>
-                        )}
-                      </SelectContent>
-                    </Select>
-
-                    {response === 'NOK' && (
-                      <div className="md:col-span-2">
-                        <Label className="text-xs text-destructive">Descrição da falha *</Label>
-                        <Textarea
-                          value={itemNotes}
-                          onChange={(e) => handleNotesChange(item.id, e.target.value)}
-                          placeholder="Descreva o problema encontrado (obrigatório para NOK)"
-                          rows={2}
-                          className="border-destructive/50"
-                        />
-                      </div>
-                    )}
-
-                    {response !== 'NOK' && (
-                      <div className="md:col-span-2">
-                        <Label className="text-xs">Observações (opcional)</Label>
-                        <Textarea
-                          value={itemNotes}
-                          onChange={(e) => handleNotesChange(item.id, e.target.value)}
-                          placeholder="Observações adicionais"
-                          rows={2}
-                        />
-                      </div>
-                    )}
-
-                    {consequence && (
-                      <div className="md:col-span-3 p-3 rounded-md bg-destructive/10 border border-destructive/20">
-                        <div className="flex items-center gap-2 text-sm">
-                          <AlertTriangle className="h-4 w-4 text-destructive" />
-                          <span className="font-medium text-destructive">
-                            Consequência: {consequence.result_classification}
-                          </span>
-                          {consequence.blocks_vehicle && (
-                            <Badge variant="destructive" className="ml-2">
-                              Bloqueia Veículo
-                            </Badge>
-                          )}
-                          {consequence.generates_os && (
-                            <Badge variant="default" className="ml-2">
-                              Gera OS
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">{consequence.action}</p>
-                      </div>
+                    {consequence.action && (
+                      <p className="text-xs text-muted-foreground mt-1">{consequence.action}</p>
                     )}
                   </div>
-                </div>
-              )
-            })}
-          </TabsContent>
-        ))}
-      </Tabs>
+                )}
+              </div>
+            </div>
+          )
+        })}
+      </div>
 
-      {/* Navegação inferior */}
-      <div className="flex justify-between pt-4 border-t">
-        <Button variant="outline" onClick={handlePrevious} disabled={activeTabIndex === 0}>
-          Anterior
+      {/* Navegação inferior touch-friendly e fixa/empilhada no mobile */}
+      <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2 pt-4 border-t sticky bottom-0 bg-background/95 backdrop-blur-sm pb-3">
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          onClick={handlePrevious}
+          disabled={activeTabIndex === 0}
+          className="min-h-[48px] text-sm"
+        >
+          Voltar Módulo
         </Button>
-        <div className="flex gap-2">
+        <div>
           {isLastModule ? (
-            <Button onClick={handleSave} disabled={saving} className="w-[200px]">
+            <Button
+              type="button"
+              size="lg"
+              onClick={handleSave}
+              disabled={saving}
+              className="w-full sm:w-[220px] min-h-[48px] text-base font-semibold bg-green-600 hover:bg-green-700 text-white"
+            >
               {saving ? 'Salvando...' : 'Finalizar Inspeção'}
             </Button>
           ) : (
-            <Button onClick={handleNext} className="w-[140px]">
-              Próxima <ChevronRight className="ml-1 h-4 w-4" />
+            <Button
+              type="button"
+              size="lg"
+              onClick={handleNext}
+              className="w-full sm:w-[180px] min-h-[48px] text-base font-semibold"
+            >
+              Próximo Módulo <ChevronRight className="ml-1 h-5 w-5" />
             </Button>
           )}
         </div>

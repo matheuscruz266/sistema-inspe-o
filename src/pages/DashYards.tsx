@@ -4,6 +4,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Package, Warehouse, Truck, DollarSign } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import StockReport from '@/pages/StockReport'
+import { fetchOverdueInspections, OverdueInspection } from '@/services/inspections-overdue'
+import { OverdueInspectionsAlert } from '@/components/OverdueInspectionsAlert'
 
 type YardTotal = {
   yard_id: string | null
@@ -21,6 +23,7 @@ export default function DashYards() {
     totalReceived: 0,
   })
   const [yardTotals, setYardTotals] = useState<YardTotal[]>([])
+  const [overdueInspections, setOverdueInspections] = useState<OverdueInspection[]>([])
 
   useEffect(() => {
     Promise.all([
@@ -35,7 +38,9 @@ export default function DashYards() {
         .eq('is_deleted', false)
         .eq('supplier_type', 'raw_material'),
       supabase.from('patios').select('id, name').eq('is_deleted', false).order('name'),
-    ]).then(([rec, sup, pat]) => {
+      fetchOverdueInspections().catch(() => [] as OverdueInspection[]),
+    ]).then(([rec, sup, pat, overdueList]) => {
+      setOverdueInspections(overdueList)
       const receipts = rec.data || []
       const patios = pat.data || []
       const patioName = (id: string | null) =>
@@ -96,7 +101,19 @@ export default function DashYards() {
 
   return (
     <div className="space-y-6 p-4 md:p-6">
-      <h1 className="text-2xl font-bold">Dash Pátios</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <h1 className="text-2xl font-bold">Dash Pátios</h1>
+      </div>
+
+      {overdueInspections.length > 0 && (
+        <OverdueInspectionsAlert
+          items={overdueInspections}
+          compact
+          title="Atenção no Pátio: Inspeções de Veículos Vencidas"
+          description="Veículos no pátio com inspeção pendente antes de liberar saída"
+        />
+      )}
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {cards.map((c) => {
           const Icon = c.icon

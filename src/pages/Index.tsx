@@ -16,6 +16,8 @@ import {
 } from 'recharts'
 import { Truck, Wrench, ClipboardCheck, AlertTriangle, TrendingUp, DollarSign } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
+import { fetchOverdueInspections, OverdueInspection } from '@/services/inspections-overdue'
+import { OverdueInspectionsAlert } from '@/components/OverdueInspectionsAlert'
 
 const COLORS = [
   'hsl(var(--chart-1))',
@@ -37,21 +39,32 @@ export default function Index() {
     typeData: [] as { name: string; value: number }[],
     topPlates: [] as { plate: string; cost: number }[],
   })
+  const [overdueInspections, setOverdueInspections] = useState<OverdueInspection[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function loadDashboard() {
-      const [vehicles, orders, inspections, stock, plans] = await Promise.all([
+      const [vehicles, orders, inspections, stock, plans, overdueList] = await Promise.all([
         supabase.from('vehicles').select('*'),
         supabase.from('work_orders').select('*').order('created_at', { ascending: false }),
         supabase.from('inspection_plans').select('*'),
         supabase.from('current_stock').select('*'),
         supabase.from('maintenance_plans').select('*'),
+        fetchOverdueInspections().catch((err) => {
+          console.error('Erro ao buscar inspeções vencidas:', err)
+          return [] as OverdueInspection[]
+        }),
       ])
+
+      setOverdueInspections(overdueList)
 
       const vehicleCount = vehicles.data?.length || 0
       const openOrders = orders.data?.filter((o) => o.status !== 'Concluída').length || 0
-      const pendingInspections = inspections.data?.filter((i) => i.status !== 'Em Dia').length || 0
+      // Usa a contagem calculada de inspeções vencidas com fallback para os planos marcados como não "Em Dia"
+      const pendingInspections =
+        overdueList.length > 0
+          ? overdueList.length
+          : inspections.data?.filter((i) => i.status !== 'Em Dia').length || 0
       const lowStockItems =
         stock.data?.filter(
           (s) => parseFloat(String(s.current_balance)) < parseFloat(String(s.min_quantity)),
@@ -173,6 +186,15 @@ export default function Index() {
           Visão geral da gestão de manutenção de frota
         </p>
       </div>
+
+      {/* Banner / Card em Destaque de Inspeções Vencidas */}
+      {overdueInspections.length > 0 && (
+        <OverdueInspectionsAlert
+          items={overdueInspections}
+          title="Alerta: Inspeções de Frota Vencidas"
+          description="Veículos ativos com periodicidade de checklist estourada — clique para executar a inspeção imediatamente."
+        />
+      )}
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {kpis.map((kpi) => {
