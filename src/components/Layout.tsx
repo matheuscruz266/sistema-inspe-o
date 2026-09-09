@@ -43,8 +43,6 @@ function NavItem({
 }
 
 function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
-  const { canPerform, isAdmin } = useAuth()
-  const hasAccess = (screen: string) => isAdmin || canPerform(screen, 'SELECT')
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
   const toggle = (key: string) => setOpenGroups((prev) => ({ ...prev, [key]: !prev[key] }))
   const isOpen = (key: string) => openGroups[key] !== false
@@ -53,11 +51,8 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
     <ScrollArea className="h-full">
       <nav className="space-y-1 p-3">
         {menuGroups.map((group) => {
-          const visible = group.items.filter((i) => hasAccess(i.screen))
-          const visibleSubs = (group.subGroups || []).filter((sg) =>
-            sg.items.some((i) => hasAccess(i.screen)),
-          )
-          if (visible.length === 0 && visibleSubs.length === 0) return null
+          const visible = group.items
+          const visibleSubs = group.subGroups || []
 
           return (
             <Collapsible
@@ -80,8 +75,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                     <NavItem key={item.path} item={item} onNavigate={onNavigate} />
                   ))}
                   {visibleSubs.map((sub) => {
-                    const subVisible = sub.items.filter((i) => hasAccess(i.screen))
-                    if (subVisible.length === 0) return null
+                    const subVisible = sub.items
                     return (
                       <Collapsible
                         key={sub.key}

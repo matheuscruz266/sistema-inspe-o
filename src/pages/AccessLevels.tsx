@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
-import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -19,11 +18,10 @@ import {
   normalizePermissions,
   type PermissionMatrixData,
 } from '@/components/PermissionMatrix'
-import { Plus, Pencil, ShieldX } from 'lucide-react'
+import { Plus, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function AccessLevels() {
-  const { isAdmin } = useAuth()
   const [levels, setLevels] = useState<any[]>([])
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<any>(null)
@@ -81,18 +79,6 @@ export default function AccessLevels() {
     toast.success('Salvo com sucesso')
     setOpen(false)
     fetchData()
-  }
-
-  if (!isAdmin) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3 p-4">
-        <ShieldX className="h-12 w-12 text-destructive" />
-        <h2 className="text-xl font-bold">Acesso Negado</h2>
-        <p className="text-muted-foreground text-center max-w-sm">
-          Apenas administradores podem visualizar e gerenciar níveis de acesso.
-        </p>
-      </div>
-    )
   }
 
   const countScreens = (perms: any): number => {

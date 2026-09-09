@@ -28,18 +28,8 @@ import {
 } from '@/components/ui/table'
 import { Wrench, ClipboardCheck, DollarSign, Pencil, Trash2, RotateCcw } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import { useAuth } from '@/hooks/use-auth'
 import { WorkOrderDialog } from '@/components/WorkOrderDialog'
 import { toast } from 'sonner'
-
-// PCM é identificado pelo nome do nível de acesso contendo "PCM" (case-insensitive)
-// ou por permissões administrativas (isAdmin).
-function isPCMUser(profile: any, isAdmin: boolean): boolean {
-  if (isAdmin) return true
-  const name = profile?.access_levels?.name
-  if (!name) return false
-  return String(name).toUpperCase().includes('PCM')
-}
 
 function shorten(text: string | null | undefined, max = 60): string {
   if (!text) return '-'
@@ -48,8 +38,7 @@ function shorten(text: string | null | undefined, max = 60): string {
 }
 
 export default function History() {
-  const { profile, isAdmin } = useAuth()
-  const canEditClosed = isPCMUser(profile, isAdmin)
+  const canEditClosed = true
   const [vehicles, setVehicles] = useState<any[]>([])
   const [selected, setSelected] = useState<string>('')
   const [events, setEvents] = useState<any[]>([])
@@ -256,10 +245,8 @@ export default function History() {
 
         <TabsContent value="closed" className="space-y-3 mt-4">
           <p className="text-sm text-muted-foreground">
-            Ordens de Serviço encerradas pelo PCM.{' '}
-            {canEditClosed
-              ? 'Você pode editar, reabrir ou excluir definitivamente uma O.S.'
-              : 'Apenas o PCM pode editar, reabrir ou excluir.'}
+            Ordens de Serviço encerradas. Você pode editar, reabrir ou excluir definitivamente uma
+            O.S.
           </p>
           <div className="rounded-md border overflow-x-auto">
             <Table>

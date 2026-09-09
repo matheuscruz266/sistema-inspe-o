@@ -21,66 +21,68 @@ function isScreenNode(value: unknown): boolean {
  * DELETE keys and is not a boolean) is treated as a module and traversed
  * recursively.
  */
-export function normalizeScreensToFlatArray(screens: unknown): string[] {
-  if (!screens) return []
-  if (Array.isArray(screens)) {
-    return screens.filter((s): s is string => typeof s === 'string')
-  }
-  if (typeof screens !== 'object') return []
-
-  const result: string[] = []
-  const walk = (node: Record<string, unknown>) => {
-    for (const [key, value] of Object.entries(node)) {
-      if (isScreenNode(value)) {
-        result.push(key)
-      } else if (value && typeof value === 'object') {
-        walk(value as Record<string, unknown>)
-      }
-    }
-  }
-  walk(screens as Record<string, unknown>)
-  return result
+export function normalizeScreensToFlatArray(_screens: unknown): string[] {
+  // Sem nível de acesso: todas as telas habilitadas para todos os usuários
+  return [
+    'dashboard',
+    'scheduling',
+    'indicators',
+    'kanban',
+    'dash_maintenance',
+    'inspection_agenda',
+    'dashboard_inspecoes',
+    'entries',
+    'non_conformities',
+    'inspection_plans',
+    'maintenance_plans',
+    'service_catalog',
+    'components',
+    'history',
+    'trips',
+    'demands',
+    'clients',
+    'routes',
+    'carrier_contracts',
+    'sales_invoices',
+    'freight_documents',
+    'fuel',
+    'telemetry',
+    'receipts',
+    'yard_payments',
+    'dash_yards',
+    'financial_dashboard',
+    'trip_margin_report',
+    'vehicles',
+    'vehicle_sets',
+    'products',
+    'people',
+    'suppliers',
+    'users',
+    'access_levels',
+    'locations',
+    'asset_owners',
+    'trailer_cargo_profiles',
+    'patios',
+    'stock',
+    'stock_report',
+    'purchasing',
+    'logs',
+    'notifications',
+  ]
 }
 
-export function safeHasScreen(screens: unknown, screen: string): boolean {
-  return normalizeScreensToFlatArray(screens).includes(screen)
+export function safeHasScreen(_screens: unknown, _screen: string): boolean {
+  return true
 }
 
 /**
- * Checks whether a given screen (possibly nested under modules) grants a
- * specific operation. Traverses the tree recursively until it finds a screen
- * node matching `screen`, then checks the operation on it.
+ * Checks whether a given screen grants a specific operation.
+ * Sem nível de acesso: todas as operações liberadas para todos os usuários.
  */
-export function safeHasOperation(screens: unknown, screen: string, operation: string): boolean {
-  if (!screens) return false
-  if (Array.isArray(screens)) {
-    return screens.filter((s): s is string => typeof s === 'string').includes(screen)
-  }
-  if (typeof screens !== 'object') return false
-
-  const findScreen = (node: Record<string, unknown>): unknown => {
-    for (const [key, value] of Object.entries(node)) {
-      if (key === screen && isScreenNode(value)) {
-        return value
-      }
-      if (value && typeof value === 'object' && !isScreenNode(value)) {
-        const found = findScreen(value as Record<string, unknown>)
-        if (found !== undefined) return found
-      }
-    }
-    return undefined
-  }
-
-  const ops = findScreen(screens as Record<string, unknown>)
-  if (ops === undefined) return false
-  if (typeof ops === 'boolean') return ops
-  if (ops && typeof ops === 'object') {
-    return (ops as Record<string, boolean>)[operation] === true
-  }
-  return false
+export function safeHasOperation(_screens: unknown, _screen: string, _operation: string): boolean {
+  return true
 }
 
-export function isPermissionsAdmin(screens: unknown): boolean {
-  const flat = normalizeScreensToFlatArray(screens)
-  return flat.includes('access_levels') || flat.includes('users')
+export function isPermissionsAdmin(_screens: unknown): boolean {
+  return true
 }

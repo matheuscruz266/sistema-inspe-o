@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
-import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -21,12 +20,11 @@ import {
   TableRow,
   TableCell,
 } from '@/components/ui/table'
-import { Plus, Pencil, ShieldX, KeyRound } from 'lucide-react'
+import { Plus, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
 import { resetUserPassword } from '@/services/reset-user-password'
 
 export default function Users() {
-  const { isAdmin } = useAuth()
   const [users, setUsers] = useState<any[]>([])
   const [levels, setLevels] = useState<any[]>([])
   const [open, setOpen] = useState(false)
@@ -150,18 +148,6 @@ export default function Users() {
     setResetTarget(null)
     setResetPassword('')
     setResetConfirm('')
-  }
-
-  if (!isAdmin) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3 p-4">
-        <ShieldX className="h-12 w-12 text-destructive" />
-        <h2 className="text-xl font-bold">Acesso Negado</h2>
-        <p className="text-muted-foreground text-center max-w-sm">
-          Apenas administradores podem visualizar e gerenciar usuários.
-        </p>
-      </div>
-    )
   }
 
   return (

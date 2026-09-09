@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/hooks/use-auth'
 import {
   Select,
   SelectTrigger,
@@ -15,14 +14,12 @@ import { DashTables } from '@/components/DashTables'
 import { Filter, X } from 'lucide-react'
 
 export default function DashMaintenance() {
-  const { permissions } = useAuth()
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [month, setMonth] = useState<string>('')
   const [plate, setPlate] = useState<string>('')
 
   useEffect(() => {
-    if (permissions && !permissions.includes('dash_maintenance')) return
     setLoading(true)
     fetchDashMaintenanceData({
       month: month || undefined,
@@ -31,15 +28,7 @@ export default function DashMaintenance() {
       setData(d)
       setLoading(false)
     })
-  }, [month, plate, permissions])
-
-  if (permissions && !permissions.includes('dash_maintenance')) {
-    return (
-      <div className="p-6 text-muted-foreground">
-        Acesso negado. Você não tem permissão para visualizar esta tela.
-      </div>
-    )
-  }
+  }, [month, plate])
 
   if (loading) return <div className="p-6 text-muted-foreground">Carregando dashboard...</div>
   if (!data) return null

@@ -6,20 +6,8 @@ import { toast } from 'sonner'
 import { KanbanBoard } from '@/components/KanbanBoard'
 import { WorkOrderDialog } from '@/components/WorkOrderDialog'
 import { ExternalOSDialog } from '@/components/ExternalOSDialog'
-import { useAuth } from '@/hooks/use-auth'
-
-// PCM é identificado pelo nome do nível de acesso contendo "PCM" (case-insensitive)
-// ou por permissões administrativas (isAdmin).
-function isPCMUser(profile: any, isAdmin: boolean): boolean {
-  if (isAdmin) return true
-  const name = profile?.access_levels?.name
-  if (!name) return false
-  return String(name).toUpperCase().includes('PCM')
-}
-
 export default function Kanban() {
-  const { profile, isAdmin } = useAuth()
-  const canEncerrar = isPCMUser(profile, isAdmin)
+  const canEncerrar = true
   const [items, setItems] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [woOpen, setWoOpen] = useState(false)

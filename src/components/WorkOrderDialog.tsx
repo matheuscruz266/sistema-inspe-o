@@ -42,14 +42,9 @@ const STATUSES = [
   'Encerrada',
 ]
 
-// PCM é identificado pelo nome do nível de acesso contendo "PCM" (case-insensitive)
-// ou por permissões administrativas (isAdmin).
-// Resiliente a profile undefined/null (ex: durante o carregamento inicial).
-function isPCMUser(profile: any, isAdmin: boolean): boolean {
-  if (isAdmin) return true
-  const name = profile?.access_levels?.name
-  if (!name) return false
-  return String(name).toUpperCase().includes('PCM')
+// Sem níveis de acesso: todas as permissões liberadas
+function isPCMUser(_profile: any, _isAdmin: boolean): boolean {
+  return true
 }
 
 // Nome do nível de acesso do usuário (ex: "PCM", "Mecânico", "Motorista").
@@ -233,7 +228,7 @@ interface Props {
 
 export function WorkOrderDialog({ open, onOpenChange, onSaved, editingId, defaultStatus }: Props) {
   const { profile, isAdmin } = useAuth()
-  const canEditDate = isPCMUser(profile, isAdmin)
+  const canEditDate = true
   const cargoLabel = userCargo(profile)
   const userNome = userName(profile)
   const [woId, setWoId] = useState<string | null>(null)
