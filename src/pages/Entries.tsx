@@ -613,6 +613,7 @@ export function InspectionExecution() {
 
   const [responses, setResponses] = useState<Record<string, { value: string; notes: string }>>({})
   const [activeTabIndex, setActiveTabIndex] = useState(0)
+  const [highlightPendingItemId, setHighlightPendingItemId] = useState<string | null>(null)
 
   // Carrega veículos e planos caso a tela tenha sido aberta sem parâmetros
   useEffect(() => {
@@ -701,6 +702,9 @@ export function InspectionExecution() {
       ...prev,
       [itemId]: { ...prev[itemId], value },
     }))
+    if (highlightPendingItemId === itemId) {
+      setHighlightPendingItemId(null)
+    }
   }
 
   const handleNotesChange = (itemId: string, notes: string) => {
@@ -708,6 +712,9 @@ export function InspectionExecution() {
       ...prev,
       [itemId]: { ...prev[itemId], notes },
     }))
+    if (highlightPendingItemId === itemId && notes.trim()) {
+      setHighlightPendingItemId(null)
+    }
   }
 
   const getConsequenceForItem = (itemId: string, responseValue: string) => {
@@ -725,46 +732,307 @@ export function InspectionExecution() {
     )
   }
 
-  // Agrupa itens por módulo (primeira parte antes de " — ")
-  const groupedItems = items.reduce(
-    (acc, item) => {
-      const module = item.item.includes(' — ') ? item.item.split(' — ')[0] : 'Geral'
-      if (!acc[module]) acc[module] = []
-      acc[module].push(item)
-      return acc
-    },
-    {} as Record<string, InspectionPlanItem[]>,
-  )
+  // Categorização técnica por palavra-chave dos módulos fixos
+  const TECHNICAL_MODULE_ORDER = [
+    'Motor e Arrefecimento',
+    'Transmissão',
+    'Freios',
+    'Suspensão e Amortecedores',
+    'Direção',
+    'Rodas e Pneus',
+    'Elétrica',
+    'Estrutura / Carroceria',
+    'Sistema Hidráulico',
+    'Segurança e Cabine',
+    'Diversos',
+  ] as const
 
-  const modules = Object.keys(groupedItems)
+  const categorizeInspectionItem = (itemText: string): string => {
+    const normalized = (itemText || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+
+    // 9. Sistema Hidráulico (prioridade alta para evitar conflito com termos genéricos)
+    if (
+      normalized.includes('hidraul') ||
+      normalized.includes('distribuidor') ||
+      normalized.includes('filtro de retorno') ||
+      normalized.includes('tempo de ciclo') ||
+      normalized.includes('cilindro') ||
+      normalized.includes('ruido da bomba') ||
+      normalized.includes('bomba do equipamento') ||
+      normalized.includes('bomba hidraulica do equipamento')
+    ) {
+      return 'Sistema Hidráulico'
+    }
+
+    // 1. Motor e Arrefecimento
+    if (
+      normalized.includes('correia') ||
+      normalized.includes('turbo') ||
+      normalized.includes('turbocompressor') ||
+      normalized.includes('coxins do motor') ||
+      normalized.includes('carter') ||
+      normalized.includes('oleo do motor') ||
+      normalized.includes('filtro de ar') ||
+      normalized.includes('filtro de oleo') ||
+      normalized.includes('filtro de combustivel') ||
+      normalized.includes('combustivel') ||
+      normalized.includes('escapamento') ||
+      normalized.includes('arrefecimento') ||
+      normalized.includes('radiador') ||
+      normalized.includes('anticongelante') ||
+      normalized.includes('resistor') ||
+      normalized.includes('mangueiras do motor')
+    ) {
+      return 'Motor e Arrefecimento'
+    }
+
+    // 2. Transmissão
+    if (
+      normalized.includes('caixa de cambio') ||
+      normalized.includes('cambio') ||
+      normalized.includes('cardan') ||
+      normalized.includes('carda') ||
+      normalized.includes('diferencial') ||
+      normalized.includes('cruzeta') ||
+      normalized.includes('pto') ||
+      normalized.includes('tomada de forca') ||
+      normalized.includes('lubrificacao')
+    ) {
+      return 'Transmissão'
+    }
+
+    // 3. Freios
+    if (
+      normalized.includes('pedais') ||
+      normalized.includes('freio motor') ||
+      normalized.includes('freio de estacionamento') ||
+      normalized.includes('catraca') ||
+      normalized.includes('lona') ||
+      normalized.includes('tambor') ||
+      normalized.includes('mangueiras de freio') ||
+      normalized.includes('mangueiras flexiveis') ||
+      normalized.includes('mangueiras pneumaticas') ||
+      normalized.includes('abs') ||
+      normalized.includes('ebs') ||
+      normalized.includes('reservatorio de ar') ||
+      normalized.includes('cuica') ||
+      normalized.includes('compressor de ar') ||
+      normalized.includes('maos de amigo') ||
+      normalized.includes('freio')
+    ) {
+      return 'Freios'
+    }
+
+    // 4. Suspensão e Amortecedores
+    if (
+      normalized.includes('mola') ||
+      normalized.includes('feixe') ||
+      normalized.includes('amortecedor') ||
+      normalized.includes('balancim') ||
+      normalized.includes('balancins') ||
+      normalized.includes('batente de borracha') ||
+      normalized.includes('suspensao') ||
+      normalized.includes('bolsas de ar') ||
+      normalized.includes('eixo de levantamento') ||
+      normalized.includes('altura do veiculo')
+    ) {
+      return 'Suspensão e Amortecedores'
+    }
+
+    // 5. Direção
+    if (
+      normalized.includes('volante') ||
+      normalized.includes('bomba de direcao') ||
+      normalized.includes('caixa de direcao') ||
+      normalized.includes('terminais de direcao') ||
+      normalized.includes('pivos') ||
+      normalized.includes('pivo') ||
+      normalized.includes('barra pitman') ||
+      normalized.includes('barra estabilizadora') ||
+      normalized.includes('direcao')
+    ) {
+      return 'Direção'
+    }
+
+    // 6. Rodas e Pneus
+    if (
+      normalized.includes('cubo') ||
+      normalized.includes('porca') ||
+      normalized.includes('roda') ||
+      normalized.includes('pneu') ||
+      normalized.includes('rodagem')
+    ) {
+      return 'Rodas e Pneus'
+    }
+
+    // 7. Elétrica
+    if (
+      normalized.includes('farol') ||
+      normalized.includes('farois') ||
+      normalized.includes('luz de freio') ||
+      normalized.includes('luzes') ||
+      normalized.includes('seta') ||
+      normalized.includes('painel') ||
+      normalized.includes('bateria') ||
+      normalized.includes('alternador') ||
+      normalized.includes('chicote') ||
+      normalized.includes('tomada') ||
+      normalized.includes('7 pinos') ||
+      normalized.includes('sensor') ||
+      normalized.includes('alarme') ||
+      normalized.includes('buzzer') ||
+      normalized.includes('lanterna') ||
+      normalized.includes('iluminacao')
+    ) {
+      return 'Elétrica'
+    }
+
+    // 8. Estrutura / Carroceria
+    if (
+      normalized.includes('travessa') ||
+      normalized.includes('para-choque') ||
+      normalized.includes('parachoque') ||
+      normalized.includes('para-lama') ||
+      normalized.includes('paralama') ||
+      normalized.includes('para-barro') ||
+      normalized.includes('parabarro') ||
+      normalized.includes('quinta roda') ||
+      normalized.includes('pino rei') ||
+      normalized.includes('reaperto') ||
+      normalized.includes('lona sombrite') ||
+      normalized.includes('sombrite') ||
+      normalized.includes('tubo enrolador') ||
+      normalized.includes('disco ou chapa de friccao') ||
+      normalized.includes('friccao') ||
+      normalized.includes('regua') ||
+      normalized.includes('piso') ||
+      normalized.includes('protetor lateral') ||
+      normalized.includes('batente de doca') ||
+      normalized.includes('porta') ||
+      normalized.includes('portinhola') ||
+      normalized.includes('estrutura')
+    ) {
+      return 'Estrutura / Carroceria'
+    }
+
+    // 10. Segurança e Cabine
+    if (
+      normalized.includes('cinto') ||
+      normalized.includes('assento') ||
+      normalized.includes('vidro') ||
+      normalized.includes('espelho') ||
+      normalized.includes('sirene') ||
+      normalized.includes('limpador') ||
+      normalized.includes('ar-condicionado') ||
+      normalized.includes('aquecimento') ||
+      normalized.includes('tacografo') ||
+      normalized.includes('retrovisor') ||
+      normalized.includes('cabine')
+    ) {
+      return 'Segurança e Cabine'
+    }
+
+    return 'Diversos'
+  }
+
+  // Agrupa itens por módulos técnicos na ordem fixa definida
+  const groupedItems = useMemo(() => {
+    const rawGroups: Record<string, InspectionPlanItem[]> = {}
+    items.forEach((item) => {
+      const moduleName = categorizeInspectionItem(item.item)
+      if (!rawGroups[moduleName]) rawGroups[moduleName] = []
+      rawGroups[moduleName].push(item)
+    })
+
+    const orderedGroups: Record<string, InspectionPlanItem[]> = {}
+    TECHNICAL_MODULE_ORDER.forEach((m) => {
+      if (rawGroups[m] && rawGroups[m].length > 0) {
+        orderedGroups[m] = rawGroups[m]
+      }
+    })
+
+    // Adiciona módulos eventuais extras se existirem (preserva integridade de dados)
+    Object.keys(rawGroups).forEach((k) => {
+      if (!orderedGroups[k] && rawGroups[k]?.length > 0) {
+        orderedGroups[k] = rawGroups[k]
+      }
+    })
+
+    return orderedGroups
+  }, [items])
+
+  const modules = useMemo(() => Object.keys(groupedItems), [groupedItems])
+
   const validateCurrentModule = () => {
     const currentModule = modules[activeTabIndex]
-    if (!currentModule) return []
-    const moduleItems = groupedItems[currentModule]
+    if (!currentModule) return { errors: [], firstInvalidItemId: null }
+    const moduleItems = groupedItems[currentModule] || []
     const errors: string[] = []
+    let firstInvalidItemId: string | null = null
+
     moduleItems.forEach((item) => {
       const response = responses[item.id]?.value
       if (!response) {
         errors.push(`Item ${item.sequence}: ${item.item} - resposta obrigatória`)
+        if (!firstInvalidItemId) firstInvalidItemId = item.id
       } else if (response === 'NOK' && !responses[item.id]?.notes?.trim()) {
         errors.push(`Item ${item.sequence}: ${item.item} - descrição da falha obrigatória para NOK`)
+        if (!firstInvalidItemId) firstInvalidItemId = item.id
       }
     })
-    return errors
+    return { errors, firstInvalidItemId }
+  }
+
+  const handleModuleClick = (targetIdx: number) => {
+    if (targetIdx <= activeTabIndex) {
+      // Voltar para módulos anteriores continua livre
+      setActiveTabIndex(targetIdx)
+      setHighlightPendingItemId(null)
+      return
+    }
+
+    // Clicar em um módulo à frente (índice maior que o atual) só funciona se o módulo atual estiver 100% respondido
+    const { errors, firstInvalidItemId } = validateCurrentModule()
+    if (errors.length > 0) {
+      toast.error(errors.join('; '))
+      if (firstInvalidItemId) {
+        setHighlightPendingItemId(firstInvalidItemId)
+        const el = document.getElementById(`inspection-item-${firstInvalidItemId}`)
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+      }
+      return
+    }
+
+    setActiveTabIndex(targetIdx)
+    setHighlightPendingItemId(null)
   }
 
   const handleNext = () => {
-    const errors = validateCurrentModule()
+    const { errors, firstInvalidItemId } = validateCurrentModule()
     if (errors.length > 0) {
       toast.error(errors.join('; '))
+      if (firstInvalidItemId) {
+        setHighlightPendingItemId(firstInvalidItemId)
+        const el = document.getElementById(`inspection-item-${firstInvalidItemId}`)
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+      }
       return
     }
+    setHighlightPendingItemId(null)
     if (activeTabIndex < modules.length - 1) {
       setActiveTabIndex((prev) => prev + 1)
     }
   }
 
   const handlePrevious = () => {
+    setHighlightPendingItemId(null)
     if (activeTabIndex > 0) {
       setActiveTabIndex((prev) => prev - 1)
     }
@@ -775,18 +1043,38 @@ export function InspectionExecution() {
   const handleSave = async () => {
     // Valida todos os módulos antes de finalizar
     const allErrors: string[] = []
+    let firstInvalidItemId: string | null = null
     items.forEach((item) => {
       const response = responses[item.id]?.value
       if (!response) {
         allErrors.push(`Item ${item.sequence}: ${item.item} - resposta obrigatória`)
+        if (!firstInvalidItemId) firstInvalidItemId = item.id
       } else if (response === 'NOK' && !responses[item.id]?.notes?.trim()) {
         allErrors.push(
           `Item ${item.sequence}: ${item.item} - descrição da falha obrigatória para NOK`,
         )
+        if (!firstInvalidItemId) firstInvalidItemId = item.id
       }
     })
     if (allErrors.length > 0) {
       toast.error(allErrors.join('; '))
+      if (firstInvalidItemId) {
+        setHighlightPendingItemId(firstInvalidItemId)
+        // Se o item estiver em outro módulo, navega até o módulo correspondente
+        for (let idx = 0; idx < modules.length; idx++) {
+          const m = modules[idx]
+          if (groupedItems[m]?.some((i) => i.id === firstInvalidItemId)) {
+            setActiveTabIndex(idx)
+            break
+          }
+        }
+        setTimeout(() => {
+          const el = document.getElementById(`inspection-item-${firstInvalidItemId}`)
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          }
+        }, 100)
+      }
       return
     }
 
@@ -1021,13 +1309,15 @@ export function InspectionExecution() {
               <button
                 type="button"
                 key={module}
-                onClick={() => setActiveTabIndex(idx)}
+                onClick={() => handleModuleClick(idx)}
                 className={`flex items-center gap-2 shrink-0 px-3 py-2 rounded-lg text-left text-xs font-medium border transition-colors touch-manipulation min-h-[44px] ${
                   isCurrent
                     ? 'border-primary bg-primary/10 text-primary font-semibold ring-1 ring-primary'
                     : isCompleted
                       ? 'border-green-500/40 bg-green-500/10 text-green-700 dark:text-green-400'
-                      : 'border-border bg-card text-muted-foreground hover:bg-muted'
+                      : idx > activeTabIndex
+                        ? 'border-border bg-card text-muted-foreground hover:bg-muted opacity-90'
+                        : 'border-border bg-card text-muted-foreground hover:bg-muted'
                 }`}
               >
                 <div
@@ -1071,17 +1361,22 @@ export function InspectionExecution() {
           const isCritical = isItemCritical(item.id)
           const consequence = getConsequenceForItem(item.id, response)
 
+          const isPendingHighlight = highlightPendingItemId === item.id
+
           return (
             <div
+              id={`inspection-item-${item.id}`}
               key={item.id}
-              className={`rounded-lg border p-4 sm:p-5 transition-colors shadow-sm bg-card ${
-                isCritical
-                  ? 'border-destructive/60 bg-destructive/5'
-                  : response === 'NOK' || response === 'Não' || response === 'Não conforme'
-                    ? 'border-red-500/40 bg-red-500/5'
-                    : response === 'OK' || response === 'Sim' || response === 'Conforme'
-                      ? 'border-green-500/30'
-                      : 'border-border'
+              className={`rounded-lg border p-4 sm:p-5 transition-all shadow-sm bg-card ${
+                isPendingHighlight
+                  ? 'ring-2 ring-destructive border-destructive bg-destructive/5'
+                  : isCritical
+                    ? 'border-destructive/60 bg-destructive/5'
+                    : response === 'NOK' || response === 'Não' || response === 'Não conforme'
+                      ? 'border-red-500/40 bg-red-500/5'
+                      : response === 'OK' || response === 'Sim' || response === 'Conforme'
+                        ? 'border-green-500/30'
+                        : 'border-border'
               }`}
             >
               <div className="flex items-start gap-3">
