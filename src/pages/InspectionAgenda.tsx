@@ -37,6 +37,9 @@ import {
   ListOrdered,
   ArrowRight,
   Sparkles,
+  Inbox,
+  FilterX,
+  Truck,
 } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import {
@@ -264,76 +267,155 @@ export default function InspectionAgenda() {
       </div>
 
       {/* Cards de Métricas / Contadores no topo */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* Vencidas */}
         <div
+          role="button"
+          tabIndex={0}
           onClick={() => setStatusFilter(statusFilter === 'overdue' ? 'ALL' : 'overdue')}
-          className={`rounded-lg border p-3.5 transition-all cursor-pointer shadow-sm ${
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              setStatusFilter(statusFilter === 'overdue' ? 'ALL' : 'overdue')
+            }
+          }}
+          className={`group relative overflow-hidden rounded-xl border p-4 transition-all duration-200 cursor-pointer shadow-xs select-none ${
             statusFilter === 'overdue'
-              ? 'border-red-500 bg-red-500/10 ring-2 ring-red-500'
-              : 'border-border bg-card hover:border-red-400'
+              ? 'border-red-500 bg-red-50/80 dark:bg-red-950/40 ring-2 ring-red-500 shadow-md'
+              : 'border-border bg-card hover:border-red-300 dark:hover:border-red-900/60 hover:shadow-sm'
           }`}
         >
+          <div className="absolute top-0 left-0 right-0 h-1 bg-red-500 rounded-t-xl" />
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-muted-foreground">Vencidas</span>
-            <ShieldAlert className="h-4 w-4 text-red-600 dark:text-red-400" />
+            <span className="text-xs font-semibold text-muted-foreground tracking-wide uppercase">
+              Vencidas
+            </span>
+            <div className="h-7 w-7 rounded-lg bg-red-100 dark:bg-red-950/60 flex items-center justify-center text-red-600 dark:text-red-400 shrink-0">
+              <ShieldAlert className="h-4 w-4" />
+            </div>
           </div>
-          <p className="text-2xl font-bold mt-1 text-red-600 dark:text-red-400">
-            {summary.overdueCount}
+          <div className="mt-2 flex items-baseline gap-1.5">
+            <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-red-600 dark:text-red-400">
+              {summary.overdueCount}
+            </span>
+            <span className="text-xs text-muted-foreground font-medium">veículos</span>
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-1 line-clamp-1">
+            Requerem inspeção imediata
           </p>
-          <span className="text-[11px] text-muted-foreground">Requerem inspeção imediata</span>
         </div>
 
+        {/* Vence Hoje */}
         <div
+          role="button"
+          tabIndex={0}
           onClick={() => setStatusFilter(statusFilter === 'due_today' ? 'ALL' : 'due_today')}
-          className={`rounded-lg border p-3.5 transition-all cursor-pointer shadow-sm ${
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              setStatusFilter(statusFilter === 'due_today' ? 'ALL' : 'due_today')
+            }
+          }}
+          className={`group relative overflow-hidden rounded-xl border p-4 transition-all duration-200 cursor-pointer shadow-xs select-none ${
             statusFilter === 'due_today'
-              ? 'border-amber-500 bg-amber-500/10 ring-2 ring-amber-500'
-              : 'border-border bg-card hover:border-amber-400'
+              ? 'border-amber-500 bg-amber-50/80 dark:bg-amber-950/40 ring-2 ring-amber-500 shadow-md'
+              : 'border-border bg-card hover:border-amber-300 dark:hover:border-amber-900/60 hover:shadow-sm'
           }`}
         >
+          <div className="absolute top-0 left-0 right-0 h-1 bg-amber-500 rounded-t-xl" />
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-muted-foreground">Vence Hoje</span>
-            <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            <span className="text-xs font-semibold text-muted-foreground tracking-wide uppercase">
+              Vence Hoje
+            </span>
+            <div className="h-7 w-7 rounded-lg bg-amber-100 dark:bg-amber-950/60 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
+              <Clock className="h-4 w-4" />
+            </div>
           </div>
-          <p className="text-2xl font-bold mt-1 text-amber-600 dark:text-amber-400">
-            {summary.dueTodayCount}
+          <div className="mt-2 flex items-baseline gap-1.5">
+            <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-amber-600 dark:text-amber-400">
+              {summary.dueTodayCount}
+            </span>
+            <span className="text-xs text-muted-foreground font-medium">veículos</span>
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-1 line-clamp-1">
+            Programadas para o dia
           </p>
-          <span className="text-[11px] text-muted-foreground">Previsão no dia de hoje</span>
         </div>
 
+        {/* Próximos 7 Dias */}
         <div
+          role="button"
+          tabIndex={0}
           onClick={() => {
-            // Filtrar próximos 7 dias
             setStatusFilter('ALL')
             setAgendaOffsetDays(0)
             setAgendaDaysWindow(14)
           }}
-          className="rounded-lg border p-3.5 transition-all cursor-pointer shadow-sm border-border bg-card hover:border-primary/50"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              setStatusFilter('ALL')
+              setAgendaOffsetDays(0)
+              setAgendaDaysWindow(14)
+            }
+          }}
+          className="group relative overflow-hidden rounded-xl border p-4 transition-all duration-200 cursor-pointer shadow-xs select-none border-border bg-card hover:border-blue-300 dark:hover:border-blue-900/60 hover:shadow-sm"
         >
+          <div className="absolute top-0 left-0 right-0 h-1 bg-blue-500 rounded-t-xl" />
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-muted-foreground">Próximos 7 Dias</span>
-            <CalendarDays className="h-4 w-4 text-primary" />
+            <span className="text-xs font-semibold text-muted-foreground tracking-wide uppercase">
+              Próximos 7 Dias
+            </span>
+            <div className="h-7 w-7 rounded-lg bg-blue-100 dark:bg-blue-950/60 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+              <CalendarDays className="h-4 w-4" />
+            </div>
           </div>
-          <p className="text-2xl font-bold mt-1 text-primary">{summary.next7DaysCount}</p>
-          <span className="text-[11px] text-muted-foreground">A vencer na próxima semana</span>
+          <div className="mt-2 flex items-baseline gap-1.5">
+            <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-blue-600 dark:text-blue-400">
+              {summary.next7DaysCount}
+            </span>
+            <span className="text-xs text-muted-foreground font-medium">veículos</span>
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-1 line-clamp-1">
+            A vencer na próxima semana
+          </p>
         </div>
 
+        {/* Sem Registro */}
         <div
+          role="button"
+          tabIndex={0}
           onClick={() => setStatusFilter(statusFilter === 'no_record' ? 'ALL' : 'no_record')}
-          className={`rounded-lg border p-3.5 transition-all cursor-pointer shadow-sm ${
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              setStatusFilter(statusFilter === 'no_record' ? 'ALL' : 'no_record')
+            }
+          }}
+          className={`group relative overflow-hidden rounded-xl border p-4 transition-all duration-200 cursor-pointer shadow-xs select-none ${
             statusFilter === 'no_record'
-              ? 'border-slate-500 bg-slate-500/10 ring-2 ring-slate-500'
-              : 'border-border bg-card hover:border-slate-400'
+              ? 'border-slate-500 bg-slate-50/80 dark:bg-slate-900/50 ring-2 ring-slate-500 shadow-md'
+              : 'border-border bg-card hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-sm'
           }`}
         >
+          <div className="absolute top-0 left-0 right-0 h-1 bg-slate-400 rounded-t-xl" />
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-muted-foreground">Sem Registro</span>
-            <HelpCircle className="h-4 w-4 text-muted-foreground" />
+            <span className="text-xs font-semibold text-muted-foreground tracking-wide uppercase">
+              Sem Registro
+            </span>
+            <div className="h-7 w-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 shrink-0">
+              <HelpCircle className="h-4 w-4" />
+            </div>
           </div>
-          <p className="text-2xl font-bold mt-1 text-muted-foreground">{summary.noRecordCount}</p>
-          <span className="text-[11px] text-muted-foreground">
+          <div className="mt-2 flex items-baseline gap-1.5">
+            <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-700 dark:text-slate-300">
+              {summary.noRecordCount}
+            </span>
+            <span className="text-xs text-muted-foreground font-medium">veículos</span>
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-1 line-clamp-1">
             Nunca inspecionados para o plano
-          </span>
+          </p>
         </div>
       </div>
 
@@ -508,26 +590,35 @@ export default function InspectionAgenda() {
         <TabsContent value="agenda" className="space-y-4">
           {/* Seção de Vencidas Anteriores ou Sem Registro para dar destaque imediato */}
           {itemsByDay.overdueBefore.length > 0 && (
-            <Card className="border-red-300 bg-red-50/50 dark:bg-red-950/20 dark:border-red-900/60 shadow-sm">
-              <CardHeader className="p-3 sm:p-4 pb-2">
-                <div className="flex items-center justify-between">
+            <Card className="border-red-300/80 bg-red-50/60 dark:bg-red-950/25 dark:border-red-900/60 shadow-sm overflow-hidden">
+              <CardHeader className="p-3.5 sm:p-4 pb-2.5 bg-red-100/50 dark:bg-red-950/40 border-b border-red-200/60 dark:border-red-900/40">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <ShieldAlert className="h-4 w-4 text-red-600 dark:text-red-400" />
-                    <CardTitle className="text-sm font-bold text-red-900 dark:text-red-200">
-                      Atenção: {itemsByDay.overdueBefore.length} inspeções vencidas ou sem registro
-                      anterior à janela
-                    </CardTitle>
+                    <div className="h-7 w-7 rounded-lg bg-red-600 text-white flex items-center justify-center shrink-0">
+                      <ShieldAlert className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-sm sm:text-base font-bold text-red-900 dark:text-red-200">
+                        {itemsByDay.overdueBefore.length}{' '}
+                        {itemsByDay.overdueBefore.length === 1
+                          ? 'inspeção vencida anterior à janela'
+                          : 'inspeções vencidas anteriores à janela'}
+                      </CardTitle>
+                      <CardDescription className="text-xs text-red-700 dark:text-red-300/80 mt-0.5">
+                        Veículos que ultrapassaram a data limite da rotina e requerem vistoria antes
+                        de rodar.
+                      </CardDescription>
+                    </div>
                   </div>
-                  <Badge variant="destructive" className="text-xs">
-                    Urgente
+                  <Badge
+                    variant="destructive"
+                    className="text-xs font-semibold self-start sm:self-auto shrink-0 animate-pulse"
+                  >
+                    Ação Imediata
                   </Badge>
                 </div>
-                <CardDescription className="text-xs text-red-700 dark:text-red-300/80">
-                  Estes veículos já ultrapassaram a periodicidade permitida e devem ser
-                  inspecionados antes de liberar a rota.
-                </CardDescription>
               </CardHeader>
-              <CardContent className="p-3 sm:p-4 pt-1">
+              <CardContent className="p-3 sm:p-4 pt-3">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
                   {itemsByDay.overdueBefore.slice(0, 6).map((item) => (
                     <AgendaItemCard
@@ -538,10 +629,12 @@ export default function InspectionAgenda() {
                   ))}
                 </div>
                 {itemsByDay.overdueBefore.length > 6 && (
-                  <p className="text-xs text-center text-muted-foreground mt-2">
-                    E mais {itemsByDay.overdueBefore.length - 6} pendências — veja a Lista Completa
-                    para conferir todas.
-                  </p>
+                  <div className="pt-2 text-center">
+                    <p className="text-xs text-muted-foreground">
+                      E mais <strong>{itemsByDay.overdueBefore.length - 6}</strong> pendências —
+                      consulte a aba <strong>Lista Completa</strong> para ver todos os veículos.
+                    </p>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -550,16 +643,20 @@ export default function InspectionAgenda() {
           {/* Grid de Dias da Agenda: no Desktop colunas/dias, no Mobile lista vertical touch-friendly */}
           <div className="space-y-3">
             <div className="text-xs font-semibold text-muted-foreground flex items-center justify-between px-1">
-              <span>
-                Janela exibida:{' '}
-                <strong className="text-foreground">
-                  {agendaDates[0]?.formattedShort} até{' '}
-                  {agendaDates[agendaDates.length - 1]?.formattedShort}
-                </strong>{' '}
-                ({agendaDaysWindow} dias)
+              <span className="flex items-center gap-1.5">
+                <CalendarDays className="h-3.5 w-3.5 text-primary" />
+                <span>
+                  Janela exibida:{' '}
+                  <strong className="text-foreground">
+                    {agendaDates[0]?.formattedShort} até{' '}
+                    {agendaDates[agendaDates.length - 1]?.formattedShort}
+                  </strong>{' '}
+                  ({agendaDaysWindow} dias)
+                </span>
               </span>
-              <span className="hidden sm:inline">
-                Dica: clique em Executar para iniciar o checklist
+              <span className="hidden sm:inline text-[11px] text-muted-foreground/80">
+                Toque em <strong className="text-foreground">Executar Inspeção</strong> para abrir o
+                checklist
               </span>
             </div>
 
@@ -575,41 +672,59 @@ export default function InspectionAgenda() {
                 return (
                   <div
                     key={day.ymd}
-                    className={`rounded-lg border transition-all flex flex-col bg-card shadow-sm overflow-hidden ${
+                    className={`rounded-xl border transition-all duration-150 flex flex-col bg-card shadow-xs overflow-hidden ${
                       day.isToday
-                        ? 'border-amber-400 bg-amber-50/20 dark:bg-amber-950/20 ring-1 ring-amber-400'
+                        ? 'border-amber-400 bg-amber-50/20 dark:bg-amber-950/20 ring-2 ring-amber-400/80 shadow-sm'
                         : hasOverdueOrToday
                           ? 'border-red-300 dark:border-red-900/60'
-                          : 'border-border'
-                    } ${isSelected ? 'ring-2 ring-primary' : ''}`}
+                          : 'border-border/90 hover:border-border'
+                    } ${isSelected ? 'ring-2 ring-primary shadow-md' : ''}`}
                   >
                     {/* Cabeçalho do Dia */}
                     <div
+                      role="button"
+                      tabIndex={0}
                       onClick={() => setSelectedDayKey(isSelected ? null : day.ymd)}
-                      className={`p-2.5 border-b cursor-pointer select-none transition-colors flex items-center justify-between ${
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          setSelectedDayKey(isSelected ? null : day.ymd)
+                        }
+                      }}
+                      className={`p-2.5 sm:p-2 sm:px-2.5 border-b cursor-pointer select-none transition-colors flex items-center justify-between ${
                         day.isToday
-                          ? 'bg-amber-100/70 dark:bg-amber-950/50 text-amber-900 dark:text-amber-200 font-semibold'
+                          ? 'bg-amber-100/80 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 font-semibold'
                           : 'bg-muted/40 hover:bg-muted/70 text-foreground'
                       }`}
                     >
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-bold text-sm">{day.dayOfWeek}</span>
-                        <span className="text-xs text-muted-foreground">{day.formattedShort}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-sm tracking-tight">{day.dayOfWeek}</span>
+                        <span className="text-xs text-muted-foreground font-mono">
+                          {day.formattedShort}
+                        </span>
                       </div>
 
                       <div className="flex items-center gap-1">
                         {day.isToday && (
                           <Badge
                             variant="outline"
-                            className="text-[10px] font-bold border-amber-500 text-amber-700 dark:text-amber-300"
+                            className="text-[10px] h-5 px-1.5 font-bold border-amber-500 bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
                           >
                             Hoje
                           </Badge>
                         )}
                         <Badge
-                          variant={dayItems.length > 0 ? 'secondary' : 'outline'}
-                          className={`text-[11px] h-5 px-1.5 min-w-[20px] justify-center ${
-                            dayItems.length > 0 ? 'font-bold' : 'text-muted-foreground opacity-60'
+                          variant={
+                            dayItems.length > 0
+                              ? day.isToday
+                                ? 'default'
+                                : 'secondary'
+                              : 'outline'
+                          }
+                          className={`text-[11px] h-5 px-1.5 min-w-[22px] justify-center ${
+                            dayItems.length > 0
+                              ? 'font-bold'
+                              : 'text-muted-foreground/60 opacity-60'
                           }`}
                         >
                           {dayItems.length}
@@ -618,11 +733,12 @@ export default function InspectionAgenda() {
                     </div>
 
                     {/* Lista de Itens do Dia */}
-                    <div className="p-2 space-y-2 flex-1 min-h-[100px] flex flex-col justify-start">
+                    <div className="p-2 space-y-2 flex-1 min-h-[90px] flex flex-col justify-start">
                       {dayItems.length === 0 ? (
-                        <div className="flex-1 flex items-center justify-center py-4 text-center">
+                        <div className="flex-1 flex flex-col items-center justify-center py-5 text-center">
+                          <CheckCircle2 className="h-4 w-4 text-muted-foreground/30 mb-1" />
                           <span className="text-[11px] text-muted-foreground/60 italic">
-                            Nenhum checklist previsto
+                            Sem previsão
                           </span>
                         </div>
                       ) : (
@@ -641,6 +757,27 @@ export default function InspectionAgenda() {
               })}
             </div>
           </div>
+
+          {/* Estado vazio quando não houver itens na janela inteira e nem pendências */}
+          {filteredItems.length === 0 && (
+            <div className="rounded-xl border border-dashed p-8 text-center bg-card">
+              <Inbox className="h-10 w-10 text-muted-foreground/40 mx-auto mb-2" />
+              <h3 className="text-base font-semibold">Nenhuma inspeção encontrada</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
+                Não há checklists agendados para os filtros atuais. Experimente limpar ou ajustar os
+                filtros.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleResetFilters}
+                className="mt-4 text-xs gap-1.5"
+              >
+                <FilterX className="h-3.5 w-3.5" />
+                Limpar Filtros
+              </Button>
+            </div>
+          )}
         </TabsContent>
 
         {/* TAB 2: VISÃO LISTA COMPLETA (TABELA ORDENADA) */}
@@ -760,7 +897,7 @@ function AgendaItemCard({ item, compact = false, onExecute }: AgendaItemCardProp
 
   return (
     <div
-      className={`rounded-md border p-2.5 transition-all text-xs flex flex-col justify-between gap-2 shadow-xs ${
+      className={`rounded-lg border p-3 transition-all text-xs flex flex-col justify-between gap-2.5 shadow-2xs hover:shadow-xs ${
         isOverdue
           ? 'bg-red-50/70 dark:bg-red-950/30 border-red-200 dark:border-red-900/60'
           : isToday
@@ -770,27 +907,33 @@ function AgendaItemCard({ item, compact = false, onExecute }: AgendaItemCardProp
               : 'bg-card border-border hover:border-primary/40'
       }`}
     >
-      <div className="space-y-1">
-        <div className="flex items-center justify-between gap-1 flex-wrap">
-          <span className="font-mono font-bold text-xs sm:text-sm tracking-tight px-1.5 py-0.5 rounded bg-background border">
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between gap-1.5">
+          <span className="font-mono font-bold text-xs sm:text-sm tracking-wide px-2 py-0.5 rounded-md bg-background border shadow-2xs text-foreground">
             {item.plate}
           </span>
           {getStatusBadge(item, true)}
         </div>
 
-        <div className="pt-0.5">
-          <p className="font-semibold text-xs leading-snug line-clamp-1">{item.planCode}</p>
-          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground pt-0.5">
-            <span>{item.vehicleType}</span>
-            <span>•</span>
-            <span>{item.periodicity}</span>
+        <div>
+          <p
+            className="font-bold text-xs leading-snug line-clamp-1 text-foreground"
+            title={item.planCode}
+          >
+            {item.planCode}
+          </p>
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground pt-0.5 truncate">
+            <span className="truncate">{item.vehicleType}</span>
+            <span className="text-muted-foreground/50">•</span>
+            <span className="shrink-0">{item.periodicity}</span>
           </div>
         </div>
 
         {!compact && (
-          <div className="pt-1 text-[11px] text-muted-foreground border-t mt-1.5 flex flex-col gap-0.5">
-            <span>
-              Última: {item.lastInspectionDate ? formatDate(item.lastInspectionDate) : 'Nunca'}
+          <div className="pt-1.5 text-[11px] text-muted-foreground border-t mt-1.5 flex flex-col gap-0.5">
+            <span className="truncate">
+              Última:{' '}
+              {item.lastInspectionDate ? formatDate(item.lastInspectionDate) : 'Nunca inspecionado'}
             </span>
             <span className="font-medium text-foreground">
               Vencimento: {formatDate(item.nextDueDate)}
@@ -799,19 +942,19 @@ function AgendaItemCard({ item, compact = false, onExecute }: AgendaItemCardProp
         )}
       </div>
 
-      <div className="pt-1">
+      <div className="pt-0.5">
         <Button
           size="sm"
           onClick={onExecute}
-          className={`w-full text-xs font-medium gap-1.5 min-h-[38px] touch-manipulation shadow-xs ${
+          className={`w-full text-xs font-semibold gap-1.5 min-h-[44px] touch-manipulation shadow-xs active:scale-[0.99] transition-transform ${
             isOverdue
-              ? 'bg-red-600 hover:bg-red-700 text-white'
+              ? 'bg-red-600 hover:bg-red-700 text-white shadow-red-600/20'
               : isToday
-                ? 'bg-amber-600 hover:bg-amber-700 text-white'
-                : ''
+                ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-600/20'
+                : 'bg-primary hover:bg-primary/90 text-primary-foreground'
           }`}
         >
-          <PlayCircle className="h-3.5 w-3.5" />
+          <PlayCircle className="h-4 w-4 shrink-0" />
           <span>Executar Inspeção</span>
         </Button>
       </div>
@@ -823,7 +966,10 @@ function getStatusBadge(item: ScheduledInspectionItem, minimal = false) {
   if (item.status === 'overdue') {
     const days = Math.max(1, -item.daysDifference)
     return (
-      <Badge variant="destructive" className="font-semibold text-[11px] gap-1 shrink-0">
+      <Badge
+        variant="destructive"
+        className="font-bold text-[11px] h-6 px-2 gap-1 shrink-0 shadow-2xs whitespace-nowrap"
+      >
         <ShieldAlert className="h-3 w-3" />
         {minimal ? `${days}d atraso` : `Atrasado (${days} ${days === 1 ? 'dia' : 'dias'})`}
       </Badge>
@@ -832,7 +978,7 @@ function getStatusBadge(item: ScheduledInspectionItem, minimal = false) {
 
   if (item.status === 'due_today') {
     return (
-      <Badge className="bg-amber-500 hover:bg-amber-600 text-white font-semibold text-[11px] gap-1 shrink-0">
+      <Badge className="bg-amber-500 hover:bg-amber-600 text-white font-bold text-[11px] h-6 px-2 gap-1 shrink-0 shadow-2xs whitespace-nowrap">
         <Clock className="h-3 w-3" />
         Vence Hoje
       </Badge>
@@ -843,7 +989,7 @@ function getStatusBadge(item: ScheduledInspectionItem, minimal = false) {
     return (
       <Badge
         variant="outline"
-        className="text-muted-foreground text-[11px] gap-1 shrink-0 bg-muted/60"
+        className="text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-700 bg-slate-100/70 dark:bg-slate-800/60 text-[11px] h-6 px-2 gap-1 shrink-0 font-medium whitespace-nowrap"
       >
         <HelpCircle className="h-3 w-3" />
         Sem Registro
@@ -853,7 +999,10 @@ function getStatusBadge(item: ScheduledInspectionItem, minimal = false) {
 
   const daysLeft = item.daysDifference
   return (
-    <Badge variant="secondary" className="text-[11px] shrink-0 font-normal">
+    <Badge
+      variant="secondary"
+      className="text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-[11px] h-6 px-2 shrink-0 font-semibold whitespace-nowrap"
+    >
       {daysLeft === 1 ? 'Vence amanhã' : `Em ${daysLeft} dias`}
     </Badge>
   )
