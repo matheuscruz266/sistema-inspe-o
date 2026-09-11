@@ -853,34 +853,36 @@ export default function InspectionsDashboard() {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
+    <div className="space-y-6 p-4 md:p-6 min-w-0 max-w-full overflow-hidden">
       {/* Cabeçalho */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 min-w-0">
+        <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-2xl font-bold tracking-tight">Dashboard de Inspeções</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight break-words">
+              Dashboard de Inspeções
+            </h1>
             <Badge
               variant="outline"
-              className="font-semibold text-xs border-primary/50 text-primary"
+              className="font-semibold text-xs border-primary/50 text-primary shrink-0"
             >
               Métricas & Indicadores de Checklist
             </Badge>
             {onlyRoadFleet && (
               <Badge
                 variant="secondary"
-                className="text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border-blue-200"
+                className="text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border-blue-200 shrink-0"
               >
                 Frota Rodoviária (Cavalos & Carretas)
               </Badge>
             )}
           </div>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 break-words">
             Acompanhe a conformidade mês a mês, avarias recorrentes, odômetros entre inspeções e
             veículos críticos.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <Button
             variant="outline"
             size="sm"
@@ -888,7 +890,7 @@ export default function InspectionsDashboard() {
             className="text-xs gap-1 min-h-[38px] touch-manipulation"
           >
             <RotateCcw className="h-3.5 w-3.5" />
-            Limpar Filtros
+            <span>Limpar Filtros</span>
           </Button>
         </div>
       </div>
@@ -993,117 +995,129 @@ export default function InspectionsDashboard() {
       {/* Cards de Métricas Principais (KPIs) - Grade responsiva com acentos visuais */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Total Realizadas */}
-        <div className="relative overflow-hidden rounded-xl border border-border bg-card p-4 shadow-xs">
+        <div className="relative overflow-hidden rounded-xl border border-border bg-card p-3 sm:p-4 shadow-xs min-w-0">
           <div className="absolute top-0 left-0 right-0 h-1 bg-primary rounded-t-xl" />
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide truncate">
               Total Realizadas
             </span>
             <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
               <ClipboardCheck className="h-4 w-4" />
             </div>
           </div>
-          <div className="mt-2 flex items-baseline gap-1.5">
+          <div className="mt-2 flex items-baseline gap-1.5 flex-wrap">
             <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
               {totalInspections}
             </span>
             <span className="text-xs text-muted-foreground font-medium">vistorias</span>
           </div>
-          <p className="text-[11px] text-muted-foreground mt-1 line-clamp-1">
+          <p
+            className="text-[11px] text-muted-foreground mt-1 truncate"
+            title="Checklists no período selecionado"
+          >
             Checklists no período selecionado
           </p>
         </div>
 
         {/* Inspeções OK */}
-        <div className="relative overflow-hidden rounded-xl border border-green-200/80 dark:border-green-900/50 bg-card p-4 shadow-xs">
+        <div className="relative overflow-hidden rounded-xl border border-green-200/80 dark:border-green-900/50 bg-card p-3 sm:p-4 shadow-xs min-w-0">
           <div className="absolute top-0 left-0 right-0 h-1 bg-green-600 rounded-t-xl" />
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-green-700 dark:text-green-400 uppercase tracking-wide">
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-xs font-semibold text-green-700 dark:text-green-400 uppercase tracking-wide truncate">
               Inspeções OK
             </span>
             <div className="h-7 w-7 rounded-lg bg-green-100 dark:bg-green-950/60 flex items-center justify-center text-green-600 dark:text-green-400 shrink-0">
               <FileCheck2 className="h-4 w-4" />
             </div>
           </div>
-          <div className="mt-2 flex items-baseline gap-2">
+          <div className="mt-2 flex items-baseline gap-1.5 sm:gap-2 flex-wrap">
             <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-green-600 dark:text-green-400">
               {okInspections}
             </span>
             <Badge
               variant="outline"
-              className="text-xs font-bold border-green-500/50 text-green-700 dark:text-green-300 bg-green-50/50 dark:bg-green-950/40"
+              className="text-xs font-bold border-green-500/50 text-green-700 dark:text-green-300 bg-green-50/50 dark:bg-green-950/40 shrink-0"
             >
               {pctOkInspections}%
             </Badge>
           </div>
-          <p className="text-[11px] text-muted-foreground mt-1 line-clamp-1">
+          <p
+            className="text-[11px] text-muted-foreground mt-1 truncate"
+            title="Checklists sem nenhuma falha"
+          >
             Checklists sem nenhuma falha
           </p>
         </div>
 
         {/* Inspeções com Atenção */}
-        <div className="relative overflow-hidden rounded-xl border border-amber-200/80 dark:border-amber-900/50 bg-card p-4 shadow-xs">
+        <div className="relative overflow-hidden rounded-xl border border-amber-200/80 dark:border-amber-900/50 bg-card p-3 sm:p-4 shadow-xs min-w-0">
           <div className="absolute top-0 left-0 right-0 h-1 bg-amber-500 rounded-t-xl" />
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide">
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide truncate">
               Com Atenção / NOK
             </span>
             <div className="h-7 w-7 rounded-lg bg-amber-100 dark:bg-amber-950/60 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
               <FileX2 className="h-4 w-4" />
             </div>
           </div>
-          <div className="mt-2 flex items-baseline gap-2">
+          <div className="mt-2 flex items-baseline gap-1.5 sm:gap-2 flex-wrap">
             <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-amber-600 dark:text-amber-400">
               {atencaoInspections}
             </span>
             <Badge
               variant="outline"
-              className="text-xs font-bold border-amber-500/50 text-amber-700 dark:text-amber-300 bg-amber-50/50 dark:bg-amber-950/40"
+              className="text-xs font-bold border-amber-500/50 text-amber-700 dark:text-amber-300 bg-amber-50/50 dark:bg-amber-950/40 shrink-0"
             >
               {totalInspections > 0 ? Math.round((atencaoInspections / totalInspections) * 100) : 0}
               %
             </Badge>
           </div>
-          <p className="text-[11px] text-muted-foreground mt-1 line-clamp-1">
+          <p
+            className="text-[11px] text-muted-foreground mt-1 truncate"
+            title="Com 1 ou mais itens reprovados"
+          >
             Com 1 ou mais itens reprovados
           </p>
         </div>
 
         {/* Índice de Conformidade */}
-        <div className="relative overflow-hidden rounded-xl border border-blue-200/80 dark:border-blue-900/50 bg-card p-4 shadow-xs">
+        <div className="relative overflow-hidden rounded-xl border border-blue-200/80 dark:border-blue-900/50 bg-card p-3 sm:p-4 shadow-xs min-w-0">
           <div className="absolute top-0 left-0 right-0 h-1 bg-blue-600 rounded-t-xl" />
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide">
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-xs font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide truncate">
               Taxa de Conformidade
             </span>
             <div className="h-7 w-7 rounded-lg bg-blue-100 dark:bg-blue-950/60 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
               <TrendingUp className="h-4 w-4" />
             </div>
           </div>
-          <div className="mt-2 flex items-baseline gap-2">
+          <div className="mt-2 flex items-baseline gap-1.5 sm:gap-2 flex-wrap">
             <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-blue-600 dark:text-blue-400">
               {pctOkItems}%
             </span>
-            <span className="text-xs text-muted-foreground font-semibold">
+            <span className="text-xs text-muted-foreground font-semibold truncate">
               ({nokItemChecks} NOKs)
             </span>
           </div>
-          <p className="text-[11px] text-muted-foreground mt-1 line-clamp-1">
+          <p
+            className="text-[11px] text-muted-foreground mt-1 truncate"
+            title={`De ${totalItemChecks} verificações realizadas`}
+          >
             De {totalItemChecks} verificações realizadas
           </p>
         </div>
       </div>
 
       {/* BLOCO 3: BLOCO DE NÃO CONFORMIDADES (NCs) */}
-      <Card className="shadow-sm border-red-200/80 dark:border-red-950/60 bg-card">
+      <Card className="shadow-sm border-red-200/80 dark:border-red-950/60 bg-card min-w-0">
         <CardHeader className="pb-2">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <div>
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <ShieldAlert className="h-4 w-4 text-red-600" />
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 min-w-0">
+            <div className="min-w-0">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2 break-words">
+                <ShieldAlert className="h-4 w-4 text-red-600 shrink-0" />
                 <span>Gestão de Não Conformidades (NCs)</span>
               </CardTitle>
-              <CardDescription className="text-xs">
+              <CardDescription className="text-xs break-words">
                 Acompanhamento de NCs abertas vs fechadas, tempo de resolução e veículos impedidos
                 de rodar.
               </CardDescription>
@@ -1111,7 +1125,7 @@ export default function InspectionsDashboard() {
             {ncMetrics.blockedCount > 0 && (
               <Badge
                 variant="destructive"
-                className="text-xs font-semibold animate-pulse self-start sm:self-auto"
+                className="text-xs font-semibold animate-pulse self-start sm:self-auto shrink-0 whitespace-nowrap"
               >
                 <ShieldBan className="h-3.5 w-3.5 mr-1" />
                 {ncMetrics.blockedCount}{' '}
@@ -1122,47 +1136,60 @@ export default function InspectionsDashboard() {
         </CardHeader>
         <CardContent className="pt-2">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <div className="p-3.5 rounded-xl border border-border/80 bg-muted/20">
-              <span className="text-xs text-muted-foreground block font-semibold uppercase tracking-wide">
+            <div className="p-3 sm:p-3.5 rounded-xl border border-border/80 bg-muted/20 min-w-0">
+              <span className="text-xs text-muted-foreground block font-semibold uppercase tracking-wide truncate">
                 NCs Abertas
               </span>
-              <div className="flex items-baseline gap-1.5 mt-1.5">
+              <div className="flex items-baseline gap-1.5 mt-1.5 flex-wrap">
                 <span className="text-2xl sm:text-3xl font-extrabold text-amber-600 dark:text-amber-400">
                   {ncMetrics.open}
                 </span>
                 <span className="text-xs text-muted-foreground font-medium">pendentes</span>
               </div>
-              <p className="text-[11px] text-muted-foreground mt-1 line-clamp-1">
+              <p
+                className="text-[11px] text-muted-foreground mt-1 truncate"
+                title="Aguardando OS ou reparo"
+              >
                 Aguardando OS ou reparo
               </p>
             </div>
 
-            <div className="p-3.5 rounded-xl border border-border/80 bg-muted/20">
-              <span className="text-xs text-muted-foreground block font-semibold uppercase tracking-wide">
+            <div className="p-3 sm:p-3.5 rounded-xl border border-border/80 bg-muted/20 min-w-0">
+              <span className="text-xs text-muted-foreground block font-semibold uppercase tracking-wide truncate">
                 NCs Fechadas
               </span>
-              <div className="flex items-baseline gap-1.5 mt-1.5">
+              <div className="flex items-baseline gap-1.5 mt-1.5 flex-wrap">
                 <span className="text-2xl sm:text-3xl font-extrabold text-green-600 dark:text-green-400">
                   {ncMetrics.closed}
                 </span>
                 <span className="text-xs text-muted-foreground font-medium">resolvidas</span>
               </div>
-              <p className="text-[11px] text-muted-foreground mt-1 line-clamp-1">
+              <p
+                className="text-[11px] text-muted-foreground mt-1 truncate"
+                title="Concluídas no período"
+              >
                 Concluídas no período
               </p>
             </div>
 
-            <div className="p-3.5 rounded-xl border border-border/80 bg-muted/20">
-              <span className="text-xs text-muted-foreground block font-semibold uppercase tracking-wide">
+            <div className="p-3 sm:p-3.5 rounded-xl border border-border/80 bg-muted/20 min-w-0">
+              <span className="text-xs text-muted-foreground block font-semibold uppercase tracking-wide truncate">
                 Tempo Médio Fechamento
               </span>
-              <div className="flex items-baseline gap-1.5 mt-1.5">
+              <div className="flex items-baseline gap-1.5 mt-1.5 flex-wrap">
                 <span className="text-2xl sm:text-3xl font-extrabold text-blue-600 dark:text-blue-400">
                   {ncMetrics.avgClosingDays}
                 </span>
                 <span className="text-xs font-semibold text-muted-foreground">dias</span>
               </div>
-              <p className="text-[11px] text-muted-foreground mt-1 line-clamp-1">
+              <p
+                className="text-[11px] text-muted-foreground mt-1 truncate"
+                title={
+                  ncMetrics.closedSampleCount > 0
+                    ? `Base em ${ncMetrics.closedSampleCount} NC(s) fechadas`
+                    : 'Sem histórico fechado'
+                }
+              >
                 {ncMetrics.closedSampleCount > 0
                   ? `Base em ${ncMetrics.closedSampleCount} NC(s) fechadas`
                   : 'Sem histórico fechado'}
@@ -1170,14 +1197,14 @@ export default function InspectionsDashboard() {
             </div>
 
             <div
-              className={`p-3.5 rounded-xl border transition-colors ${
+              className={`p-3 sm:p-3.5 rounded-xl border transition-colors min-w-0 ${
                 ncMetrics.blockedCount > 0
                   ? 'border-red-300 bg-red-50/70 dark:bg-red-950/30'
                   : 'border-border/80 bg-muted/20'
               }`}
             >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide truncate">
                   Veículos Bloqueados
                 </span>
                 <ShieldBan
@@ -1186,7 +1213,7 @@ export default function InspectionsDashboard() {
                   }`}
                 />
               </div>
-              <div className="flex items-baseline gap-1.5 mt-1.5">
+              <div className="flex items-baseline gap-1.5 mt-1.5 flex-wrap">
                 <span
                   className={`text-2xl sm:text-3xl font-extrabold ${
                     ncMetrics.blockedCount > 0
@@ -1353,32 +1380,39 @@ export default function InspectionsDashboard() {
         </Card>
 
         {/* BLOCO 2: Itens NOK Recorrentes por Veículo */}
-        <Card className="shadow-sm">
+        <Card className="shadow-sm min-w-0">
           <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <RecurrentIcon className="h-4 w-4 text-red-500" />
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 min-w-0">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2 break-words">
+                <RecurrentIcon className="h-4 w-4 text-red-500 shrink-0" />
                 <span>Itens NOK Recorrentes por Veículo</span>
               </CardTitle>
-              <Badge variant="outline" className="text-[11px]">
+              <Badge
+                variant="outline"
+                className="text-[11px] self-start sm:self-auto shrink-0 whitespace-nowrap"
+              >
                 Agrupamento Item × Placa
               </Badge>
             </div>
-            <CardDescription className="text-xs">
+            <CardDescription className="text-xs break-words">
               Avarias que repetiram em múltiplas inspeções no mesmo veículo (Nx)
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
+            <div className="overflow-x-auto w-full">
+              <Table className="min-w-[500px]">
                 <TableHeader className="bg-muted/40">
                   <TableRow>
-                    <TableHead className="py-2.5 font-semibold text-xs">Veículo</TableHead>
-                    <TableHead className="py-2.5 font-semibold text-xs">Item Reprovado</TableHead>
-                    <TableHead className="py-2.5 font-semibold text-xs text-center">
+                    <TableHead className="py-2.5 font-semibold text-xs whitespace-nowrap">
+                      Veículo
+                    </TableHead>
+                    <TableHead className="py-2.5 font-semibold text-xs whitespace-nowrap">
+                      Item Reprovado
+                    </TableHead>
+                    <TableHead className="py-2.5 font-semibold text-xs text-center whitespace-nowrap">
                       Ocorrências
                     </TableHead>
-                    <TableHead className="py-2.5 font-semibold text-xs text-right">
+                    <TableHead className="py-2.5 font-semibold text-xs text-right whitespace-nowrap">
                       Última Incidência
                     </TableHead>
                   </TableRow>
@@ -1413,23 +1447,35 @@ export default function InspectionsDashboard() {
                               {entry.plate}
                             </span>
                           </TableCell>
-                          <TableCell className="text-xs py-3">
-                            <div className="font-semibold text-foreground">{entry.item}</div>
-                            <span className="text-[10px] text-muted-foreground">
+                          <TableCell className="text-xs py-3 max-w-[200px]">
+                            <div
+                              className="font-semibold text-foreground truncate"
+                              title={entry.item}
+                            >
+                              {entry.item}
+                            </div>
+                            <span
+                              className="text-[10px] text-muted-foreground block truncate"
+                              title={entry.module}
+                            >
                               {entry.module}
                             </span>
                           </TableCell>
-                          <TableCell className="text-center py-3">
+                          <TableCell className="text-center py-3 whitespace-nowrap">
                             {isRecurrent ? (
                               <Badge
                                 variant="destructive"
-                                className="font-bold text-[10px] gap-1 px-1.5 py-0.5 shadow-2xs"
+                                className="font-bold text-[10px] gap-1 px-1.5 py-0.5 shadow-2xs whitespace-nowrap"
+                                title={`Reprovado ${entry.occurrences} vezes neste veículo`}
                               >
-                                <RecurrentIcon className="h-3 w-3" />
-                                NOK Recorrente ({entry.occurrences}x)
+                                <RecurrentIcon className="h-3 w-3 shrink-0" />
+                                <span>NOK Recorrente ({entry.occurrences}x)</span>
                               </Badge>
                             ) : (
-                              <Badge variant="outline" className="font-mono text-[11px]">
+                              <Badge
+                                variant="outline"
+                                className="font-mono text-[11px] whitespace-nowrap"
+                              >
                                 {entry.occurrences}x
                               </Badge>
                             )}
@@ -1451,37 +1497,42 @@ export default function InspectionsDashboard() {
       {/* BLOCO 4: ODÔMETRO ENTRE INSPEÇÕES & BLOCO 6: RANKING DE VEÍCULOS CRÍTICOS */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* BLOCO 4: Odômetro entre inspeções */}
-        <Card className="shadow-sm">
+        <Card className="shadow-sm min-w-0">
           <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <Gauge className="h-4 w-4 text-primary" />
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 min-w-0">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2 break-words">
+                <Gauge className="h-4 w-4 text-primary shrink-0" />
                 <span>Odômetro entre Inspeções</span>
               </CardTitle>
               {odometerStats.fleetAvg > 0 && (
-                <Badge variant="outline" className="text-[11px] font-mono">
+                <Badge
+                  variant="outline"
+                  className="text-[11px] font-mono self-start sm:self-auto shrink-0 whitespace-nowrap"
+                >
                   Média Frota: ~{odometerStats.fleetAvg.toLocaleString('pt-BR')} km
                 </Badge>
               )}
             </div>
-            <CardDescription className="text-xs">
+            <CardDescription className="text-xs break-words">
               Km médio percorrido entre inspeções consecutivas por veículo (detecta veículos rodando
               muito sem checklist)
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
+            <div className="overflow-x-auto w-full">
+              <Table className="min-w-[480px]">
                 <TableHeader className="bg-muted/40">
                   <TableRow>
-                    <TableHead className="py-2.5 font-semibold text-xs">Veículo</TableHead>
-                    <TableHead className="py-2.5 font-semibold text-xs text-center">
+                    <TableHead className="py-2.5 font-semibold text-xs whitespace-nowrap">
+                      Veículo
+                    </TableHead>
+                    <TableHead className="py-2.5 font-semibold text-xs text-center whitespace-nowrap">
                       Km Médio / Insp
                     </TableHead>
-                    <TableHead className="py-2.5 font-semibold text-xs text-center">
+                    <TableHead className="py-2.5 font-semibold text-xs text-center whitespace-nowrap">
                       Maior Salto (Km)
                     </TableHead>
-                    <TableHead className="py-2.5 font-semibold text-xs text-right">
+                    <TableHead className="py-2.5 font-semibold text-xs text-right whitespace-nowrap">
                       Último Odômetro
                     </TableHead>
                   </TableRow>
@@ -1515,7 +1566,7 @@ export default function InspectionsDashboard() {
                               {v.plate}
                             </span>
                           </TableCell>
-                          <TableCell className="text-center text-xs font-mono py-3">
+                          <TableCell className="text-center text-xs font-mono py-3 whitespace-nowrap">
                             {v.avgKmBetween > 0 ? (
                               <span
                                 className={`font-semibold ${
@@ -1532,12 +1583,12 @@ export default function InspectionsDashboard() {
                               </span>
                             )}
                           </TableCell>
-                          <TableCell className="text-center text-xs font-mono text-muted-foreground py-3">
+                          <TableCell className="text-center text-xs font-mono text-muted-foreground py-3 whitespace-nowrap">
                             {v.maxKmBetween > 0
                               ? `${v.maxKmBetween.toLocaleString('pt-BR')} km`
                               : '—'}
                           </TableCell>
-                          <TableCell className="text-right text-xs font-mono font-semibold py-3">
+                          <TableCell className="text-right text-xs font-mono font-semibold py-3 whitespace-nowrap">
                             {v.lastRecordedOdometer > 0
                               ? `${v.lastRecordedOdometer.toLocaleString('pt-BR')} km`
                               : '—'}
@@ -1553,35 +1604,42 @@ export default function InspectionsDashboard() {
         </Card>
 
         {/* BLOCO 6: Ranking de Veículos Críticos */}
-        <Card className="shadow-sm">
+        <Card className="shadow-sm min-w-0">
           <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <Flame className="h-4 w-4 text-red-500" />
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 min-w-0">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2 break-words">
+                <Flame className="h-4 w-4 text-red-500 shrink-0" />
                 <span>Ranking de Veículos Críticos</span>
               </CardTitle>
-              <Badge variant="destructive" className="text-[11px]">
+              <Badge
+                variant="destructive"
+                className="text-[11px] self-start sm:self-auto shrink-0 whitespace-nowrap"
+              >
                 Ordenado do Pior para o Melhor
               </Badge>
             </div>
-            <CardDescription className="text-xs">
+            <CardDescription className="text-xs break-words">
               Veículos que concentraram mais inspeções com status "Atenção" no período
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
+            <div className="overflow-x-auto w-full">
+              <Table className="min-w-[500px]">
                 <TableHeader className="bg-muted/40">
                   <TableRow>
-                    <TableHead className="w-12 py-2.5 font-semibold text-xs">Pos.</TableHead>
-                    <TableHead className="py-2.5 font-semibold text-xs">Veículo</TableHead>
-                    <TableHead className="py-2.5 font-semibold text-xs text-center">
+                    <TableHead className="w-12 py-2.5 font-semibold text-xs whitespace-nowrap">
+                      Pos.
+                    </TableHead>
+                    <TableHead className="py-2.5 font-semibold text-xs whitespace-nowrap">
+                      Veículo
+                    </TableHead>
+                    <TableHead className="py-2.5 font-semibold text-xs text-center whitespace-nowrap">
                       Inspeções Atenção
                     </TableHead>
-                    <TableHead className="py-2.5 font-semibold text-xs text-center">
+                    <TableHead className="py-2.5 font-semibold text-xs text-center whitespace-nowrap">
                       Taxa Falhas
                     </TableHead>
-                    <TableHead className="py-2.5 font-semibold text-xs text-right">
+                    <TableHead className="py-2.5 font-semibold text-xs text-right whitespace-nowrap">
                       Total Itens NOK
                     </TableHead>
                   </TableRow>
@@ -1612,7 +1670,7 @@ export default function InspectionsDashboard() {
                                   : ''
                           }`}
                         >
-                          <TableCell className="text-xs font-mono text-muted-foreground font-bold py-3">
+                          <TableCell className="text-xs font-mono text-muted-foreground font-bold py-3 whitespace-nowrap">
                             #{idx + 1}
                           </TableCell>
                           <TableCell className="font-mono font-bold text-xs whitespace-nowrap py-3">
@@ -1620,24 +1678,24 @@ export default function InspectionsDashboard() {
                               {v.plate}
                             </span>
                           </TableCell>
-                          <TableCell className="text-center py-3">
+                          <TableCell className="text-center py-3 whitespace-nowrap">
                             {v.attentionCount > 0 ? (
                               <Badge
                                 variant="destructive"
-                                className="font-mono text-[11px] font-bold"
+                                className="font-mono text-[11px] font-bold whitespace-nowrap"
                               >
                                 {v.attentionCount} de {v.totalInsp}
                               </Badge>
                             ) : (
                               <Badge
                                 variant="outline"
-                                className="text-[11px] border-green-600/50 text-green-600 bg-green-50/50 dark:bg-green-950/40 font-semibold"
+                                className="text-[11px] border-green-600/50 text-green-600 bg-green-50/50 dark:bg-green-950/40 font-semibold whitespace-nowrap"
                               >
                                 0 Atenção
                               </Badge>
                             )}
                           </TableCell>
-                          <TableCell className="text-center text-xs font-mono font-semibold py-3">
+                          <TableCell className="text-center text-xs font-mono font-semibold py-3 whitespace-nowrap">
                             <span
                               className={
                                 v.failureRate > 0
@@ -1648,7 +1706,7 @@ export default function InspectionsDashboard() {
                               {v.failureRate}%
                             </span>
                           </TableCell>
-                          <TableCell className="text-right text-xs font-mono font-semibold py-3">
+                          <TableCell className="text-right text-xs font-mono font-semibold py-3 whitespace-nowrap">
                             {v.nokItemCount > 0 ? (
                               <span className="text-red-600 dark:text-red-400 font-bold">
                                 {v.nokItemCount} falhas
@@ -1727,36 +1785,43 @@ export default function InspectionsDashboard() {
       {/* Tabelas de Detalhamento por Plano e por Veículo */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Tabela 1: % OK vs NOK por Plano de Inspeção */}
-        <Card className="shadow-sm">
+        <Card className="shadow-sm min-w-0">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold flex items-center justify-between">
-              <span>Conformidade por Plano de Inspeção</span>
-              <Badge variant="outline" className="text-[11px]">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 min-w-0">
+              <CardTitle className="text-sm font-semibold break-words">
+                Conformidade por Plano de Inspeção
+              </CardTitle>
+              <Badge
+                variant="outline"
+                className="text-[11px] self-start sm:self-auto shrink-0 whitespace-nowrap"
+              >
                 {planStats.length} Planos Ativos
               </Badge>
-            </CardTitle>
-            <CardDescription className="text-xs">
+            </div>
+            <CardDescription className="text-xs break-words">
               Volume de itens checados e índice de aprovação por checklist no período
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
+            <div className="overflow-x-auto w-full">
+              <Table className="min-w-[480px]">
                 <TableHeader className="bg-muted/40">
                   <TableRow>
-                    <TableHead className="py-2.5 font-semibold text-xs">
+                    <TableHead className="py-2.5 font-semibold text-xs whitespace-nowrap">
                       Plano / Frequência
                     </TableHead>
-                    <TableHead className="py-2.5 font-semibold text-xs text-center">
+                    <TableHead className="py-2.5 font-semibold text-xs text-center whitespace-nowrap">
                       Total Itens
                     </TableHead>
-                    <TableHead className="py-2.5 font-semibold text-xs text-center">
+                    <TableHead className="py-2.5 font-semibold text-xs text-center whitespace-nowrap">
                       Aprovados (OK)
                     </TableHead>
-                    <TableHead className="py-2.5 font-semibold text-xs text-center">
+                    <TableHead className="py-2.5 font-semibold text-xs text-center whitespace-nowrap">
                       Reprovados (NOK)
                     </TableHead>
-                    <TableHead className="py-2.5 font-semibold text-xs text-right">% OK</TableHead>
+                    <TableHead className="py-2.5 font-semibold text-xs text-right whitespace-nowrap">
+                      % OK
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1775,22 +1840,27 @@ export default function InspectionsDashboard() {
                         key={idx}
                         className={`transition-colors hover:bg-muted/40 ${idx % 2 === 1 ? 'bg-muted/15' : ''}`}
                       >
-                        <TableCell className="font-semibold text-xs py-3">
-                          <div>{p.code}</div>
-                          <span className="text-[10px] text-muted-foreground font-normal">
+                        <TableCell className="font-semibold text-xs py-3 max-w-[180px]">
+                          <div className="truncate" title={p.code}>
+                            {p.code}
+                          </div>
+                          <span
+                            className="text-[10px] text-muted-foreground font-normal block truncate"
+                            title={p.periodicity}
+                          >
                             {p.periodicity}
                           </span>
                         </TableCell>
-                        <TableCell className="text-center text-xs font-mono py-3">
+                        <TableCell className="text-center text-xs font-mono py-3 whitespace-nowrap">
                           {p.total}
                         </TableCell>
-                        <TableCell className="text-center text-xs font-mono text-green-600 dark:text-green-400 font-semibold py-3">
+                        <TableCell className="text-center text-xs font-mono text-green-600 dark:text-green-400 font-semibold py-3 whitespace-nowrap">
                           {p.ok}
                         </TableCell>
-                        <TableCell className="text-center text-xs font-mono text-red-600 dark:text-red-400 font-semibold py-3">
+                        <TableCell className="text-center text-xs font-mono text-red-600 dark:text-red-400 font-semibold py-3 whitespace-nowrap">
                           {p.nok}
                         </TableCell>
-                        <TableCell className="text-right py-3">
+                        <TableCell className="text-right py-3 whitespace-nowrap">
                           <Badge
                             variant={
                               p.okPct >= 90
@@ -1799,7 +1869,7 @@ export default function InspectionsDashboard() {
                                   ? 'secondary'
                                   : 'destructive'
                             }
-                            className={`font-mono text-[11px] font-bold ${
+                            className={`font-mono text-[11px] font-bold whitespace-nowrap ${
                               p.okPct >= 90
                                 ? 'bg-green-600 hover:bg-green-700 text-white'
                                 : p.okPct >= 75
@@ -1820,34 +1890,41 @@ export default function InspectionsDashboard() {
         </Card>
 
         {/* Tabela 2: % OK vs NOK por Veículo no Período */}
-        <Card className="shadow-sm">
+        <Card className="shadow-sm min-w-0">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold flex items-center justify-between">
-              <span>Conformidade por Veículo no Período</span>
-              <Badge variant="outline" className="text-[11px]">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 min-w-0">
+              <CardTitle className="text-sm font-semibold break-words">
+                Conformidade por Veículo no Período
+              </CardTitle>
+              <Badge
+                variant="outline"
+                className="text-[11px] self-start sm:self-auto shrink-0 whitespace-nowrap"
+              >
                 {vehicleStats.length} Veículos Inspecionados
               </Badge>
-            </CardTitle>
-            <CardDescription className="text-xs">
+            </div>
+            <CardDescription className="text-xs break-words">
               Mapeamento de frotas com maior incidência de avarias e reprovações
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
+            <div className="overflow-x-auto w-full">
+              <Table className="min-w-[480px]">
                 <TableHeader className="bg-muted/40">
                   <TableRow>
-                    <TableHead className="py-2.5 font-semibold text-xs">Veículo (Placa)</TableHead>
-                    <TableHead className="py-2.5 font-semibold text-xs text-center">
+                    <TableHead className="py-2.5 font-semibold text-xs whitespace-nowrap">
+                      Veículo (Placa)
+                    </TableHead>
+                    <TableHead className="py-2.5 font-semibold text-xs text-center whitespace-nowrap">
                       Inspeções
                     </TableHead>
-                    <TableHead className="py-2.5 font-semibold text-xs text-center">
+                    <TableHead className="py-2.5 font-semibold text-xs text-center whitespace-nowrap">
                       Itens OK
                     </TableHead>
-                    <TableHead className="py-2.5 font-semibold text-xs text-center">
+                    <TableHead className="py-2.5 font-semibold text-xs text-center whitespace-nowrap">
                       Itens NOK
                     </TableHead>
-                    <TableHead className="py-2.5 font-semibold text-xs text-right">
+                    <TableHead className="py-2.5 font-semibold text-xs text-right whitespace-nowrap">
                       Aderência (% OK)
                     </TableHead>
                   </TableRow>
@@ -1868,21 +1945,21 @@ export default function InspectionsDashboard() {
                         key={v.plate}
                         className={`transition-colors hover:bg-muted/40 ${idx % 2 === 1 ? 'bg-muted/15' : ''}`}
                       >
-                        <TableCell className="font-mono font-bold text-xs py-3">
+                        <TableCell className="font-mono font-bold text-xs py-3 whitespace-nowrap">
                           <span className="px-2 py-0.5 rounded bg-background border shadow-2xs">
                             {v.plate}
                           </span>
                         </TableCell>
-                        <TableCell className="text-center text-xs font-mono py-3">
+                        <TableCell className="text-center text-xs font-mono py-3 whitespace-nowrap">
                           {v.inspectionsCount}
                         </TableCell>
-                        <TableCell className="text-center text-xs font-mono text-green-600 dark:text-green-400 font-semibold py-3">
+                        <TableCell className="text-center text-xs font-mono text-green-600 dark:text-green-400 font-semibold py-3 whitespace-nowrap">
                           {v.ok}
                         </TableCell>
-                        <TableCell className="text-center text-xs font-mono text-red-600 dark:text-red-400 font-semibold py-3">
+                        <TableCell className="text-center text-xs font-mono text-red-600 dark:text-red-400 font-semibold py-3 whitespace-nowrap">
                           {v.nok}
                         </TableCell>
-                        <TableCell className="text-right py-3">
+                        <TableCell className="text-right py-3 whitespace-nowrap">
                           <Badge
                             variant={
                               v.okPct >= 90
@@ -1891,7 +1968,7 @@ export default function InspectionsDashboard() {
                                   ? 'secondary'
                                   : 'destructive'
                             }
-                            className={`font-mono text-[11px] font-bold ${
+                            className={`font-mono text-[11px] font-bold whitespace-nowrap ${
                               v.okPct >= 90
                                 ? 'bg-green-600 hover:bg-green-700 text-white'
                                 : v.okPct >= 70
@@ -1913,28 +1990,34 @@ export default function InspectionsDashboard() {
       </div>
 
       {/* Tabela de Top Itens NOK detalhada */}
-      <Card className="shadow-sm">
+      <Card className="shadow-sm min-w-0">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-amber-500" />
-            Detalhamento dos Itens Mais Reprovados
+          <CardTitle className="text-sm font-semibold flex items-center gap-2 break-words">
+            <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />
+            <span>Detalhamento dos Itens Mais Reprovados</span>
           </CardTitle>
-          <CardDescription className="text-xs">
+          <CardDescription className="text-xs break-words">
             Lista consolidada de irregularidades encontradas nos checklists durante as vistorias
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
+          <div className="overflow-x-auto w-full">
+            <Table className="min-w-[550px]">
               <TableHeader className="bg-muted/40">
                 <TableRow>
-                  <TableHead className="w-12 py-2.5 font-semibold text-xs">#</TableHead>
-                  <TableHead className="py-2.5 font-semibold text-xs">Módulo / Sistema</TableHead>
-                  <TableHead className="py-2.5 font-semibold text-xs">Item de Inspeção</TableHead>
-                  <TableHead className="py-2.5 font-semibold text-xs text-center">
+                  <TableHead className="w-12 py-2.5 font-semibold text-xs whitespace-nowrap">
+                    #
+                  </TableHead>
+                  <TableHead className="py-2.5 font-semibold text-xs whitespace-nowrap">
+                    Módulo / Sistema
+                  </TableHead>
+                  <TableHead className="py-2.5 font-semibold text-xs whitespace-nowrap">
+                    Item de Inspeção
+                  </TableHead>
+                  <TableHead className="py-2.5 font-semibold text-xs text-center whitespace-nowrap">
                     Total de Reprovações
                   </TableHead>
-                  <TableHead className="py-2.5 font-semibold text-xs">
+                  <TableHead className="py-2.5 font-semibold text-xs whitespace-nowrap">
                     Último Veículo Afetado
                   </TableHead>
                 </TableRow>
@@ -1956,23 +2039,31 @@ export default function InspectionsDashboard() {
                       key={idx}
                       className={`transition-colors hover:bg-muted/40 ${idx % 2 === 1 ? 'bg-muted/15' : ''}`}
                     >
-                      <TableCell className="text-xs font-mono text-muted-foreground font-bold py-3">
+                      <TableCell className="text-xs font-mono text-muted-foreground font-bold py-3 whitespace-nowrap">
                         #{idx + 1}
                       </TableCell>
-                      <TableCell className="py-3">
-                        <Badge variant="outline" className="text-[11px] font-normal">
+                      <TableCell className="py-3 whitespace-nowrap">
+                        <Badge
+                          variant="outline"
+                          className="text-[11px] font-normal whitespace-nowrap"
+                        >
                           {item.module}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-xs font-semibold py-3 text-foreground">
-                        {item.item}
+                      <TableCell className="text-xs font-semibold py-3 text-foreground max-w-[240px]">
+                        <span className="block truncate" title={item.item}>
+                          {item.item}
+                        </span>
                       </TableCell>
-                      <TableCell className="text-center py-3">
-                        <Badge variant="destructive" className="font-mono text-[11px] font-bold">
+                      <TableCell className="text-center py-3 whitespace-nowrap">
+                        <Badge
+                          variant="destructive"
+                          className="font-mono text-[11px] font-bold whitespace-nowrap"
+                        >
                           {item.count} {item.count === 1 ? 'falha' : 'falhas'}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-xs font-mono py-3 font-semibold">
+                      <TableCell className="text-xs font-mono py-3 font-semibold whitespace-nowrap">
                         <span className="px-2 py-0.5 rounded bg-background border shadow-2xs">
                           {item.lastPlate}
                         </span>

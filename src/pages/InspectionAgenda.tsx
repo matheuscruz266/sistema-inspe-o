@@ -224,26 +224,28 @@ export default function InspectionAgenda() {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
+    <div className="space-y-6 p-4 md:p-6 min-w-0 max-w-full overflow-hidden">
       {/* Cabeçalho */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 min-w-0">
+        <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-2xl font-bold tracking-tight">Agenda de Inspeções Futuras</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight break-words">
+              Agenda de Inspeções Futuras
+            </h1>
             <Badge
               variant="outline"
-              className="text-xs font-semibold text-primary border-primary/50"
+              className="text-xs font-semibold text-primary border-primary/50 shrink-0"
             >
               Planejamento & Aderência
             </Badge>
           </div>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 break-words">
             Previsão da próxima data por veículo e plano de checklist com base na periodicidade da
             frota ativa.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto">
+        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0 flex-wrap">
           <Button
             variant="outline"
             size="sm"
@@ -260,7 +262,7 @@ export default function InspectionAgenda() {
             onClick={() => navigate('/execucao-inspecao')}
             className="text-xs gap-1.5 min-h-[38px] font-semibold"
           >
-            <PlayCircle className="h-4 w-4" />
+            <PlayCircle className="h-4 w-4 shrink-0" />
             <span>Nova Inspeção</span>
           </Button>
         </div>
@@ -279,28 +281,31 @@ export default function InspectionAgenda() {
               setStatusFilter(statusFilter === 'overdue' ? 'ALL' : 'overdue')
             }
           }}
-          className={`group relative overflow-hidden rounded-xl border p-4 transition-all duration-200 cursor-pointer shadow-xs select-none ${
+          className={`group relative overflow-hidden rounded-xl border p-3 sm:p-4 transition-all duration-200 cursor-pointer shadow-xs select-none min-w-0 ${
             statusFilter === 'overdue'
               ? 'border-red-500 bg-red-50/80 dark:bg-red-950/40 ring-2 ring-red-500 shadow-md'
               : 'border-border bg-card hover:border-red-300 dark:hover:border-red-900/60 hover:shadow-sm'
           }`}
         >
           <div className="absolute top-0 left-0 right-0 h-1 bg-red-500 rounded-t-xl" />
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted-foreground tracking-wide uppercase">
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-xs font-semibold text-muted-foreground tracking-wide uppercase truncate">
               Vencidas
             </span>
             <div className="h-7 w-7 rounded-lg bg-red-100 dark:bg-red-950/60 flex items-center justify-center text-red-600 dark:text-red-400 shrink-0">
               <ShieldAlert className="h-4 w-4" />
             </div>
           </div>
-          <div className="mt-2 flex items-baseline gap-1.5">
+          <div className="mt-2 flex items-baseline gap-1.5 flex-wrap">
             <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-red-600 dark:text-red-400">
               {summary.overdueCount}
             </span>
             <span className="text-xs text-muted-foreground font-medium">veículos</span>
           </div>
-          <p className="text-[11px] text-muted-foreground mt-1 line-clamp-1">
+          <p
+            className="text-[11px] text-muted-foreground mt-1 truncate"
+            title="Requerem inspeção imediata"
+          >
             Requerem inspeção imediata
           </p>
         </div>
@@ -316,28 +321,31 @@ export default function InspectionAgenda() {
               setStatusFilter(statusFilter === 'due_today' ? 'ALL' : 'due_today')
             }
           }}
-          className={`group relative overflow-hidden rounded-xl border p-4 transition-all duration-200 cursor-pointer shadow-xs select-none ${
+          className={`group relative overflow-hidden rounded-xl border p-3 sm:p-4 transition-all duration-200 cursor-pointer shadow-xs select-none min-w-0 ${
             statusFilter === 'due_today'
               ? 'border-amber-500 bg-amber-50/80 dark:bg-amber-950/40 ring-2 ring-amber-500 shadow-md'
               : 'border-border bg-card hover:border-amber-300 dark:hover:border-amber-900/60 hover:shadow-sm'
           }`}
         >
           <div className="absolute top-0 left-0 right-0 h-1 bg-amber-500 rounded-t-xl" />
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted-foreground tracking-wide uppercase">
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-xs font-semibold text-muted-foreground tracking-wide uppercase truncate">
               Vence Hoje
             </span>
             <div className="h-7 w-7 rounded-lg bg-amber-100 dark:bg-amber-950/60 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
               <Clock className="h-4 w-4" />
             </div>
           </div>
-          <div className="mt-2 flex items-baseline gap-1.5">
+          <div className="mt-2 flex items-baseline gap-1.5 flex-wrap">
             <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-amber-600 dark:text-amber-400">
               {summary.dueTodayCount}
             </span>
             <span className="text-xs text-muted-foreground font-medium">veículos</span>
           </div>
-          <p className="text-[11px] text-muted-foreground mt-1 line-clamp-1">
+          <p
+            className="text-[11px] text-muted-foreground mt-1 truncate"
+            title="Programadas para o dia"
+          >
             Programadas para o dia
           </p>
         </div>
@@ -359,24 +367,27 @@ export default function InspectionAgenda() {
               setAgendaDaysWindow(14)
             }
           }}
-          className="group relative overflow-hidden rounded-xl border p-4 transition-all duration-200 cursor-pointer shadow-xs select-none border-border bg-card hover:border-blue-300 dark:hover:border-blue-900/60 hover:shadow-sm"
+          className="group relative overflow-hidden rounded-xl border p-3 sm:p-4 transition-all duration-200 cursor-pointer shadow-xs select-none border-border bg-card hover:border-blue-300 dark:hover:border-blue-900/60 hover:shadow-sm min-w-0"
         >
           <div className="absolute top-0 left-0 right-0 h-1 bg-blue-500 rounded-t-xl" />
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted-foreground tracking-wide uppercase">
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-xs font-semibold text-muted-foreground tracking-wide uppercase truncate">
               Próximos 7 Dias
             </span>
             <div className="h-7 w-7 rounded-lg bg-blue-100 dark:bg-blue-950/60 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
               <CalendarDays className="h-4 w-4" />
             </div>
           </div>
-          <div className="mt-2 flex items-baseline gap-1.5">
+          <div className="mt-2 flex items-baseline gap-1.5 flex-wrap">
             <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-blue-600 dark:text-blue-400">
               {summary.next7DaysCount}
             </span>
             <span className="text-xs text-muted-foreground font-medium">veículos</span>
           </div>
-          <p className="text-[11px] text-muted-foreground mt-1 line-clamp-1">
+          <p
+            className="text-[11px] text-muted-foreground mt-1 truncate"
+            title="A vencer na próxima semana"
+          >
             A vencer na próxima semana
           </p>
         </div>
@@ -392,28 +403,31 @@ export default function InspectionAgenda() {
               setStatusFilter(statusFilter === 'no_record' ? 'ALL' : 'no_record')
             }
           }}
-          className={`group relative overflow-hidden rounded-xl border p-4 transition-all duration-200 cursor-pointer shadow-xs select-none ${
+          className={`group relative overflow-hidden rounded-xl border p-3 sm:p-4 transition-all duration-200 cursor-pointer shadow-xs select-none min-w-0 ${
             statusFilter === 'no_record'
               ? 'border-slate-500 bg-slate-50/80 dark:bg-slate-900/50 ring-2 ring-slate-500 shadow-md'
               : 'border-border bg-card hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-sm'
           }`}
         >
           <div className="absolute top-0 left-0 right-0 h-1 bg-slate-400 rounded-t-xl" />
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted-foreground tracking-wide uppercase">
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-xs font-semibold text-muted-foreground tracking-wide uppercase truncate">
               Sem Registro
             </span>
             <div className="h-7 w-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 shrink-0">
               <HelpCircle className="h-4 w-4" />
             </div>
           </div>
-          <div className="mt-2 flex items-baseline gap-1.5">
+          <div className="mt-2 flex items-baseline gap-1.5 flex-wrap">
             <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-700 dark:text-slate-300">
               {summary.noRecordCount}
             </span>
             <span className="text-xs text-muted-foreground font-medium">veículos</span>
           </div>
-          <p className="text-[11px] text-muted-foreground mt-1 line-clamp-1">
+          <p
+            className="text-[11px] text-muted-foreground mt-1 truncate"
+            title="Nunca inspecionados para o plano"
+          >
             Nunca inspecionados para o plano
           </p>
         </div>
@@ -590,21 +604,21 @@ export default function InspectionAgenda() {
         <TabsContent value="agenda" className="space-y-4">
           {/* Seção de Vencidas Anteriores ou Sem Registro para dar destaque imediato */}
           {itemsByDay.overdueBefore.length > 0 && (
-            <Card className="border-red-300/80 bg-red-50/60 dark:bg-red-950/25 dark:border-red-900/60 shadow-sm overflow-hidden">
+            <Card className="border-red-300/80 bg-red-50/60 dark:bg-red-950/25 dark:border-red-900/60 shadow-sm overflow-hidden min-w-0">
               <CardHeader className="p-3.5 sm:p-4 pb-2.5 bg-red-100/50 dark:bg-red-950/40 border-b border-red-200/60 dark:border-red-900/40">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                  <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0">
                     <div className="h-7 w-7 rounded-lg bg-red-600 text-white flex items-center justify-center shrink-0">
                       <ShieldAlert className="h-4 w-4" />
                     </div>
-                    <div>
-                      <CardTitle className="text-sm sm:text-base font-bold text-red-900 dark:text-red-200">
+                    <div className="min-w-0">
+                      <CardTitle className="text-sm sm:text-base font-bold text-red-900 dark:text-red-200 break-words">
                         {itemsByDay.overdueBefore.length}{' '}
                         {itemsByDay.overdueBefore.length === 1
                           ? 'inspeção vencida anterior à janela'
                           : 'inspeções vencidas anteriores à janela'}
                       </CardTitle>
-                      <CardDescription className="text-xs text-red-700 dark:text-red-300/80 mt-0.5">
+                      <CardDescription className="text-xs text-red-700 dark:text-red-300/80 mt-0.5 break-words">
                         Veículos que ultrapassaram a data limite da rotina e requerem vistoria antes
                         de rodar.
                       </CardDescription>
@@ -612,7 +626,7 @@ export default function InspectionAgenda() {
                   </div>
                   <Badge
                     variant="destructive"
-                    className="text-xs font-semibold self-start sm:self-auto shrink-0 animate-pulse"
+                    className="text-xs font-semibold self-start sm:self-auto shrink-0 animate-pulse whitespace-nowrap"
                   >
                     Ação Imediata
                   </Badge>
@@ -630,7 +644,7 @@ export default function InspectionAgenda() {
                 </div>
                 {itemsByDay.overdueBefore.length > 6 && (
                   <div className="pt-2 text-center">
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground break-words">
                       E mais <strong>{itemsByDay.overdueBefore.length - 6}</strong> pendências —
                       consulte a aba <strong>Lista Completa</strong> para ver todos os veículos.
                     </p>
@@ -641,11 +655,11 @@ export default function InspectionAgenda() {
           )}
 
           {/* Grid de Dias da Agenda: no Desktop colunas/dias, no Mobile lista vertical touch-friendly */}
-          <div className="space-y-3">
-            <div className="text-xs font-semibold text-muted-foreground flex items-center justify-between px-1">
-              <span className="flex items-center gap-1.5">
-                <CalendarDays className="h-3.5 w-3.5 text-primary" />
-                <span>
+          <div className="space-y-3 min-w-0">
+            <div className="text-xs font-semibold text-muted-foreground flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 px-1 min-w-0">
+              <span className="flex items-center gap-1.5 min-w-0 flex-wrap">
+                <CalendarDays className="h-3.5 w-3.5 text-primary shrink-0" />
+                <span className="break-words">
                   Janela exibida:{' '}
                   <strong className="text-foreground">
                     {agendaDates[0]?.formattedShort} até{' '}
@@ -654,14 +668,14 @@ export default function InspectionAgenda() {
                   ({agendaDaysWindow} dias)
                 </span>
               </span>
-              <span className="hidden sm:inline text-[11px] text-muted-foreground/80">
+              <span className="text-[11px] text-muted-foreground/80">
                 Toque em <strong className="text-foreground">Executar Inspeção</strong> para abrir o
                 checklist
               </span>
             </div>
 
             {/* Container Responsivo de Dias */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3 min-w-0">
               {agendaDates.map((day) => {
                 const dayItems = itemsByDay.map.get(day.ymd) || []
                 const isSelected = selectedDayKey === day.ymd
@@ -672,7 +686,7 @@ export default function InspectionAgenda() {
                 return (
                   <div
                     key={day.ymd}
-                    className={`rounded-xl border transition-all duration-150 flex flex-col bg-card shadow-xs overflow-hidden ${
+                    className={`rounded-xl border transition-all duration-150 flex flex-col bg-card shadow-xs overflow-hidden min-w-0 ${
                       day.isToday
                         ? 'border-amber-400 bg-amber-50/20 dark:bg-amber-950/20 ring-2 ring-amber-400/80 shadow-sm'
                         : hasOverdueOrToday
@@ -691,24 +705,26 @@ export default function InspectionAgenda() {
                           setSelectedDayKey(isSelected ? null : day.ymd)
                         }
                       }}
-                      className={`p-2.5 sm:p-2 sm:px-2.5 border-b cursor-pointer select-none transition-colors flex items-center justify-between ${
+                      className={`p-2.5 sm:p-2 sm:px-2.5 border-b cursor-pointer select-none transition-colors flex items-center justify-between gap-1.5 min-w-0 ${
                         day.isToday
                           ? 'bg-amber-100/80 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 font-semibold'
                           : 'bg-muted/40 hover:bg-muted/70 text-foreground'
                       }`}
                     >
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-sm tracking-tight">{day.dayOfWeek}</span>
-                        <span className="text-xs text-muted-foreground font-mono">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="font-bold text-sm tracking-tight truncate">
+                          {day.dayOfWeek}
+                        </span>
+                        <span className="text-xs text-muted-foreground font-mono shrink-0">
                           {day.formattedShort}
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 shrink-0">
                         {day.isToday && (
                           <Badge
                             variant="outline"
-                            className="text-[10px] h-5 px-1.5 font-bold border-amber-500 bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                            className="text-[10px] h-5 px-1.5 font-bold border-amber-500 bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300 whitespace-nowrap"
                           >
                             Hoje
                           </Badge>
@@ -721,7 +737,7 @@ export default function InspectionAgenda() {
                                 : 'secondary'
                               : 'outline'
                           }
-                          className={`text-[11px] h-5 px-1.5 min-w-[22px] justify-center ${
+                          className={`text-[11px] h-5 px-1.5 min-w-[22px] justify-center whitespace-nowrap ${
                             dayItems.length > 0
                               ? 'font-bold'
                               : 'text-muted-foreground/60 opacity-60'
@@ -733,7 +749,7 @@ export default function InspectionAgenda() {
                     </div>
 
                     {/* Lista de Itens do Dia */}
-                    <div className="p-2 space-y-2 flex-1 min-h-[90px] flex flex-col justify-start">
+                    <div className="p-2 space-y-2 flex-1 min-h-[90px] flex flex-col justify-start min-w-0">
                       {dayItems.length === 0 ? (
                         <div className="flex-1 flex flex-col items-center justify-center py-5 text-center">
                           <CheckCircle2 className="h-4 w-4 text-muted-foreground/30 mb-1" />
@@ -781,19 +797,19 @@ export default function InspectionAgenda() {
         </TabsContent>
 
         {/* TAB 2: VISÃO LISTA COMPLETA (TABELA ORDENADA) */}
-        <TabsContent value="list" className="space-y-3">
-          <div className="rounded-md border overflow-x-auto bg-card shadow-sm">
-            <Table>
+        <TabsContent value="list" className="space-y-3 min-w-0">
+          <div className="rounded-md border overflow-x-auto bg-card shadow-sm w-full">
+            <Table className="min-w-[760px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Situação</TableHead>
-                  <TableHead>Placa</TableHead>
-                  <TableHead>Veículo</TableHead>
-                  <TableHead>Plano de Inspeção</TableHead>
-                  <TableHead>Periodicidade</TableHead>
-                  <TableHead>Última Inspeção</TableHead>
-                  <TableHead>Próximo Vencimento</TableHead>
-                  <TableHead className="text-right">Ação</TableHead>
+                  <TableHead className="whitespace-nowrap">Situação</TableHead>
+                  <TableHead className="whitespace-nowrap">Placa</TableHead>
+                  <TableHead className="whitespace-nowrap">Veículo</TableHead>
+                  <TableHead className="whitespace-nowrap">Plano de Inspeção</TableHead>
+                  <TableHead className="whitespace-nowrap">Periodicidade</TableHead>
+                  <TableHead className="whitespace-nowrap">Última Inspeção</TableHead>
+                  <TableHead className="whitespace-nowrap">Próximo Vencimento</TableHead>
+                  <TableHead className="text-right whitespace-nowrap">Ação</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -808,38 +824,52 @@ export default function InspectionAgenda() {
                     const statusBadge = getStatusBadge(item)
                     return (
                       <TableRow key={item.id} className="hover:bg-muted/40">
-                        <TableCell>{statusBadge}</TableCell>
-                        <TableCell>
-                          <span className="font-mono font-bold text-sm tracking-wide px-2 py-0.5 rounded bg-muted">
+                        <TableCell className="whitespace-nowrap py-3">{statusBadge}</TableCell>
+                        <TableCell className="whitespace-nowrap py-3">
+                          <span className="font-mono font-bold text-xs sm:text-sm tracking-wide px-2 py-0.5 rounded bg-muted border">
                             {item.plate}
                           </span>
                         </TableCell>
-                        <TableCell>
-                          <div>
-                            <span className="font-medium text-xs sm:text-sm">
+                        <TableCell className="py-3 max-w-[200px]">
+                          <div className="min-w-0">
+                            <span
+                              className="font-medium text-xs sm:text-sm block truncate"
+                              title={item.vehicleType}
+                            >
                               {item.vehicleType}
                             </span>
                             {item.model && (
-                              <span className="text-[11px] text-muted-foreground block truncate max-w-[160px]">
+                              <span
+                                className="text-[11px] text-muted-foreground block truncate"
+                                title={item.model}
+                              >
                                 {item.model}
                               </span>
                             )}
                           </div>
                         </TableCell>
-                        <TableCell>
-                          <span className="font-medium text-xs sm:text-sm">{item.planCode}</span>
+                        <TableCell className="py-3 max-w-[180px]">
+                          <span
+                            className="font-medium text-xs sm:text-sm block truncate"
+                            title={item.planCode}
+                          >
+                            {item.planCode}
+                          </span>
                         </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="text-[11px]">
+                        <TableCell className="whitespace-nowrap py-3">
+                          <Badge variant="outline" className="text-[11px] whitespace-nowrap">
                             {item.periodicity} ({item.periodicityDays}d)
                           </Badge>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="whitespace-nowrap py-3">
                           {item.lastInspectionDate ? (
                             <div className="text-xs">
                               <span>{formatDate(item.lastInspectionDate)}</span>
                               {item.lastStatus && (
-                                <span className="text-[10px] text-muted-foreground block">
+                                <span
+                                  className="text-[10px] text-muted-foreground block truncate max-w-[140px]"
+                                  title={`Status: ${item.lastStatus}`}
+                                >
                                   Status: {item.lastStatus}
                                 </span>
                               )}
@@ -850,7 +880,7 @@ export default function InspectionAgenda() {
                             </span>
                           )}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="whitespace-nowrap py-3">
                           <div className="text-xs font-semibold">
                             <span>{formatDate(item.nextDueDate)}</span>
                             <span className="text-[11px] block font-normal text-muted-foreground">
@@ -858,13 +888,13 @@ export default function InspectionAgenda() {
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-right whitespace-nowrap">
+                        <TableCell className="text-right whitespace-nowrap py-3">
                           <Button
                             size="sm"
                             onClick={() => handleStartExecution(item)}
                             className="text-xs font-medium gap-1.5 min-h-[38px] touch-manipulation"
                           >
-                            <PlayCircle className="h-4 w-4" />
+                            <PlayCircle className="h-4 w-4 shrink-0" />
                             <span>Executar</span>
                           </Button>
                         </TableCell>
@@ -897,7 +927,7 @@ function AgendaItemCard({ item, compact = false, onExecute }: AgendaItemCardProp
 
   return (
     <div
-      className={`rounded-lg border p-3 transition-all text-xs flex flex-col justify-between gap-2.5 shadow-2xs hover:shadow-xs ${
+      className={`rounded-lg border p-2.5 sm:p-3 transition-all text-xs flex flex-col justify-between gap-2 shadow-2xs hover:shadow-xs min-w-0 max-w-full ${
         isOverdue
           ? 'bg-red-50/70 dark:bg-red-950/30 border-red-200 dark:border-red-900/60'
           : isToday
@@ -907,35 +937,44 @@ function AgendaItemCard({ item, compact = false, onExecute }: AgendaItemCardProp
               : 'bg-card border-border hover:border-primary/40'
       }`}
     >
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between gap-1.5">
-          <span className="font-mono font-bold text-xs sm:text-sm tracking-wide px-2 py-0.5 rounded-md bg-background border shadow-2xs text-foreground">
+      <div className="space-y-1.5 min-w-0">
+        <div className="flex items-center justify-between gap-1.5 min-w-0">
+          <span className="font-mono font-bold text-xs tracking-wide px-1.5 py-0.5 rounded-md bg-background border shadow-2xs text-foreground shrink-0">
             {item.plate}
           </span>
-          {getStatusBadge(item, true)}
+          <div className="min-w-0 flex justify-end">{getStatusBadge(item, true)}</div>
         </div>
 
-        <div>
+        <div className="min-w-0">
           <p
-            className="font-bold text-xs leading-snug line-clamp-1 text-foreground"
+            className="font-bold text-xs leading-snug truncate text-foreground"
             title={item.planCode}
           >
             {item.planCode}
           </p>
-          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground pt-0.5 truncate">
-            <span className="truncate">{item.vehicleType}</span>
-            <span className="text-muted-foreground/50">•</span>
-            <span className="shrink-0">{item.periodicity}</span>
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground pt-0.5 min-w-0">
+            <span className="truncate flex-1 min-w-0" title={item.vehicleType}>
+              {item.vehicleType}
+            </span>
+            <span className="text-muted-foreground/50 shrink-0">•</span>
+            <span className="shrink-0 whitespace-nowrap">{item.periodicity}</span>
           </div>
         </div>
 
         {!compact && (
-          <div className="pt-1.5 text-[11px] text-muted-foreground border-t mt-1.5 flex flex-col gap-0.5">
-            <span className="truncate">
+          <div className="pt-1.5 text-[11px] text-muted-foreground border-t mt-1.5 flex flex-col gap-0.5 min-w-0">
+            <span
+              className="truncate"
+              title={
+                item.lastInspectionDate
+                  ? `Última: ${formatDate(item.lastInspectionDate)}`
+                  : 'Nunca inspecionado'
+              }
+            >
               Última:{' '}
               {item.lastInspectionDate ? formatDate(item.lastInspectionDate) : 'Nunca inspecionado'}
             </span>
-            <span className="font-medium text-foreground">
+            <span className="font-medium text-foreground truncate">
               Vencimento: {formatDate(item.nextDueDate)}
             </span>
           </div>
@@ -946,7 +985,7 @@ function AgendaItemCard({ item, compact = false, onExecute }: AgendaItemCardProp
         <Button
           size="sm"
           onClick={onExecute}
-          className={`w-full text-xs font-semibold gap-1.5 min-h-[44px] touch-manipulation shadow-xs active:scale-[0.99] transition-transform ${
+          className={`w-full text-xs font-semibold gap-1.5 min-h-[38px] sm:min-h-[40px] px-2 touch-manipulation shadow-xs active:scale-[0.99] transition-transform ${
             isOverdue
               ? 'bg-red-600 hover:bg-red-700 text-white shadow-red-600/20'
               : isToday
@@ -955,7 +994,7 @@ function AgendaItemCard({ item, compact = false, onExecute }: AgendaItemCardProp
           }`}
         >
           <PlayCircle className="h-4 w-4 shrink-0" />
-          <span>Executar Inspeção</span>
+          <span className="truncate">Executar Inspeção</span>
         </Button>
       </div>
     </div>
@@ -968,19 +1007,25 @@ function getStatusBadge(item: ScheduledInspectionItem, minimal = false) {
     return (
       <Badge
         variant="destructive"
-        className="font-bold text-[11px] h-6 px-2 gap-1 shrink-0 shadow-2xs whitespace-nowrap"
+        className="font-bold text-[10px] sm:text-[11px] h-5 sm:h-6 px-1.5 sm:px-2 gap-1 shrink-0 shadow-2xs whitespace-nowrap max-w-full truncate"
+        title={`Atrasado há ${days} ${days === 1 ? 'dia' : 'dias'}`}
       >
-        <ShieldAlert className="h-3 w-3" />
-        {minimal ? `${days}d atraso` : `Atrasado (${days} ${days === 1 ? 'dia' : 'dias'})`}
+        <ShieldAlert className="h-3 w-3 shrink-0" />
+        <span className="truncate">
+          {minimal ? `${days}d atraso` : `Atrasado (${days} ${days === 1 ? 'dia' : 'dias'})`}
+        </span>
       </Badge>
     )
   }
 
   if (item.status === 'due_today') {
     return (
-      <Badge className="bg-amber-500 hover:bg-amber-600 text-white font-bold text-[11px] h-6 px-2 gap-1 shrink-0 shadow-2xs whitespace-nowrap">
-        <Clock className="h-3 w-3" />
-        Vence Hoje
+      <Badge
+        className="bg-amber-500 hover:bg-amber-600 text-white font-bold text-[10px] sm:text-[11px] h-5 sm:h-6 px-1.5 sm:px-2 gap-1 shrink-0 shadow-2xs whitespace-nowrap"
+        title="Vence Hoje"
+      >
+        <Clock className="h-3 w-3 shrink-0" />
+        <span>Vence Hoje</span>
       </Badge>
     )
   }
@@ -989,10 +1034,11 @@ function getStatusBadge(item: ScheduledInspectionItem, minimal = false) {
     return (
       <Badge
         variant="outline"
-        className="text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-700 bg-slate-100/70 dark:bg-slate-800/60 text-[11px] h-6 px-2 gap-1 shrink-0 font-medium whitespace-nowrap"
+        className="text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-700 bg-slate-100/70 dark:bg-slate-800/60 text-[10px] sm:text-[11px] h-5 sm:h-6 px-1.5 sm:px-2 gap-1 shrink-0 font-medium whitespace-nowrap"
+        title="Sem Registro"
       >
-        <HelpCircle className="h-3 w-3" />
-        Sem Registro
+        <HelpCircle className="h-3 w-3 shrink-0" />
+        <span>Sem Registro</span>
       </Badge>
     )
   }
@@ -1001,9 +1047,10 @@ function getStatusBadge(item: ScheduledInspectionItem, minimal = false) {
   return (
     <Badge
       variant="secondary"
-      className="text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-[11px] h-6 px-2 shrink-0 font-semibold whitespace-nowrap"
+      className="text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-[10px] sm:text-[11px] h-5 sm:h-6 px-1.5 sm:px-2 shrink-0 font-semibold whitespace-nowrap max-w-full truncate"
+      title={daysLeft === 1 ? 'Vence amanhã' : `Em ${daysLeft} dias`}
     >
-      {daysLeft === 1 ? 'Vence amanhã' : `Em ${daysLeft} dias`}
+      <span className="truncate">{daysLeft === 1 ? 'Vence amanhã' : `Em ${daysLeft} dias`}</span>
     </Badge>
   )
 }
